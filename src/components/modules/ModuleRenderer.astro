@@ -8,6 +8,10 @@ import { generateOverrideCSS } from '@/lib/nova-elements';
 import { normalizeContent } from '@/lib/normalize-content';
 import { resolveContentLinks } from '@/lib/resolve-links';
 import RawHTML from './RawHTML.astro';
+import HeroVideo from './HeroVideo.astro';
+import AudienceBars from './AudienceBars.astro';
+import TopVoicesGrid from './TopVoicesGrid.astro';
+import CountdownBranding from './CountdownBranding.astro';
 import Hero from './Hero.astro';
 import LogoTicker from './LogoTicker.astro';
 import Stats from './Stats.astro';
@@ -75,6 +79,10 @@ const overrideCSS = generateOverrideCSS(allOverrides);
 
 const componentMap: Record<string, any> = {
   RawHTML,
+  HeroVideo,
+  AudienceBars,
+  TopVoicesGrid,
+  CountdownBranding,
   Hero,
   LogoTicker,
   Stats,

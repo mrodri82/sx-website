@@ -1,0 +1,56 @@
+---
+/**
+ * HeroVideo — SX style
+ * Full-viewport video background + huge bold uppercase title.
+ * Matches sxtech.eu homepage hero pattern.
+ */
+import { t } from '@/lib/i18n';
+import { getLocaleFromPath } from '@/lib/i18n';
+import type { Locale } from '@/lib/i18n';
+
+interface Props {
+  content: Record<string, unknown>;
+  style?: Record<string, Record<string, string>>;
+}
+
+const { content, style = {} } = Astro.props;
+const locale = getLocaleFromPath(Astro.url.pathname) as Locale;
+
+const badge    = t(content, 'badge', locale);
+const headline = t(content, 'headline', locale);
+const subtitle = t(content, 'subtitle', locale);
+const ctaText  = t(content, 'cta_primary_text', locale);
+const ctaUrl   = (content.cta_primary_url as string) || '/regular-visitors';
+const videoUrl = (content.video_url as string) || '';
+const posterUrl = (content.poster_url as string) || '';
+
+const sectionStyle = Object.entries(style['hero-video-section'] || {}).map(([k, v]) => `${k}: ${v}`).join('; ');
+---
+
+<section data-nova-el="hero-video-section" class="relative w-full min-h-[85vh] overflow-hidden flex items-center justify-center bg-black" style={sectionStyle}>
+  {videoUrl && (
+    <video
+      class="absolute inset-0 w-full h-full object-cover"
+      autoplay muted loop playsinline preload="metadata"
+      poster={posterUrl || undefined}
+    >
+      <source src={videoUrl} type="video/mp4" />
+    </video>
+  )}
+  <div class="absolute inset-0 bg-black/60" aria-hidden="true"></div>
+
+  <div class="relative z-10 max-w-5xl mx-auto px-6 py-24 text-center">
+    {badge && (
+      <p data-nova-el="hero-video-badge" class="inline-block text-xs font-bold uppercase tracking-[0.3em] text-brand-500 bg-black/60 px-4 py-1 mb-6">{badge}</p>
+    )}
+    {headline && (
+      <h1 data-nova-el="hero-video-title" class="sx-heading text-6xl sm:text-7xl md:text-8xl lg:text-[9rem] text-white mb-6" set:html={headline} />
+    )}
+    {subtitle && (
+      <p data-nova-el="hero-video-subtitle" class="text-white/80 text-base sm:text-lg max-w-2xl mx-auto mb-10 leading-relaxed">{subtitle}</p>
+    )}
+    {ctaText && (
+      <a data-nova-el="hero-video-cta" href={ctaUrl} class="sx-btn text-base px-8 py-4">{ctaText}</a>
+    )}
+  </div>
+</section>

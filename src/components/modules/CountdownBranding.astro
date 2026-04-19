@@ -1,0 +1,66 @@
+---
+/**
+ * CountdownBranding — SX style closing block
+ * Massive uppercase title split across lines (e.g. "SX FESTIVAL / EXPO 2026 / BERLIN")
+ * with optional live countdown to event date.
+ */
+import { t } from '@/lib/i18n';
+import { getLocaleFromPath } from '@/lib/i18n';
+import type { Locale } from '@/lib/i18n';
+
+interface Props {
+  content: Record<string, unknown>;
+  style?: Record<string, Record<string, string>>;
+}
+
+const { content } = Astro.props;
+const locale = getLocaleFromPath(Astro.url.pathname) as Locale;
+
+const line1 = t(content, 'line1', locale) || 'SX Festival';
+const line2 = t(content, 'line2', locale) || 'Expo 2026';
+const line3 = t(content, 'line3', locale) || 'Berlin';
+const eventDate = (content.event_date as string) || '2026-06-26T00:00:00';
+const showCountdown = content.show_countdown !== false;
+---
+
+<section data-nova-el="countdown-branding-section" class="bg-black text-brand-500 py-24 overflow-hidden">
+  <div class="max-w-[1600px] mx-auto px-6 text-center">
+    <h2 class="sx-heading text-6xl sm:text-7xl md:text-8xl lg:text-[10rem] leading-[0.85]">
+      <span class="block">{line1}</span>
+      <span class="block text-white">{line2}</span>
+      <span class="block">{line3}</span>
+    </h2>
+    {showCountdown && (
+      <div class="mt-10 flex justify-center gap-6 md:gap-10" data-sx-countdown={eventDate}>
+        {['days', 'hours', 'minutes', 'seconds'].map((unit) => (
+          <div class="text-center">
+            <div class="sx-heading text-4xl md:text-6xl text-white" data-sx-unit={unit}>–</div>
+            <div class="text-[10px] md:text-xs uppercase tracking-widest text-brand-500 mt-1">{unit}</div>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+</section>
+
+<script>
+  const root = document.querySelector('[data-sx-countdown]');
+  if (root) {
+    const target = new Date(root.getAttribute('data-sx-countdown') || '').getTime();
+    function tick() {
+      const now = Date.now();
+      const diff = Math.max(0, target - now);
+      const d = Math.floor(diff / 86400000);
+      const h = Math.floor((diff % 86400000) / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      const vals: Record<string, string> = { days: String(d), hours: String(h).padStart(2,'0'), minutes: String(m).padStart(2,'0'), seconds: String(s).padStart(2,'0') };
+      for (const unit in vals) {
+        const el = root.querySelector(`[data-sx-unit="${unit}"]`);
+        if (el) el.textContent = vals[unit];
+      }
+    }
+    tick();
+    setInterval(tick, 1000);
+  }
+</script>

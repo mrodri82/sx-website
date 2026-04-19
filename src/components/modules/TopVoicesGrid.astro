@@ -1,0 +1,60 @@
+---
+/**
+ * TopVoicesGrid — SX style
+ * Horizontal scroll / responsive grid of rectangular photo cards.
+ * Each card: image fills, bottom yellow label strip with name + role.
+ */
+import { t, tItems } from '@/lib/i18n';
+import { getLocaleFromPath } from '@/lib/i18n';
+import type { Locale } from '@/lib/i18n';
+
+interface Props {
+  content: Record<string, unknown>;
+  style?: Record<string, Record<string, string>>;
+}
+
+const { content } = Astro.props;
+const locale = getLocaleFromPath(Astro.url.pathname) as Locale;
+
+const label    = t(content, 'section_label', locale);
+const headline = t(content, 'headline', locale);
+const subtitle = t(content, 'subtitle', locale);
+const items    = tItems((content.items as Record<string, unknown>[]) || [], locale);
+---
+
+<section data-nova-el="top-voices-section" class="bg-black py-20">
+  <div class="max-w-[1600px] mx-auto px-6">
+    {label && (
+      <p data-nova-el="top-voices-label" class="text-xs font-bold uppercase tracking-[0.3em] text-brand-500 mb-4">{label}</p>
+    )}
+    {headline && (
+      <h2 data-nova-el="top-voices-title" class="sx-heading text-4xl md:text-5xl lg:text-6xl text-white mb-4" set:html={headline} />
+    )}
+    {subtitle && (
+      <p data-nova-el="top-voices-subtitle" class="text-white/60 text-base max-w-2xl mb-10">{subtitle}</p>
+    )}
+
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-0">
+      {items.map((item) => (
+        <a data-nova-el="top-voices-card" href={item.url || '#'} class="group relative block overflow-hidden">
+          {item.image && (
+            <div class="aspect-[3/4] overflow-hidden bg-white/5">
+              <img
+                src={item.image}
+                alt={item.title || ''}
+                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                loading="lazy"
+              />
+            </div>
+          )}
+          <div class="absolute bottom-0 left-0 right-0 bg-brand-500 text-black px-3 py-2">
+            <p class="sx-heading text-sm md:text-base leading-tight">{item.title}</p>
+            {item.description && (
+              <p class="text-[10px] uppercase tracking-wider opacity-80">{item.description}</p>
+            )}
+          </div>
+        </a>
+      ))}
+    </div>
+  </div>
+</section>

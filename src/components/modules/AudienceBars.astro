@@ -1,0 +1,57 @@
+---
+/**
+ * AudienceBars — SX-style three full-height vertical audience cards.
+ * Each bar: big label (VISITOR / CREATOR / EXHIBITOR) + subtitle + CTA row.
+ * Hovered / active bar gets yellow fill.
+ */
+import { t, tItems } from '@/lib/i18n';
+import { getLocaleFromPath } from '@/lib/i18n';
+import type { Locale } from '@/lib/i18n';
+
+interface Props {
+  content: Record<string, unknown>;
+  style?: Record<string, Record<string, string>>;
+}
+
+const { content } = Astro.props;
+const locale = getLocaleFromPath(Astro.url.pathname) as Locale;
+
+const items = tItems((content.items as Record<string, unknown>[]) || [], locale);
+---
+
+<section data-nova-el="audience-bars-section" class="bg-black py-16">
+  <div class="max-w-[1600px] mx-auto px-6">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {items.map((item) => (
+        <a
+          href={item.url || '#'}
+          data-nova-el="audience-bar"
+          class="group relative flex flex-col justify-between min-h-[440px] p-8 border-2 border-white/20 hover:border-brand-500 hover:bg-brand-500 transition-all duration-200"
+        >
+          <div>
+            <div class="sx-heading text-4xl md:text-5xl text-white group-hover:text-black transition-colors mb-3">
+              {item.title}
+            </div>
+            {item.subtitle && (
+              <p class="text-white/70 group-hover:text-black/70 transition-colors text-sm uppercase tracking-wider mb-6">
+                {item.subtitle}
+              </p>
+            )}
+            {item.description && (
+              <p class="text-white/60 group-hover:text-black/80 transition-colors text-sm leading-relaxed">
+                {item.description}
+              </p>
+            )}
+          </div>
+          <div class="pt-8">
+            {item.cta_text && (
+              <span class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-brand-500 group-hover:text-black bg-black/20 group-hover:bg-black px-4 py-2 transition-colors">
+                {item.cta_text} →
+              </span>
+            )}
+          </div>
+        </a>
+      ))}
+    </div>
+  </div>
+</section>
