@@ -24,7 +24,7 @@ const columns = parseInt(String(content.columns || '3'));
 <section data-nova-el="widget-section" class="py-24 relative">
   <div class="max-w-5xl mx-auto px-6">
     {label && <p data-nova-el="widget-label" data-animate="fade-up" class="text-xs font-mono text-brand-400 uppercase tracking-widest mb-4">{label}</p>}
-    {headline && <h2 data-nova-el="widget-title" data-animate="fade-up" data-delay="0.1" class="text-3xl sm:text-4xl lg:text-5xl font-display font-bold mb-4">{headline}</h2>}
+    {headline && <h2 data-nova-el="widget-title" data-animate="fade-up" data-delay="0.1" class="text-3xl sm:text-4xl lg:text-5xl font-display font-bold mb-4" set:html={headline}></h2>}
     {subtitle && <p data-nova-el="widget-subtitle" data-animate="fade-up" data-delay="0.2" class="text-navy-400 text-lg mb-12 max-w-2xl">{subtitle}</p>}
 
     <div class={`grid grid-cols-2 sm:grid-cols-3 ${columns >= 4 ? 'lg:grid-cols-4' : `lg:grid-cols-${columns}`} gap-3 sm:gap-4`} data-stagger="0.05">

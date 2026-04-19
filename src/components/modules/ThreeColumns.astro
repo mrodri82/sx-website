@@ -37,11 +37,7 @@ const headlineLines = headline.split('\n');
       ) : (
         <p data-nova-el="columns-label" data-animate="fade-up" class="text-xs font-mono text-brand-400 uppercase tracking-widest mb-4">{sectionLabel}</p>
       )}
-      <h2 data-nova-el="columns-title" data-animate="fade-up" data-delay="0.1" class="text-3xl sm:text-4xl lg:text-5xl font-display font-bold mb-6">
-        {headlineLines.map((line, i) => (
-          <>{i > 0 && <br />}{line}</>
-        ))}
-      </h2>
+      <h2 data-nova-el="columns-title" data-animate="fade-up" data-delay="0.1" class="text-3xl sm:text-4xl lg:text-5xl font-display font-bold mb-6" set:html={headline.replace(/\n/g, '<br>')}></h2>
       <p data-nova-el="columns-subtitle" data-animate="fade-up" data-delay="0.2" class="text-navy-400 text-lg leading-relaxed">
         {subtitle}
       </p>
