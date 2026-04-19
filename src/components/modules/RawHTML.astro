@@ -2,30 +2,24 @@
 /**
  * RawHTML — pastes arbitrary HTML + CSS into the page.
  *
- * Use case: clones that were migrated from an external page builder
- * (e.g., Elementor). The scraped HTML + the page's generated CSS
- * are stored verbatim; Nova renders the whole block unchanged so
- * the visual output matches the source pixel-for-pixel.
+ * Use case: clones migrated from an external page builder (e.g. Elementor).
+ * Scraped HTML + the page's generated CSS are stored verbatim; Nova renders
+ * the block unchanged so visual output matches source pixel-for-pixel.
  *
- * Fields:
- * - html : full HTML fragment (a section / container / article)
- * - css  : optional CSS that applies only to this block
+ * Fields (inside `content`):
+ *   - html             — full HTML fragment (non-localized)
+ *   - html_es/en/de    — localized HTML fragments
+ *   - css              — optional CSS injected before the block
  */
-export interface Props {
-  data: {
-    html?: string;
-    html_es?: string;
-    html_en?: string;
-    html_de?: string;
-    css?: string;
-  };
+const { content = {}, locale = 'es' } = Astro.props as {
+  content?: Record<string, unknown>;
   locale?: 'es' | 'en' | 'de';
-}
+};
 
-const { data, locale = 'es' } = Astro.props;
-const html = (data as any)[`html_${locale}`] || data.html || (data as any).html_en || (data as any).html_es || '';
-const css = data.css || '';
+const c: any = content || {};
+const html: string = c[`html_${locale}`] || c.html || c.html_en || c.html_es || '';
+const css: string = c.css || '';
 ---
 
 {css && <style set:html={css} />}
-<section data-nova-el="rawhtml-section" set:html={html} />
+<section data-nova-el="rawhtml-section" set:html={html}></section>
