@@ -33,7 +33,7 @@ const isMirror = sections.length > 0 && sections.every((s: any) => s.component =
   ogImage={ogImage || undefined}
   heroImage={heroImage || undefined}
 >
-  {!isMirror && <Navigation />}
+  <Navigation />
   <ModuleRenderer sections={sections} />
   {!isMirror && <Footer />}
 </BaseLayout>

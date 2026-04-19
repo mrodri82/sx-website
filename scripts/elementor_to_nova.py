@@ -110,9 +110,48 @@ def extract_elementor_html(full_html: str) -> str:
     # strip inline event handlers
     block = re.sub(r'\son[a-z]+\s*=\s*"[^"]*"', '', block, flags=re.IGNORECASE)
     block = re.sub(r"\son[a-z]+\s*=\s*'[^']*'", '', block, flags=re.IGNORECASE)
-    # remove wheel-of-fortune popup + any iframes
-    block = re.sub(r'<div[^>]*id="[^"]*mabel[^"]*"[^>]*>.*?</div>', '', block, flags=re.DOTALL | re.IGNORECASE)
-    block = re.sub(r'<div[^>]*class="[^"]*mabel[^"]*"[^>]*>.*?</div>', '', block, flags=re.DOTALL | re.IGNORECASE)
+    # remove wheel-of-fortune (mabel/wof) popups, iframes, and parent elementor-widgets containing them
+    def strip_parent_with_class(html: str, child_pat: str) -> str:
+        """Find child_pat; walk outward to the nearest <div class="…elementor-widget…"> and drop it."""
+        out = []
+        cursor = 0
+        pat = re.compile(child_pat, re.IGNORECASE)
+        while True:
+            m = pat.search(html, cursor)
+            if not m: break
+            # walk backwards to find the enclosing div opening tag
+            back_text = html[cursor:m.start()]
+            # find last '<div' before match
+            last_div = back_text.rfind('<div')
+            if last_div < 0:
+                out.append(html[cursor:m.end()])
+                cursor = m.end()
+                continue
+            widget_start = cursor + last_div
+            # find matching </div>
+            depth = 1
+            scan_pos = m.end()
+            combined = re.compile(r'<(/?)div\b[^>]*>', re.IGNORECASE)
+            end_pos = len(html)
+            while scan_pos < len(html):
+                mm = combined.search(html, scan_pos)
+                if not mm: break
+                if mm.group(1) == '/':
+                    depth -= 1
+                    if depth == 0:
+                        end_pos = mm.end()
+                        break
+                else:
+                    depth += 1
+                scan_pos = mm.end()
+            # emit everything up to widget_start, skip widget block
+            out.append(html[cursor:widget_start])
+            cursor = end_pos
+        out.append(html[cursor:])
+        return ''.join(out)
+
+    block = strip_parent_with_class(block, r'class="[^"]*\bwof-[a-z-]+\b')
+    block = strip_parent_with_class(block, r'class="[^"]*\bmabel-[a-z-]+\b')
     block = re.sub(r'<iframe[^>]*>.*?</iframe>', '', block, flags=re.DOTALL | re.IGNORECASE)
     return block
 
