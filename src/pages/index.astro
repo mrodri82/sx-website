@@ -30,7 +30,13 @@ try {
   ogImage={ogImage || undefined}
   heroImage={heroImage || undefined}
 >
-  <Navigation />
-  <ModuleRenderer sections={sections} />
+  <Navigation variant={sections.length === 0 ? 'solid' : 'transparent'} />
+  {sections.length === 0 ? (
+    <div class="min-h-[calc(100vh-98px)] pt-[98px] bg-black flex items-center justify-center">
+      <p class="text-white/30 text-sm uppercase tracking-widest">Homepage unter Aufbau — Sektionen werden eine nach der anderen nachgebaut.</p>
+    </div>
+  ) : (
+    <ModuleRenderer sections={sections} />
+  )}
   <Footer />
 </BaseLayout>
