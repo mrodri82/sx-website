@@ -1,0 +1,59 @@
+---
+export const prerender = false;
+
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import ModuleRenderer from '@/components/modules/ModuleRenderer.astro';
+import { getModuleById } from '@/lib/wordpress';
+import { normalizeContent } from '@/lib/normalize-content';
+import { getTokenFromCookies, getSession } from '@/lib/auth';
+
+// Auth: session cookie OR internal secret token for screenshot generation
+const internalToken = Astro.url.searchParams.get('_token');
+const isInternal = internalToken === (import.meta.env.WP_CMS_APP_PASSWORD || '').replace(/\s/g, '');
+if (!isInternal) {
+  const token = getTokenFromCookies(Astro.request.headers.get('cookie'));
+  const session = token ? getSession(token) : null;
+  if (!session) return new Response('Unauthorized', { status: 401 });
+}
+
+const moduleId = parseInt(Astro.url.searchParams.get('id') || '0');
+if (!moduleId) return new Response('Missing id parameter', { status: 400 });
+
+let mod: any = null;
+try { mod = await getModuleById(moduleId); } catch {}
+if (!mod) return new Response('Module not found', { status: 404 });
+
+function safeJsonParse(str: string) {
+  if (!str) return {};
+  try { return JSON.parse(str); }
+  catch {
+    try { return JSON.parse(str.replace(/[\x00-\x1F\x7F]/g, ch => ch === '\n' ? '\\n' : ch === '\r' ? '\\r' : ch === '\t' ? '\\t' : '')); }
+    catch { return {}; }
+  }
+}
+
+const content = normalizeContent(safeJsonParse(mod.meta?.content_json || '{}'));
+const style = safeJsonParse(mod.meta?.default_style || '{}');
+const component = mod.meta?.component || 'Unknown';
+
+const section = {
+  id: mod.id,
+  title: mod.title?.rendered || '',
+  component,
+  content,
+  style,
+};
+---
+
+<BaseLayout title={`Preview: ${section.title}`}>
+  <style is:global>
+    /* Kill nav, footer, animations, scrolling — thumbnail mode */
+    nav, footer, .nav-wrapper { display: none !important; }
+    [data-animate] { opacity: 1 !important; transform: none !important; clip-path: none !important; }
+    html, body { overflow: hidden !important; }
+    section { padding-top: 1.5rem !important; padding-bottom: 1.5rem !important; }
+    section.min-h-screen, .min-h-screen { min-height: auto !important; }
+    .logo-ticker { animation: none !important; }
+  </style>
+  <ModuleRenderer sections={[section]} locale="es" />
+</BaseLayout>

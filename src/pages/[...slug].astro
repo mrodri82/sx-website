@@ -1,0 +1,181 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Navigation from '@/components/Navigation.astro';
+import Footer from '@/components/Footer.astro';
+import ModuleRenderer from '@/components/modules/ModuleRenderer.astro';
+import { getPageSections } from '@/lib/wordpress';
+import { getLocaleFromPath } from '@/lib/i18n';
+import type { Locale } from '@/lib/i18n';
+import { site } from '@/config/site';
+
+export const prerender = false;
+
+const rawSlug = Astro.params.slug || '';
+
+// Proxy wp-admin and wp-login.php to WordPress backend
+if (rawSlug === 'wp-admin' || rawSlug.startsWith('wp-admin/') || rawSlug === 'wp-login.php') {
+  const WP_URL = `http://127.0.0.1:${site.cmsProxyPort}`;
+  const wpPath = '/' + rawSlug + Astro.url.search;
+  const proxyHeaders: Record<string, string> = {
+    Host: site.cmsHost,
+    'X-Forwarded-Proto': 'https',
+    'X-Forwarded-Host': site.cmsHost,
+  };
+  const cookie = Astro.request.headers.get('cookie');
+  if (cookie) proxyHeaders['Cookie'] = cookie;
+  const ct = Astro.request.headers.get('content-type');
+  if (ct) proxyHeaders['Content-Type'] = ct;
+
+  try {
+    // Read request body for POST/PUT (stream can only be consumed once)
+    let reqBody: string | undefined;
+    if (Astro.request.method !== 'GET' && Astro.request.method !== 'HEAD') {
+      try { reqBody = await Astro.request.text(); } catch { reqBody = undefined; }
+    }
+
+    const wpRes = await fetch(WP_URL + wpPath, {
+      method: Astro.request.method,
+      headers: proxyHeaders,
+      body: reqBody,
+      redirect: 'manual',
+    });
+
+    const resHeaders = new Headers();
+
+    // Rewrite all headers — fix domain references
+    wpRes.headers.forEach((v, k) => {
+      const kl = k.toLowerCase();
+      if (kl === 'transfer-encoding' || kl === 'content-encoding') return;
+      // Fix redirects that point to wrong domain or to internal port (both raw and URL-encoded)
+      const origin = site.siteOrigin;
+      const encodedOrigin = encodeURIComponent(origin).replace(/%3A/gi, '%3A').replace(/%2F/gi, '%2F');
+      let fixed = v
+        .replace(new RegExp(`https?://127\\.0\\.0\\.1:${site.cmsProxyPort}`, 'g'), origin)
+        .replace(new RegExp(`https?://${site.cmsHost.replace(/\./g, '\\.')}:${site.cmsProxyPort}`, 'g'), origin)
+        .replace(new RegExp(`https?://${site.cmsHost.replace(/\./g, '\\.')}:8090`, 'g'), origin)
+        .replace(new RegExp(`https?://${site.cmsHost.replace(/\./g, '\\.')}(?!:)`, 'g'), origin)
+        // URL-encoded variants in query strings
+        .replace(new RegExp(`https?%3A%2F%2F127\\.0\\.0\\.1%3A${site.cmsProxyPort}`, 'gi'), encodedOrigin)
+        .replace(new RegExp(`https?%3A%2F%2F${site.cmsHost.replace(/\./g, '\\.')}`, 'gi'), encodedOrigin);
+      resHeaders.append(k, fixed);
+    });
+
+    // For HTML responses, also rewrite internal URLs in the body
+    const contentType = wpRes.headers.get('content-type') || '';
+    if (contentType.includes('text/html') && wpRes.status < 400) {
+      const body = await wpRes.text();
+      const fixedBody = body
+        .replace(new RegExp(`https?://127\\.0\\.0\\.1:${site.cmsProxyPort}`, 'g'), site.siteOrigin)
+        .replace(new RegExp(`https?://${site.cmsHost.replace(/\./g, '\\.')}(?!:)`, 'g'), site.siteOrigin);
+      return new Response(fixedBody, { status: wpRes.status, headers: resHeaders });
+    }
+
+    return new Response(wpRes.body, { status: wpRes.status, headers: resHeaders });
+  } catch {
+    return new Response('WP Backend unavailable', { status: 502 });
+  }
+}
+
+// Skip other WP/Nova paths
+if (rawSlug.startsWith('wp-') || rawSlug.startsWith('admin') || rawSlug.startsWith('api') || rawSlug.startsWith('_astro') || rawSlug.startsWith('fonts') || rawSlug.startsWith('images') || rawSlug.startsWith('nova-preview') || rawSlug.startsWith('insights/') || rawSlug === 'favicon.svg') {
+  return new Response(null, { status: 404 });
+}
+
+// Extract locale and clean slug
+const locale: Locale = getLocaleFromPath('/' + rawSlug);
+const slug = rawSlug.replace(/^(en|de)\//, '').replace(/^(en|de)$/, '') || '';
+
+// Skip empty slug (handled by index.astro)
+if (!slug) {
+  return new Response(null, { status: 404 });
+}
+
+// Redirects
+if (slug === 'about-us') return Astro.redirect('/nosotros', 301);
+
+// Block flat WP slugs — only hierarchical URLs are canonical
+// These flat slugs exist in WP but should never be reachable as URLs
+const BLOCKED_FLAT_SLUGS = [
+  'b2-performance-ppc', 'b2-performance-social', 'b2-performance-seo',
+  'servicios-herramientas', 'servicios-analytics', 'servicios-ai-visibility',
+];
+if (BLOCKED_FLAT_SLUGS.includes(slug)) {
+  return new Response(null, { status: 404 });
+}
+
+// Try to fetch page sections from WP
+let sections = [];
+let pageTitle = '';
+let pageContent = '';
+let ogImage = '';
+
+let heroImage = '';
+let seoTitle = '';
+let seoDescription = '';
+try {
+  const result = await getPageSections(slug);
+  sections = result.sections;
+  ogImage = result.ogImage || '';
+  pageTitle = result.pageTitle || '';
+  seoTitle = result.seoTitle || '';
+  seoDescription = result.seoDescription || '';
+  // Extract hero background image for preloading
+  const firstSection = sections[0];
+  if (firstSection?.component === 'Hero' && firstSection.content?.background_image) {
+    heroImage = firstSection.content.background_image as string;
+  }
+} catch {}
+
+// If no modules, try to get basic WP page content
+if (sections.length === 0) {
+  try {
+    const WP_URL = site.cmsUrl;
+    const res = await fetch(`${WP_URL}/index.php/?rest_route=/wp/v2/pages&slug=${slug}&_fields=title,content&_t=${Date.now()}`, {
+      headers: { Host: site.cmsHost },
+      cache: 'no-store',
+    });
+    if (res.ok) {
+      const pages = await res.json();
+      if (pages.length > 0) {
+        pageTitle = pages[0].title?.rendered || '';
+        pageContent = pages[0].content?.rendered || '';
+      }
+    }
+  } catch {}
+}
+
+// If nothing found at all, 404
+if (sections.length === 0 && !pageTitle) {
+  return new Response(null, { status: 404 });
+}
+
+const title = seoTitle || pageTitle || slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+const description = seoDescription || undefined;
+---
+
+<BaseLayout title={seoTitle || `${pageTitle || title} — ${site.brandName}`} description={description} ogImage={ogImage || undefined} heroImage={heroImage || undefined}>
+  <Navigation />
+
+  {sections.length > 0 ? (
+    <ModuleRenderer sections={sections} locale={locale} />
+  ) : (
+    <section class="min-h-screen pt-32 pb-24">
+      <div class="max-w-4xl mx-auto px-6">
+        <h1 class="text-4xl sm:text-5xl font-display font-bold text-white mb-8">{pageTitle}</h1>
+        {pageContent ? (
+          <div class="prose prose-invert prose-lg max-w-none text-navy-300" set:html={pageContent} />
+        ) : (
+          <div class="text-center py-20">
+            <p class="text-navy-500 text-lg mb-4">Diese Seite wird gerade aufgebaut.</p>
+            <a href={`/admin/live/${slug || 'homepage'}`} class="inline-flex items-center gap-2 text-brand-400 hover:text-brand-300 transition-colors">
+              Im Nova Editor bearbeiten
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+            </a>
+          </div>
+        )}
+      </div>
+    </section>
+  )}
+
+  <Footer />
+</BaseLayout>

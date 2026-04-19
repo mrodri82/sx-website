@@ -1,0 +1,126 @@
+---
+/**
+ * SX Festival — Base Layout (minimal shell)
+ *
+ * Nav + Footer are slotted by each page template (so custom pages
+ * can opt for elementor-canvas-style full-bleed).
+ */
+interface Props {
+  title: string;
+  description?: string;
+  ogImage?: string;
+  heroImage?: string;
+}
+
+const {
+  title,
+  description = "The world's most anticipated adult event. Modern Sex Culture. June 26-28, 2026 · Berlin.",
+  ogImage = '/images/og-default.jpg',
+  heroImage,
+} = Astro.props;
+
+import { site } from '@/config/site';
+
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+const requestHost = Astro.request.headers.get('host') || '';
+const isAdminHost = site.isAdminHost(requestHost);
+const isScreenshot = Astro.url.searchParams.has('ss');
+
+import '@/styles/global.css';
+---
+
+<!doctype html>
+<html lang="en" data-ss={isScreenshot ? '1' : undefined}>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="generator" content={Astro.generator} />
+  <meta name="robots" content={isAdminHost ? 'noindex, nofollow' : 'max-image-preview:large'} />
+
+  <title>{title}</title>
+  <meta name="description" content={description} />
+  <link rel="canonical" href={canonicalURL} />
+
+  {heroImage && <link rel="preload" href={heroImage} as="image" fetchpriority="high" />}
+
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content={canonicalURL} />
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content={description} />
+  {ogImage && (
+    <meta property="og:image" content={ogImage.startsWith('http') ? ogImage : new URL(ogImage, Astro.site).href} />
+  )}
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <script type="application/ld+json" set:html={JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "Event",
+    name: site.brandFullName,
+    alternateName: site.brandAltName,
+    description,
+    startDate: "2026-06-26",
+    endDate: "2026-06-28",
+    eventStatus: "https://schema.org/EventScheduled",
+    eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+    location: {
+      "@type": "Place",
+      name: "Heeresbäckerei, Berlin",
+      address: {
+        "@type": "PostalAddress",
+        streetAddress: site.streetAddress,
+        addressLocality: site.city,
+        postalCode: site.postalCode,
+        addressCountry: site.country,
+      },
+    },
+    organizer: {
+      "@type": "Organization",
+      name: site.legalName,
+      url: site.siteOrigin,
+      ...(site.linkedinUrl ? { sameAs: [site.linkedinUrl] } : {}),
+    },
+  })} />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" />
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+  <link rel="apple-touch-icon" sizes="192x192" href="/favicon-192.png" />
+</head>
+<body class="min-h-screen">
+  <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:bg-brand-500 focus:text-black focus:px-4 focus:py-2">Skip to content</a>
+  <main id="main-content">
+    <slot />
+  </main>
+
+  <script>
+    // Reveal animations after load
+    document.querySelectorAll('[data-animate]').forEach(el => { setTimeout(() => { el.style.opacity = '1'; el.style.transform = 'none'; }, 0); });
+
+    // Nova admin bar for logged-in editors
+    const hasWPCookie = document.cookie.split(';').some(c => c.trim().startsWith('wordpress_logged_in_'));
+    const hasNovaCookie = document.cookie.split(';').some(c => c.trim().startsWith('nova_session='));
+    const isInIframe = window.parent !== window;
+    const isNovaEdit = window.location.search.includes('nova_edit=1');
+    if ((hasWPCookie || hasNovaCookie) && !isInIframe && !isNovaEdit) {
+      const currentPath = window.location.pathname.replace(/^\/+/, '').replace(/\/+$/, '') || 'homepage';
+      const liveEditorUrl = '/admin/live/' + currentPath;
+      const bar = document.createElement('div');
+      bar.innerHTML = `
+        <div style="position:fixed;top:0;left:0;right:0;z-index:99999;height:36px;background:#0d0d0d;border-bottom:1px solid #1a1a1a;display:flex;align-items:center;padding:0 16px;font-family:Inter,sans-serif;gap:12px">
+          <a href="${liveEditorUrl}" style="color:#eeee22;font-weight:700;font-size:14px;text-decoration:none">Nova</a>
+          <span style="width:1px;height:16px;background:#333"></span>
+          <a href="${liveEditorUrl}" style="color:#999;font-size:12px;text-decoration:none">Editor</a>
+          <span style="width:1px;height:16px;background:#333"></span>
+          <a href="/wp-admin/" style="color:#999;font-size:12px;text-decoration:none">WP Admin</a>
+          <span style="flex:1"></span>
+          <span style="color:#555;font-size:11px">${window.location.pathname}</span>
+        </div>
+      `;
+      document.body.prepend(bar);
+      document.body.style.paddingTop = '36px';
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,207 @@
+---
+export const prerender = false;
+import { getTokenFromCookies, getSession } from '@/lib/auth';
+const token = getTokenFromCookies(Astro.request.headers.get('cookie'));
+const session = token ? getSession(token) : null;
+if (!session) return Astro.redirect('/admin/login?return=/admin/concepts');
+---
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nova Editor — Layout-Konzepte</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0a1427; color: #cbd5e1; font-family: 'DM Sans', sans-serif; }
+    .header { background: #0e1930; border-bottom: 1px solid rgba(255,255,255,0.08); padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; }
+    .header h1 { font-size: 20px; color: #fff; }
+    .header a { color: #5599ED; text-decoration: none; font-size: 14px; }
+    .concepts { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; padding: 32px; max-width: 60vw; margin: 0 auto; }
+    @media (max-width: 900px) { .concepts { grid-template-columns: 1fr; } }
+    .card { background: #0e1930; border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; overflow: hidden; transition: all 0.2s; }
+    .card:hover { border-color: rgba(47,129,247,0.4); box-shadow: 0 8px 32px rgba(47,129,247,0.1); }
+    .card-header { padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; gap: 12px; }
+    .card-header .badge { background: #2f81f7; color: #fff; font-weight: 700; font-size: 14px; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+    .card-header h2 { font-size: 16px; color: #fff; }
+    .card-header span { font-size: 12px; color: #64748b; }
+    .mockup { padding: 16px; height: 320px; position: relative; }
+    .m { position: absolute; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; letter-spacing: 0.03em; color: rgba(255,255,255,0.7); }
+    .m-toolbar { background: #131f38; border: 1px solid rgba(255,255,255,0.1); }
+    .m-sidebar { background: rgba(47,129,247,0.08); border: 1px solid rgba(47,129,247,0.2); }
+    .m-sidebar2 { background: rgba(139,92,246,0.08); border: 1px solid rgba(139,92,246,0.2); }
+    .m-preview { background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.1); }
+    .m-panel { background: rgba(34,211,238,0.06); border: 1px solid rgba(34,211,238,0.2); }
+    .m-floating { background: rgba(236,72,153,0.08); border: 1px solid rgba(236,72,153,0.25); border-radius: 12px; }
+    .card-body { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.06); }
+    .card-body p { font-size: 13px; line-height: 1.6; color: #94a3b8; margin-bottom: 8px; }
+    .card-body .pro { color: #4ade80; font-size: 12px; }
+    .card-body .con { color: #f87171; font-size: 12px; }
+    .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; margin-right: 4px; }
+    .tag-current { background: rgba(47,129,247,0.15); color: #5599ED; }
+    .tag-recommended { background: rgba(74,222,128,0.15); color: #4ade80; }
+    .vote-bar { padding: 20px 32px; text-align: center; }
+    .vote-bar p { font-size: 14px; color: #64748b; margin-bottom: 12px; }
+    .concept-label { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: rgba(255,255,255,0.4); position: absolute; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Nova Editor — Layout-Konzepte</h1>
+    <a href="/admin/live/homepage">← Zurück zum Editor</a>
+  </div>
+
+  <div class="concepts">
+    <!-- ════════ CONCEPT A ════════ -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge">A</div>
+        <div>
+          <h2>Toolbar + Right Sidebar</h2>
+          <span><span class="tag tag-current">AKTUELL</span> Minimal-Change vom Status Quo</span>
+        </div>
+      </div>
+      <div class="mockup">
+        <div class="m m-toolbar" style="left:16px;right:16px;top:16px;height:36px;font-size:11px">
+          <span>Nova &nbsp;|&nbsp; / homepage ▾ &nbsp;|&nbsp; 🔗 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>SEO ▾</b> &nbsp;| WP Admin | Versions | Save</span>
+        </div>
+        <div class="m m-preview" style="left:16px;right:280px;top:60px;bottom:16px">
+          <span>Page Preview</span>
+        </div>
+        <div class="m m-sidebar" style="right:16px;top:60px;bottom:16px;width:256px">
+          <div style="text-align:center;line-height:1.8;font-size:10px">
+            Module List<br>──────────<br>Content | Style | AI<br>──────────<br>Fields<br>Repeaters<br>──────────<br>Save Bar
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <p>Aktueller Stand: Alles rechts (Module + Felder + Style). SEO als Toolbar-Dropdown. Page-Einstellungen verstreut.</p>
+        <p class="pro">✓ Bekanntes Layout, minimaler Umbau</p>
+        <p class="con">✗ Sidebar wird bei vielen Feldern eng + überladen</p>
+      </div>
+    </div>
+
+    <!-- ════════ CONCEPT B ════════ -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge">B</div>
+        <div>
+          <h2>Dual Sidebar — Page Left, Module Right</h2>
+          <span><span class="tag tag-recommended">EMPFOHLEN</span> Klare Trennung Page vs. Module</span>
+        </div>
+      </div>
+      <div class="mockup">
+        <div class="m m-toolbar" style="left:16px;right:16px;top:16px;height:36px;font-size:11px">
+          <span>Nova &nbsp;|&nbsp; / homepage ▾ &nbsp;&nbsp;&nbsp;&nbsp; Publish ▾ &nbsp;| Save</span>
+        </div>
+        <div class="m m-sidebar2" style="left:16px;top:60px;bottom:16px;width:220px">
+          <div style="text-align:center;line-height:1.8;font-size:10px">
+            <b>📄 PAGE</b><br>──────────<br>SEO (Title, Desc)<br>Slug<br>OG Image<br>──────────<br>Sprach-Tabs<br>──────────<br>Page Tree
+          </div>
+        </div>
+        <div class="m m-preview" style="left:244px;right:280px;top:60px;bottom:16px">
+          <span>Page Preview</span>
+        </div>
+        <div class="m m-sidebar" style="right:16px;top:60px;bottom:16px;width:256px">
+          <div style="text-align:center;line-height:1.8;font-size:10px">
+            <b>🧩 MODULE</b><br>──────────<br>Module List<br>──────────<br>Content | Style<br>Fields<br>Repeaters<br>──────────<br>AI Chat
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <p>Links: alles was die <b>Seite</b> betrifft (SEO, Slug, OG, Sprache, Page-Tree). Rechts: alles was das aktuell ausgewählte <b>Modul</b> betrifft.</p>
+        <p class="pro">✓ Klare mentale Trennung: Page-Ebene vs. Modul-Ebene</p>
+        <p class="pro">✓ SEO immer sichtbar, nicht versteckt in Dropdown</p>
+        <p class="con">✗ Weniger Preview-Breite auf kleinen Screens</p>
+      </div>
+    </div>
+
+    <!-- ════════ CONCEPT C ════════ -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge">C</div>
+        <div>
+          <h2>Collapsible Left Panel + Right Module</h2>
+          <span>Kompromiss — Left einklappbar bei Bedarf</span>
+        </div>
+      </div>
+      <div class="mockup">
+        <div class="m m-toolbar" style="left:16px;right:16px;top:16px;height:36px;font-size:11px">
+          <span>Nova &nbsp;| ☰ Page &nbsp;|&nbsp; / homepage ▾ &nbsp;&nbsp;&nbsp;&nbsp; 🔗 &nbsp;&nbsp; Save</span>
+        </div>
+        <div class="m m-sidebar2" style="left:16px;top:60px;bottom:16px;width:48px">
+          <div style="text-align:center;font-size:9px;line-height:2.2">
+            📄<br>🔍<br>🌍<br>🗂
+          </div>
+        </div>
+        <div class="m m-panel" style="left:72px;top:60px;bottom:16px;width:200px;font-size:9px">
+          <div style="text-align:center;line-height:1.6">
+            <b>SEO Panel</b><br>(ausgeklappt)<br>──────────<br>Title<br>Description<br>Slug<br>OG Image
+          </div>
+        </div>
+        <div class="m m-preview" style="left:280px;right:280px;top:60px;bottom:16px">
+          <span>Page Preview</span>
+        </div>
+        <div class="m m-sidebar" style="right:16px;top:60px;bottom:16px;width:256px">
+          <div style="text-align:center;line-height:1.8;font-size:10px">
+            <b>Module Editor</b><br>──────────<br>Content | Style | AI
+          </div>
+        </div>
+        <div class="concept-label" style="left:20px;bottom:20px">Icons links: klick öffnet Panel</div>
+      </div>
+      <div class="card-body">
+        <p>Links: schmale Icon-Leiste (SEO, Sprache, Page-Tree, Settings). Klick auf Icon öffnet ein Panel. Eingeklappt = maximaler Preview-Space.</p>
+        <p class="pro">✓ Maximale Preview-Fläche wenn eingeklappt</p>
+        <p class="pro">✓ Page-Settings bei Bedarf erreichbar</p>
+        <p class="con">✗ Mehr Klicks nötig um SEO zu erreichen</p>
+      </div>
+    </div>
+
+    <!-- ════════ CONCEPT D ════════ -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge">D</div>
+        <div>
+          <h2>Command Bar + Floating Panels</h2>
+          <span>Modern — inspiriert von Figma/Linear/Notion</span>
+        </div>
+      </div>
+      <div class="mockup">
+        <div class="m m-toolbar" style="left:16px;right:16px;top:16px;height:36px;font-size:11px">
+          <span>Nova &nbsp;|&nbsp; / homepage ▾ &nbsp;&nbsp;&nbsp;&nbsp; ⌘K Search... &nbsp;&nbsp;&nbsp;&nbsp; Save</span>
+        </div>
+        <div class="m m-preview" style="left:16px;right:16px;top:60px;bottom:16px">
+          <span style="font-size:14px">Full-Width Page Preview</span>
+        </div>
+        <div class="m m-floating" style="right:32px;top:80px;width:280px;height:200px">
+          <div style="text-align:center;line-height:1.8;font-size:10px">
+            <b>🧩 Module Panel</b><br>(floating, draggable)<br>──────────<br>Content | Style<br>Fields
+          </div>
+        </div>
+        <div class="m m-floating" style="left:32px;top:100px;width:260px;height:160px;background:rgba(74,222,128,0.06);border-color:rgba(74,222,128,0.2)">
+          <div style="text-align:center;line-height:1.8;font-size:10px">
+            <b>📄 SEO Panel</b><br>(floating)<br>──────────<br>Title / Desc / Slug
+          </div>
+        </div>
+        <div class="concept-label" style="right:32px;bottom:24px">⌘K öffnet Command Palette</div>
+      </div>
+      <div class="card-body">
+        <p>Kein fester Sidebar. Preview nimmt <b>100% Breite</b>. Module Editor + SEO sind <b>floating Panels</b> die man öffnen, verschieben, schließen kann. Command Palette (⌘K) für schnellen Zugriff.</p>
+        <p class="pro">✓ Maximale Preview-Fläche, wie im echten Browser</p>
+        <p class="pro">✓ Flexible Panels je nach Workflow</p>
+        <p class="con">✗ Größter Umbau, neue Interaction Patterns</p>
+        <p class="con">✗ Panels können sich überlappen</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="vote-bar">
+    <p>Interaktive Prototypen testen:</p>
+    <div style="display:flex;gap:12px;justify-content:center;margin-top:12px">
+      <a href="/admin/concepts/a" style="display:inline-flex;align-items:center;gap:8px;padding:10px 24px;background:rgba(47,129,247,0.1);border:1px solid rgba(47,129,247,0.3);border-radius:10px;color:#5599ED;text-decoration:none;font-weight:600;font-size:14px">Konzept A testen →</a>
+      <a href="/admin/concepts/b" style="display:inline-flex;align-items:center;gap:8px;padding:10px 24px;background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.3);border-radius:10px;color:#4ade80;text-decoration:none;font-weight:600;font-size:14px">Konzept B testen →</a>
+    </div>
+  </div>
+</body>
+</html>

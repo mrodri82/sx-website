@@ -1,0 +1,90 @@
+---
+/**
+ * BeforeAfter — Image comparison slider with range input + clip-path
+ * Great for redesigns, performance improvements, before/after results.
+ * Uses native input[type=range] — minimal JS for slider positioning.
+ */
+import { t } from '@/lib/i18n';
+import type { Locale } from '@/lib/i18n';
+
+interface Props {
+  content: Record<string, unknown>;
+  style: Record<string, string>;
+  overrides?: Record<string, string>;
+  locale?: Locale;
+}
+
+const { content, style, overrides, locale = 'es' } = Astro.props;
+const label = t(content, 'label', locale);
+const headline = t(content, 'headline', locale);
+const subtitle = t(content, 'subtitle', locale);
+const beforeImage = (content.before_image as string) || '';
+const afterImage = (content.after_image as string) || '';
+const beforeLabel = t(content, 'before_label', locale) || (locale === 'de' ? 'Vorher' : locale === 'en' ? 'Before' : 'Antes');
+const afterLabel = t(content, 'after_label', locale) || (locale === 'de' ? 'Nachher' : locale === 'en' ? 'After' : 'Despu\u00e9s');
+const uid = `ba-${Math.random().toString(36).slice(2, 8)}`;
+---
+
+<section class="py-20 relative">
+  <div class="max-w-4xl mx-auto px-6">
+    {label && <p class="text-xs font-mono text-brand-400 uppercase tracking-widest mb-4">{label}</p>}
+    {headline && <h2 class="text-3xl sm:text-4xl font-display font-bold text-white mb-4">{headline}</h2>}
+    {subtitle && <p class="text-lg text-navy-400 mb-8">{subtitle}</p>}
+
+    <div class="ba-container relative rounded-2xl overflow-hidden aspect-video bg-navy-800" id={uid}>
+      {/* After image (background) */}
+      {afterImage ? (
+        <img src={afterImage} alt={afterLabel} class="absolute inset-0 w-full h-full object-cover" />
+      ) : (
+        <div class="absolute inset-0 bg-gradient-to-r from-brand-500/20 to-green-500/20 flex items-center justify-center">
+          <span class="text-4xl text-white/20 font-display font-bold">{afterLabel}</span>
+        </div>
+      )}
+
+      {/* Before image (clipped) */}
+      <div class="ba-before absolute inset-0" style="clip-path: inset(0 50% 0 0);">
+        {beforeImage ? (
+          <img src={beforeImage} alt={beforeLabel} class="absolute inset-0 w-full h-full object-cover" />
+        ) : (
+          <div class="absolute inset-0 bg-gradient-to-r from-red-500/20 to-navy-800 flex items-center justify-center">
+            <span class="text-4xl text-white/20 font-display font-bold">{beforeLabel}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Slider line */}
+      <div class="ba-line absolute top-0 bottom-0 w-0.5 bg-white shadow-lg" style="left: 50%;"></div>
+      <div class="ba-handle absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-10 h-10 rounded-full bg-white shadow-xl flex items-center justify-center" style="left: 50%;">
+        <svg class="w-5 h-5 text-navy-800" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"/></svg>
+      </div>
+
+      {/* Labels */}
+      <span class="absolute top-4 left-4 text-xs font-mono bg-black/60 text-white px-2 py-1 rounded">{beforeLabel}</span>
+      <span class="absolute top-4 right-4 text-xs font-mono bg-black/60 text-white px-2 py-1 rounded">{afterLabel}</span>
+
+      {/* Range input (overlay) */}
+      <input type="range" min="0" max="100" value="50" class="ba-slider absolute inset-0 w-full h-full opacity-0 cursor-ew-resize" />
+    </div>
+  </div>
+</section>
+
+<style>
+  .ba-slider { z-index: 10; -webkit-appearance: none; appearance: none; }
+</style>
+
+<script>
+  document.querySelectorAll('.ba-container').forEach(container => {
+    const slider = container.querySelector('.ba-slider');
+    const before = container.querySelector('.ba-before');
+    const line = container.querySelector('.ba-line');
+    const handle = container.querySelector('.ba-handle');
+    if (!slider || !before || !line || !handle) return;
+
+    slider.addEventListener('input', (e) => {
+      const val = (e.target as HTMLInputElement).value;
+      (before as HTMLElement).style.clipPath = `inset(0 ${100 - Number(val)}% 0 0)`;
+      (line as HTMLElement).style.left = val + '%';
+      (handle as HTMLElement).style.left = val + '%';
+    });
+  });
+</script>

@@ -1,0 +1,143 @@
+---
+import { t } from '@/lib/i18n';
+import type { Locale } from '@/lib/i18n';
+
+interface Props {
+  content: Record<string, unknown>;
+  style: Record<string, string>;
+  overrides?: Record<string, string>;
+  locale?: Locale;
+}
+
+const { content, style, overrides, locale = 'es' } = Astro.props;
+
+const label = t(content, 'label', locale);
+const headline = t(content, 'headline', locale);
+const subtitle = t(content, 'subtitle', locale);
+const buttonText = t(content, 'button_text', locale) || 'Enviar';
+const emailTo = (content.email_to as string) || '';
+---
+
+<section data-nova-el="form-section" class="py-24 relative">
+  <div class="absolute inset-0 bg-gradient-to-b from-transparent via-brand-500/[0.02] to-transparent"></div>
+  <div class="max-w-7xl mx-auto px-6 relative z-10">
+    <div class="max-w-2xl mx-auto text-center mb-16">
+      {label && (
+        <p data-animate="fade-up" class="text-xs font-mono text-brand-400 uppercase tracking-widest mb-4">{label}</p>
+      )}
+      {headline && (
+        <h2 data-nova-el="form-title" data-animate="fade-up" data-delay="0.1" class="text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-white mb-6">
+          {headline}
+        </h2>
+      )}
+      {subtitle && (
+        <p data-nova-el="form-subtitle" data-animate="fade-up" data-delay="0.2" class="text-lg text-navy-400 leading-relaxed">
+          {subtitle}
+        </p>
+      )}
+    </div>
+
+    <form id="contact-form" data-animate="fade-up" data-delay="0.3" class="max-w-2xl mx-auto space-y-6">
+      {emailTo && <input type="hidden" name="email_to" value={emailTo} />}
+      <input type="hidden" name="locale" value={locale} />
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div>
+          <label for="cf-name" class="block text-sm font-medium text-navy-300 mb-2">
+            {locale === 'de' ? 'Name' : locale === 'en' ? 'Name' : 'Nombre'}
+          </label>
+          <input id="cf-name" name="name" type="text" required
+                 class="w-full bg-navy-800/50 border border-navy-700/50 rounded-xl px-4 py-3 text-white placeholder-navy-500 focus:outline-none focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/25 transition-colors"
+                 placeholder={locale === 'de' ? 'Ihr Name' : locale === 'en' ? 'Your name' : 'Tu nombre'} />
+        </div>
+        <div>
+          <label for="cf-email" class="block text-sm font-medium text-navy-300 mb-2">Email</label>
+          <input id="cf-email" name="email" type="email" required
+                 class="w-full bg-navy-800/50 border border-navy-700/50 rounded-xl px-4 py-3 text-white placeholder-navy-500 focus:outline-none focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/25 transition-colors"
+                 placeholder={locale === 'de' ? 'Ihre E-Mail' : locale === 'en' ? 'Your email' : 'Tu email'} />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div>
+          <label for="cf-phone" class="block text-sm font-medium text-navy-300 mb-2">
+            {locale === 'de' ? 'Telefon' : locale === 'en' ? 'Phone' : 'Teléfono'}
+          </label>
+          <input id="cf-phone" name="phone" type="tel"
+                 class="w-full bg-navy-800/50 border border-navy-700/50 rounded-xl px-4 py-3 text-white placeholder-navy-500 focus:outline-none focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/25 transition-colors"
+                 placeholder={locale === 'de' ? 'Ihre Telefonnummer' : locale === 'en' ? 'Your phone' : 'Tu tel\u00e9fono'} />
+        </div>
+        <div>
+          <label for="cf-company" class="block text-sm font-medium text-navy-300 mb-2">
+            {locale === 'de' ? 'Unternehmen' : locale === 'en' ? 'Company' : 'Empresa'}
+          </label>
+          <input id="cf-company" name="company" type="text"
+                 class="w-full bg-navy-800/50 border border-navy-700/50 rounded-xl px-4 py-3 text-white placeholder-navy-500 focus:outline-none focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/25 transition-colors"
+                 placeholder={locale === 'de' ? 'Ihr Unternehmen' : locale === 'en' ? 'Your company' : 'Tu empresa'} />
+        </div>
+      </div>
+
+      <div>
+        <label for="cf-message" class="block text-sm font-medium text-navy-300 mb-2">
+          {locale === 'de' ? 'Nachricht' : locale === 'en' ? 'Message' : 'Mensaje'}
+        </label>
+        <textarea id="cf-message" name="message" rows="5" required
+                  class="w-full bg-navy-800/50 border border-navy-700/50 rounded-xl px-4 py-3 text-white placeholder-navy-500 focus:outline-none focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/25 transition-colors resize-none"
+                  placeholder={locale === 'de' ? 'Ihre Nachricht...' : locale === 'en' ? 'Your message...' : 'Tu mensaje...'}></textarea>
+      </div>
+
+      <div id="form-status" class="hidden text-center py-3 rounded-xl text-sm font-medium"></div>
+
+      <div class="text-center">
+        <button id="form-submit" data-nova-el="form-button" type="submit"
+                class="inline-flex items-center justify-center gap-2 bg-brand-500 hover:bg-brand-600 text-white px-8 py-4 rounded-xl text-base font-medium transition-all hover:shadow-xl hover:shadow-brand-500/25 hover:-translate-y-0.5">
+          {buttonText}
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    const form = document.getElementById('contact-form');
+    const status = document.getElementById('form-status');
+    const btn = document.getElementById('form-submit');
+    if (form) {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const fd = new FormData(form);
+        const data = Object.fromEntries(fd.entries());
+        data.source = window.location.pathname;
+        data.referrer = document.referrer || 'direct';
+        btn.disabled = true;
+        btn.textContent = '...';
+        status.className = 'hidden';
+        try {
+          const res = await fetch('/api/contact', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+          });
+          if (res.ok) {
+            status.textContent = data.locale === 'de' ? 'Nachricht gesendet! Wir melden uns bald.' : data.locale === 'en' ? 'Message sent! We will get back to you soon.' : '¡Mensaje enviado! Te responderemos pronto.';
+            status.className = 'text-center py-3 rounded-xl text-sm font-medium bg-green-500/10 text-green-400 border border-green-500/20';
+            form.reset();
+            // GA4 Conversion Event
+            if (typeof gtag === 'function') {
+              gtag('event', 'generate_lead', { event_category: 'contact', event_label: data.source || 'contacto', value: 1 });
+            } else if (typeof window.dataLayer !== 'undefined') {
+              window.dataLayer.push({ event: 'generate_lead', event_category: 'contact', event_label: data.source || 'contacto' });
+            }
+          } else {
+            throw new Error('Error');
+          }
+        } catch {
+          status.textContent = data.locale === 'de' ? 'Fehler beim Senden. Bitte versuche es erneut.' : data.locale === 'en' ? 'Error sending. Please try again.' : 'Error al enviar. Inténtalo de nuevo.';
+          status.className = 'text-center py-3 rounded-xl text-sm font-medium bg-red-500/10 text-red-400 border border-red-500/20';
+        }
+        btn.disabled = false;
+        btn.innerHTML = `${data.locale === 'de' ? 'Senden' : data.locale === 'en' ? 'Send' : 'Enviar'} <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>`;
+      });
+    }
+  </script>
+</section>

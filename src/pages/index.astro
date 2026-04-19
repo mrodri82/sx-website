@@ -1,0 +1,39 @@
+---
+export const prerender = false;
+
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Navigation from '@/components/Navigation.astro';
+import Footer from '@/components/Footer.astro';
+import ModuleRenderer from '@/components/modules/ModuleRenderer.astro';
+import { getPageSections } from '@/lib/wordpress';
+
+let sections = [];
+let seoTitle = '';
+let seoDescription = '';
+let ogImage = '';
+let heroImage = '';
+try {
+  const result = await getPageSections('homepage');
+  sections = result.sections;
+  seoTitle = result.seoTitle || '';
+  seoDescription = result.seoDescription || '';
+  ogImage = result.ogImage || '';
+  const firstSection = sections[0];
+  if (firstSection?.component === 'Hero' && firstSection.content?.background_image) {
+    heroImage = firstSection.content.background_image as string;
+  }
+} catch (err) {
+  console.error('Failed to fetch sections from WP:', err);
+}
+---
+
+<BaseLayout
+  title={seoTitle || "SX Festival & Expo 2026 | Berlin — June 26-28"}
+  description={seoDescription || "The world's most anticipated adult event. Modern Sex Culture. Global Expo, Elite Creators, Kink & Fetish Visionaries."}
+  ogImage={ogImage || undefined}
+  heroImage={heroImage || undefined}
+>
+  <Navigation />
+  <ModuleRenderer sections={sections} />
+  <Footer />
+</BaseLayout>

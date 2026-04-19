@@ -1,0 +1,57 @@
+---
+/**
+ * WidgetGrid — Compact 2x3 (mobile) / 3x2 (desktop) grid of mini cards.
+ * Perfect for platforms, tools, quick-links. Emoji/icon + name + desc + link.
+ */
+import { t, tItems } from '@/lib/i18n';
+import type { Locale } from '@/lib/i18n';
+
+interface Props {
+  content: Record<string, unknown>;
+  style: Record<string, string>;
+  overrides?: Record<string, string>;
+  locale?: Locale;
+}
+
+const { content, style, overrides, locale = 'es' } = Astro.props;
+const label = t(content, 'label', locale);
+const headline = t(content, 'headline', locale);
+const subtitle = t(content, 'subtitle', locale);
+const items = tItems((content.items as Record<string, unknown>[]) || [], locale);
+const columns = parseInt(String(content.columns || '3'));
+---
+
+<section data-nova-el="widget-section" class="py-24 relative">
+  <div class="max-w-5xl mx-auto px-6">
+    {label && <p data-nova-el="widget-label" data-animate="fade-up" class="text-xs font-mono text-brand-400 uppercase tracking-widest mb-4">{label}</p>}
+    {headline && <h2 data-nova-el="widget-title" data-animate="fade-up" data-delay="0.1" class="text-3xl sm:text-4xl lg:text-5xl font-display font-bold mb-4">{headline}</h2>}
+    {subtitle && <p data-nova-el="widget-subtitle" data-animate="fade-up" data-delay="0.2" class="text-navy-400 text-lg mb-12 max-w-2xl">{subtitle}</p>}
+
+    <div class={`grid grid-cols-2 sm:grid-cols-3 ${columns >= 4 ? 'lg:grid-cols-4' : `lg:grid-cols-${columns}`} gap-3 sm:gap-4`} data-stagger="0.05">
+      {items.map((item, i) => {
+        const Tag = item.url ? 'a' : 'div';
+        return (
+          <Tag href={item.url || undefined} data-nova-el="widget-card" data-nova-idx={i} data-animate="fade-up"
+               class="wg-card group text-center p-5 sm:p-6 rounded-xl border border-navy-700/30 bg-navy-800/20 backdrop-blur-sm transition-all duration-300 hover:border-brand-400/40 hover:-translate-y-1 hover:shadow-lg hover:shadow-brand-500/5"
+               style={item.url ? 'text-decoration:none' : ''}>
+            {item.emoji && (
+              <div class="text-3xl mb-3">{item.emoji}</div>
+            )}
+            {item.icon && !item.emoji && (
+              <div class="text-2xl mb-3 text-brand-400"><i class={item.icon}></i></div>
+            )}
+            {item.image && !item.emoji && !item.icon && (
+              <img src={item.image} alt={item.title || ''} class="w-12 h-12 mx-auto mb-3 rounded-lg object-contain" />
+            )}
+            <div data-nova-el="widget-card-name" class="text-sm font-bold text-white mb-1 group-hover:text-brand-400 transition-colors">
+              {item.title || item.name}
+            </div>
+            {(item.desc || item.subtitle) && (
+              <div class="text-xs text-navy-400 leading-relaxed">{item.desc || item.subtitle}</div>
+            )}
+          </Tag>
+        );
+      })}
+    </div>
+  </div>
+</section>

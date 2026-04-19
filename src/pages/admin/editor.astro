@@ -1,0 +1,31 @@
+---
+/**
+ * Legacy /admin/editor redirect stub.
+ *
+ * The old form-based editor was replaced by /admin/live/[slug] once the
+ * Live Editor reached feature parity (inline text, repeater fields,
+ * module background media, visual overrides). Everything pointing at
+ * /admin/editor now auto-forwards to the equivalent Live Editor URL
+ * so bookmarks, the admin bar, WP's "Edit with Nova" button, and any
+ * other old link keep working.
+ *
+ * The old source is preserved as editor.astro.legacy.bak in case we
+ * need to copy a behaviour out of it during transition; delete the
+ * .bak once no one misses it.
+ */
+export const prerender = false;
+
+import { getTokenFromCookies, getSession } from '@/lib/auth';
+
+const token = getTokenFromCookies(Astro.request.headers.get('cookie'));
+const session = token ? getSession(token) : null;
+if (!session) {
+  return Astro.redirect('/admin/login?return=' + encodeURIComponent(Astro.url.pathname + Astro.url.search));
+}
+
+// Translate ?page=/servicios/ai-visibility into /admin/live/servicios/ai-visibility
+// so the Live Editor opens on exactly the page the user had in mind.
+const requestedPage = Astro.url.searchParams.get('page') || '/';
+const clean = requestedPage.replace(/^\/+/, '').replace(/\/+$/, '') || 'homepage';
+return Astro.redirect('/admin/live/' + clean, 302);
+---

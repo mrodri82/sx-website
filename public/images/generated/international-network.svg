@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">
+  <defs>
+    <radialGradient id="glow1" cx="50%" cy="50%"><stop offset="0%" stop-color="#3b82f6" stop-opacity="0.15"/><stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/></radialGradient>
+    <radialGradient id="glow2" cx="50%" cy="50%"><stop offset="0%" stop-color="#22c55e" stop-opacity="0.15"/><stop offset="100%" stop-color="#22c55e" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="600" height="400" fill="#0a101f"/>
+
+  <!-- Subtle grid -->
+  <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><rect width="40" height="40" fill="none" stroke="#1e293b" stroke-width="0.3"/></pattern>
+  <rect width="600" height="400" fill="url(#grid)" opacity="0.4"/>
+
+  <!-- Glow effects -->
+  <circle cx="280" cy="175" r="80" fill="url(#glow1)"/>
+  <circle cx="310" cy="145" r="60" fill="url(#glow2)"/>
+
+  <!-- Connection lines (subtle) -->
+  <line x1="280" y1="175" x2="310" y2="145" stroke="#3b82f6" stroke-width="2" opacity="0.4"/>
+  <line x1="280" y1="175" x2="220" y2="155" stroke="#3b82f6" stroke-width="0.8" opacity="0.15"/>
+  <line x1="280" y1="175" x2="245" y2="190" stroke="#3b82f6" stroke-width="0.8" opacity="0.15"/>
+  <line x1="280" y1="175" x2="320" y2="185" stroke="#3b82f6" stroke-width="0.8" opacity="0.15"/>
+  <line x1="310" y1="145" x2="340" y2="158" stroke="#3b82f6" stroke-width="0.8" opacity="0.15"/>
+  <line x1="310" y1="145" x2="285" y2="155" stroke="#3b82f6" stroke-width="0.8" opacity="0.15"/>
+  <line x1="310" y1="145" x2="350" y2="140" stroke="#3b82f6" stroke-width="0.8" opacity="0.15"/>
+  <line x1="280" y1="175" x2="235" y2="198" stroke="#3b82f6" stroke-width="0.8" opacity="0.15"/>
+  <line x1="310" y1="145" x2="365" y2="130" stroke="#3b82f6" stroke-width="0.8" opacity="0.15"/>
+
+  <!-- Secondary cities -->
+  <circle cx="220" cy="155" r="3" fill="#3b82f6" opacity="0.3"/><text x="195" y="150" fill="#334155" font-size="8" font-family="system-ui">London</text>
+  <circle cx="285" cy="155" r="3" fill="#3b82f6" opacity="0.3"/><text x="270" y="150" fill="#334155" font-size="8" font-family="system-ui">Paris</text>
+  <circle cx="340" cy="158" r="3" fill="#3b82f6" opacity="0.3"/><text x="348" y="162" fill="#334155" font-size="8" font-family="system-ui">Wien</text>
+  <circle cx="320" cy="185" r="3" fill="#3b82f6" opacity="0.3"/><text x="328" y="189" fill="#334155" font-size="8" font-family="system-ui">Roma</text>
+  <circle cx="245" cy="190" r="3" fill="#3b82f6" opacity="0.3"/><text x="220" y="195" fill="#334155" font-size="8" font-family="system-ui">Madrid</text>
+  <circle cx="235" cy="198" r="3" fill="#3b82f6" opacity="0.3"/><text x="208" y="210" fill="#334155" font-size="8" font-family="system-ui">Lisboa</text>
+  <circle cx="350" cy="140" r="3" fill="#3b82f6" opacity="0.3"/><text x="358" y="137" fill="#334155" font-size="8" font-family="system-ui">Praha</text>
+  <circle cx="365" cy="130" r="3" fill="#3b82f6" opacity="0.3"/><text x="373" y="127" fill="#334155" font-size="8" font-family="system-ui">Warszawa</text>
+
+  <!-- Main offices -->
+  <circle cx="280" cy="175" r="8" fill="#3b82f6" opacity="0.9"/>
+  <circle cx="280" cy="175" r="14" fill="none" stroke="#3b82f6" stroke-width="1" opacity="0.3"/>
+  <text x="256" y="202" fill="#3b82f6" font-size="11" font-weight="600" font-family="system-ui">Barcelona</text>
+
+  <circle cx="310" cy="145" r="8" fill="#22c55e" opacity="0.9"/>
+  <circle cx="310" cy="145" r="14" fill="none" stroke="#22c55e" stroke-width="1" opacity="0.3"/>
+  <text x="325" y="141" fill="#22c55e" font-size="11" font-weight="600" font-family="system-ui">Herdecke</text>
+
+  <!-- Stats at bottom -->
+  <rect x="140" y="320" width="320" height="50" fill="#111827" rx="12" stroke="#1e293b" stroke-width="0.5"/>
+  <text x="185" y="345" fill="#3b82f6" font-size="16" font-weight="700" font-family="system-ui">14+</text>
+  <text x="185" y="360" fill="#475569" font-size="9" font-family="system-ui">Languages</text>
+  <line x1="260" y1="330" x2="260" y2="365" stroke="#1e293b" stroke-width="0.5"/>
+  <text x="295" y="345" fill="#3b82f6" font-size="16" font-weight="700" font-family="system-ui">20+</text>
+  <text x="295" y="360" fill="#475569" font-size="9" font-family="system-ui">Countries</text>
+  <line x1="370" y1="330" x2="370" y2="365" stroke="#1e293b" stroke-width="0.5"/>
+  <text x="400" y="345" fill="#3b82f6" font-size="16" font-weight="700" font-family="system-ui">2</text>
+  <text x="400" y="360" fill="#475569" font-size="9" font-family="system-ui">Offices</text>
+</svg>

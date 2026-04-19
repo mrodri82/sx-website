@@ -1,0 +1,108 @@
+---
+import { t, tItems } from '@/lib/i18n';
+import type { Locale } from '@/lib/i18n';
+
+interface Props {
+  content: Record<string, unknown>;
+  style: Record<string, string>;
+  overrides?: Record<string, string>;
+  locale?: Locale;
+}
+
+const { content, style, overrides, locale = 'es' } = Astro.props;
+
+const label = t(content, 'label', locale);
+const headline = t(content, 'headline', locale);
+const subtitle = t(content, 'subtitle', locale);
+const items = tItems((content.items as Record<string, unknown>[]) || [], locale);
+
+const COLORS = [
+  { bg: 'rgba(47,129,247,0.12)', fg: '#2f81f7' },
+  { bg: 'rgba(63,185,80,0.12)', fg: '#3fb950' },
+  { bg: 'rgba(210,153,34,0.12)', fg: '#d29922' },
+  { bg: 'rgba(57,210,192,0.12)', fg: '#39d2c0' },
+  { bg: 'rgba(168,85,247,0.12)', fg: '#a855f7' },
+  { bg: 'rgba(248,81,73,0.12)', fg: '#f85149' },
+];
+---
+
+<section data-nova-el="expandable-section" class="py-24 relative">
+  <div class="max-w-4xl mx-auto px-6">
+    {label && (
+      <p data-nova-el="expandable-label" data-animate="fade-up" class="text-xs font-mono text-brand-400 uppercase tracking-widest mb-4">{label}</p>
+    )}
+    {headline && (
+      <h2 data-nova-el="expandable-title" data-animate="fade-up" data-delay="0.1" class="text-3xl sm:text-4xl lg:text-5xl font-display font-bold mb-4">
+        {headline}
+      </h2>
+    )}
+    {subtitle && (
+      <p data-nova-el="expandable-subtitle" data-animate="fade-up" data-delay="0.2" class="text-navy-400 text-lg mb-12 max-w-2xl">
+        {subtitle}
+      </p>
+    )}
+
+    <div class="flex flex-col gap-3" data-stagger="0.05">
+      {items.map((item, i) => {
+        const color = COLORS[i % COLORS.length];
+        const isFirst = i === 0;
+        return (
+          <div data-nova-el="expandable-card" data-nova-idx={i} data-animate="fade-up"
+               class="ec-card group border border-navy-700/30 rounded-xl overflow-hidden transition-all duration-300 hover:border-brand-400/30"
+               data-open={isFirst ? 'true' : 'false'}>
+            <button class="ec-head w-full flex items-center gap-4 p-4 sm:p-5 text-left cursor-pointer bg-transparent border-none"
+                    aria-expanded={isFirst ? 'true' : 'false'}
+                    aria-controls={`ec-body-${i}`}>
+              {item.icon && (
+                <div class="ec-icon w-10 h-10 rounded-lg flex items-center justify-center text-lg flex-shrink-0"
+                     style={`background:${color.bg};color:${color.fg}`}>
+                  <i class={item.icon}></i>
+                </div>
+              )}
+              <div class="flex-1 min-w-0">
+                <div data-nova-el="expandable-card-title" class="text-white font-display font-bold text-base sm:text-lg">
+                  {item.title}
+                </div>
+                {item.subtitle && (
+                  <div class="text-navy-400 text-sm mt-0.5">{item.subtitle}</div>
+                )}
+              </div>
+              <div class="ec-arrow text-navy-400 text-xs flex-shrink-0 transition-transform duration-300" aria-hidden="true">▼</div>
+            </button>
+            <div class="ec-body" id={`ec-body-${i}`} role="region">
+              <div class="px-5 pb-5 pt-0 text-navy-400 text-sm leading-relaxed" data-nova-el="expandable-card-body">
+                {item.body ? <Fragment set:html={item.body} /> : item.desc}
+              </div>
+              {item.url && (
+                <div class="px-5 pb-4">
+                  <a href={item.url} class="text-brand-400 text-sm font-medium hover:text-brand-300 transition-colors">
+                    Más información →
+                  </a>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  </div>
+</section>
+
+<style>
+  .ec-card[data-open="false"] .ec-body { display: none; }
+  .ec-card[data-open="true"] .ec-body { display: block; animation: ecSlideDown 0.3s ease; }
+  .ec-card[data-open="true"] .ec-arrow { transform: rotate(180deg); color: var(--color-brand-400); }
+  .ec-card[data-open="true"] { border-color: color-mix(in srgb, var(--color-brand-400) 30%, transparent); }
+  @keyframes ecSlideDown { from { opacity: 0; max-height: 0; } to { opacity: 1; max-height: 500px; } }
+</style>
+
+<script>
+  document.querySelectorAll('.ec-head').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const card = btn.closest('.ec-card');
+      const isOpen = card.dataset.open === 'true';
+      card.dataset.open = isOpen ? 'false' : 'true';
+      btn.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+    });
+  });
+</script>

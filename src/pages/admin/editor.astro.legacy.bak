@@ -1,0 +1,3667 @@
+---
+export const prerender = false;
+
+import { getTokenFromCookies, getSession } from '@/lib/auth';
+import { MODULE_REGISTRY, ADVANCED_FIELDS } from '@/lib/editor/module-registry';
+
+const token = getTokenFromCookies(Astro.request.headers.get('cookie'));
+const session = token ? getSession(token) : null;
+
+if (!session) {
+  return Astro.redirect('/admin/login');
+}
+
+// Preview loads with nova_edit=1 param to skip middleware redirect and enable edit overlays
+const requestedPage = Astro.url.searchParams.get('page') || '/';
+const pagePath = `/nova-preview${requestedPage}?nova_edit=1`;
+
+// Serialize registry for client-side use
+const registryData = JSON.stringify(MODULE_REGISTRY);
+---
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nova Editor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <!-- Tiptap Rich Text Editor (free, no API key needed) -->
+  <script type="module">
+    import { Editor } from 'https://esm.sh/@tiptap/core@2.11.5';
+    import StarterKit from 'https://esm.sh/@tiptap/starter-kit@2.11.5';
+    import Link from 'https://esm.sh/@tiptap/extension-link@2.11.5';
+    import Image from 'https://esm.sh/@tiptap/extension-image@2.11.5';
+    window.__tiptap = { Editor, StarterKit, Link, Image };
+  </script>
+  <style is:global>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --toolbar-h: 48px;
+      --sidebar-w: 400px;
+      --bg-primary: #0a101f;
+      --bg-secondary: #111827;
+      --bg-tertiary: #1e293b;
+      --bg-input: rgba(255,255,255,0.04);
+      --border: rgba(255,255,255,0.06);
+      --border-hover: rgba(255,255,255,0.12);
+      --text-primary: #e2e8f0;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --text-faint: #475569;
+      --brand: #3b82f6;
+      --brand-hover: #2563eb;
+      --brand-glow: rgba(59,130,246,0.15);
+      --success: #22c55e;
+      --error: #ef4444;
+    }
+
+    body {
+      font-family: 'DM Sans', -apple-system, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ════════════ TOOLBAR ════════════ */
+    .toolbar {
+      height: var(--toolbar-h);
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 10px;
+      flex-shrink: 0;
+      z-index: 100;
+    }
+
+    .toolbar-logo {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--brand);
+      letter-spacing: -0.3px;
+    }
+
+    .toolbar-sep {
+      width: 1px;
+      height: 20px;
+      background: var(--border);
+    }
+
+    .toolbar-page {
+      font-size: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-muted);
+      background: var(--bg-input);
+      padding: 4px 10px;
+      border-radius: 6px;
+    }
+
+    .toolbar-spacer { flex: 1; }
+
+    .device-btn { opacity: 0.4; transition: opacity 0.15s; border-radius: 4px !important; }
+    .device-btn:hover { opacity: 0.7; }
+    .device-btn.active { opacity: 1; background: var(--bg-secondary) !important; }
+    .preview-frame { transition: width 0.3s ease, margin 0.3s ease; }
+    .toolbar-user {
+      font-size: 13px;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .role-badge {
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: var(--brand-glow);
+      color: var(--brand);
+    }
+
+    .btn {
+      font-size: 12px;
+      font-family: inherit;
+      font-weight: 500;
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .btn:hover { background: var(--bg-tertiary); color: var(--text-primary); border-color: var(--border-hover); }
+
+    /* ════════════ MAIN ════════════ */
+    .editor-main {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    .preview-frame {
+      flex: 1;
+      border: none;
+      background: #0a101f;
+    }
+
+    /* ════════════ SIDEBAR ════════════ */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--bg-secondary);
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+
+    .sidebar-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .sidebar-tab {
+      flex: 1;
+      padding: 11px 0;
+      text-align: center;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-muted);
+      cursor: pointer;
+      border: none;
+      border-bottom: 2px solid transparent;
+      background: none;
+      transition: all 0.15s;
+    }
+
+    .sidebar-tab:hover { color: var(--text-secondary); }
+    .sidebar-tab.active { color: var(--brand); border-bottom-color: var(--brand); }
+
+    .sidebar-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+    }
+
+    .sidebar-content::-webkit-scrollbar { width: 4px; }
+    .sidebar-content::-webkit-scrollbar-track { background: transparent; }
+    .sidebar-content::-webkit-scrollbar-thumb { background: var(--border-hover); border-radius: 2px; }
+
+    /* ════════════ MODULE LIST ════════════ */
+    .module-item {
+      padding: 12px 14px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 6px;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .module-item:hover { border-color: var(--brand); background: var(--brand-glow); }
+
+    .module-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: var(--brand-glow);
+      color: var(--brand);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    .module-info { flex: 1; min-width: 0; }
+
+    .module-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .module-type {
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-muted);
+    }
+
+    /* ════════════ MODULE EDITOR ════════════ */
+    .module-editor { display: none; }
+    .module-editor.active { display: flex; flex-direction: column; height: 100%; }
+
+    .editor-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .btn-back {
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .btn-back:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+
+    .editor-title { font-size: 14px; font-weight: 700; color: var(--text-primary); flex: 1; }
+    .editor-comp { font-size: 10px; font-family: 'JetBrains Mono', monospace; color: var(--text-muted); }
+
+    /* ── 3-Tab Navigation (Content / Style / Advanced) ── */
+    .editor-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      background: var(--bg-secondary);
+    }
+
+    .editor-tab {
+      flex: 1;
+      padding: 10px 8px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      border: none;
+      background: none;
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s ease;
+      letter-spacing: 0.3px;
+    }
+
+    .editor-tab:hover { color: var(--text-secondary); background: rgba(255,255,255,0.02); }
+
+    .editor-tab.active {
+      color: var(--brand);
+      border-bottom-color: var(--brand);
+      background: rgba(59,130,246,0.04);
+    }
+
+    .editor-tab-panel {
+      display: none;
+      flex: 1;
+      overflow-y: auto;
+      flex-direction: column;
+    }
+
+    .editor-tab-panel.active {
+      display: flex;
+    }
+
+    .editor-tab-placeholder {
+      padding: 32px 20px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .editor-tab-placeholder strong {
+      display: block;
+      color: var(--text-secondary);
+      font-size: 14px;
+      margin-bottom: 6px;
+    }
+
+    /* ── Language Tabs ── */
+    .lang-bar {
+      display: flex;
+      gap: 0;
+      padding: 8px 16px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .lang-btn {
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: none;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .lang-btn:first-child { border-radius: 6px 0 0 6px; }
+    .lang-btn:last-child { border-radius: 0 6px 6px 0; }
+    .lang-btn:not(:first-child) { border-left: none; }
+    .lang-btn:hover { color: var(--text-secondary); background: var(--bg-input); }
+
+    .lang-btn.active {
+      background: var(--brand);
+      border-color: var(--brand);
+      color: #fff;
+    }
+
+    .lang-btn.active + .lang-btn { border-left-color: var(--brand); }
+
+    /* ── Fields ── */
+    .editor-fields {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px 16px;
+    }
+
+    .editor-fields::-webkit-scrollbar { width: 4px; }
+    .editor-fields::-webkit-scrollbar-thumb { background: var(--border-hover); border-radius: 2px; }
+
+    .field-group { margin-bottom: 12px; }
+
+    .field-label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .field-input {
+      width: 100%;
+      padding: 8px 10px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .field-input:focus { border-color: var(--brand); }
+    .field-input::placeholder { color: var(--text-faint); }
+
+    textarea.field-input { min-height: 64px; resize: vertical; line-height: 1.5; }
+
+    .lang-fields { display: none; }
+    .lang-fields.active { display: block; }
+
+    .shared-divider {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-faint);
+      margin: 16px 0 8px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── Actions ── */
+    .editor-actions {
+      padding: 12px 16px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    /* ═══ Tiptap Editor ═══ */
+    .tiptap-wrap { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-top: 6px; }
+    .tiptap-toolbar { display: flex; gap: 2px; padding: 4px 6px; background: rgba(255,255,255,0.03); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+    .tiptap-toolbar button { background: none; border: 1px solid transparent; border-radius: 4px; color: var(--text-secondary); font-size: 12px; padding: 4px 8px; cursor: pointer; font-family: inherit; min-width: 28px; }
+    .tiptap-toolbar button:hover { background: rgba(255,255,255,0.06); color: var(--text-primary); border-color: var(--border); }
+    .tiptap-toolbar .sep { width: 1px; background: var(--border); margin: 2px 4px; }
+    .tiptap-editor { padding: 12px; min-height: 180px; max-height: 400px; overflow-y: auto; color: var(--text-primary); font-size: 14px; line-height: 1.7; }
+    .tiptap-editor .tiptap { outline: none; }
+    .tiptap-editor h2 { font-size: 20px; font-weight: 700; color: #fff; margin: 16px 0 8px; }
+    .tiptap-editor h3 { font-size: 17px; font-weight: 700; color: #fff; margin: 14px 0 6px; }
+    .tiptap-editor h4 { font-size: 15px; font-weight: 600; color: #fff; margin: 12px 0 4px; }
+    .tiptap-editor p { margin: 0 0 8px; }
+    .tiptap-editor a { color: var(--brand); }
+    .tiptap-editor ul, .tiptap-editor ol { padding-left: 20px; margin: 8px 0; }
+    .tiptap-editor li { margin: 4px 0; }
+    .tiptap-editor img { max-width: 100%; border-radius: 6px; margin: 8px 0; }
+    .tiptap-editor blockquote { border-left: 3px solid var(--brand); padding-left: 12px; margin: 12px 0; color: var(--text-muted); }
+    .tiptap-code { min-height: 180px; font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.5; }
+
+    .btn-save {
+      flex: 1;
+      padding: 10px;
+      background: var(--brand);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn-save:hover { background: var(--brand-hover); }
+    .btn-save:disabled { opacity: 0.5; cursor: wait; }
+
+    .btn-cancel {
+      padding: 10px 16px;
+      background: none;
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .btn-cancel:hover { background: var(--bg-tertiary); }
+
+    .save-toast {
+      text-align: center;
+      padding: 8px;
+      margin: 0 16px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      display: none;
+    }
+
+    .save-toast.success { display: block; background: rgba(34,197,94,0.1); color: var(--success); }
+    .save-toast.error { display: block; background: rgba(239,68,68,0.1); color: var(--error); }
+
+    /* ════════════ CHAT ════════════ */
+    .chat-messages {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .chat-msg {
+      font-size: 13px;
+      line-height: 1.55;
+      padding: 10px 14px;
+      border-radius: 12px;
+      max-width: 92%;
+    }
+
+    .chat-msg.assistant { background: var(--bg-input); color: var(--text-secondary); align-self: flex-start; border-bottom-left-radius: 4px; }
+    .chat-msg.user { background: var(--brand-glow); color: #93c5fd; align-self: flex-end; border-bottom-right-radius: 4px; }
+
+    .chat-input-area {
+      padding: 12px 16px;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .chat-input {
+      width: 100%;
+      padding: 10px 14px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 13px;
+      resize: none;
+      outline: none;
+    }
+
+    .chat-input:focus { border-color: var(--brand); }
+    .chat-input::placeholder { color: var(--text-faint); }
+
+    .chat-action {
+      margin-top: 8px;
+    }
+
+    .chat-action-btn {
+      width: 100%;
+      padding: 8px 12px;
+      background: var(--brand-glow);
+      color: var(--brand);
+      border: 1px solid rgba(59,130,246,0.2);
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .chat-action-btn:hover {
+      background: rgba(59,130,246,0.25);
+      border-color: var(--brand);
+    }
+
+    .chat-action-btn:disabled {
+      cursor: default;
+      opacity: 0.8;
+    }
+
+    .chat-action-row {
+      display: flex;
+      gap: 6px;
+    }
+
+    .chat-action-preview {
+      flex: 1;
+      background: rgba(255,255,255,0.04);
+      color: var(--text-secondary);
+      border-color: var(--border);
+    }
+
+    .chat-action-preview:hover {
+      background: rgba(255,255,255,0.08);
+      color: var(--text-primary);
+    }
+
+    .chat-action-preview.active {
+      background: rgba(245,158,11,0.15);
+      color: #f59e0b;
+      border-color: rgba(245,158,11,0.3);
+    }
+
+    .chat-action-apply {
+      flex: 1;
+    }
+
+    /* ════════════ EMPTY STATE ════════════ */
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+    }
+
+    .empty-state h3 { font-size: 15px; color: var(--text-secondary); margin-bottom: 6px; }
+    .empty-state p { font-size: 13px; line-height: 1.5; }
+
+    /* ════════════ DRAG & DROP ════════════ */
+    .drag-handle {
+      width: 20px;
+      cursor: grab;
+      color: var(--text-faint);
+      font-size: 14px;
+      text-align: center;
+      flex-shrink: 0;
+      opacity: 0.4;
+      transition: opacity 0.15s;
+    }
+
+    .module-item:hover .drag-handle { opacity: 1; }
+    .module-item.sortable-ghost { opacity: 0.3; border-color: var(--brand); }
+    .module-item.sortable-chosen { box-shadow: 0 4px 20px rgba(59,130,246,0.2); }
+
+    /* ════════════ BACKGROUND & DESIGN PANEL ════════════ */
+    .panel-section {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+    }
+
+    .panel-section-title {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-faint);
+      margin-bottom: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .panel-section-title .chevron {
+      font-size: 8px;
+      transition: transform 0.15s;
+    }
+
+    .panel-section-title.collapsed .chevron { transform: rotate(-90deg); }
+
+    .panel-body { display: block; }
+    .panel-body.hidden { display: none; }
+
+    .field-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .field-row .field-group { flex: 1; margin-bottom: 0; }
+
+    .color-input-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .color-swatch {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .color-swatch::-webkit-color-swatch-wrapper { padding: 0; }
+    .color-swatch::-webkit-color-swatch { border: none; border-radius: 5px; }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--brand);
+    }
+
+    /* ════════════ PAGE TREE ════════════ */
+    .tree-group { padding: 4px 0; }
+    .tree-group-label {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.5px; color: var(--text-faint); padding: 4px 12px;
+    }
+    .tree-item {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 12px; cursor: pointer; border-radius: 6px;
+      font-size: 12px; color: var(--text-secondary); transition: all 0.1s;
+      margin: 0 4px;
+    }
+    .tree-item:hover { background: var(--bg-input); color: var(--text-primary); }
+    .tree-item.active { background: var(--brand-glow); color: var(--brand); }
+    .tree-item.child { padding-left: 28px; font-size: 11px; }
+    .tree-item .tree-icon { font-size: 10px; opacity: 0.5; width: 14px; }
+
+    .module-hint {
+      font-size: 11px;
+      color: var(--text-faint);
+      text-align: center;
+      padding: 8px;
+      margin-bottom: 8px;
+    }
+
+    /* ════════════ REPEATER CARDS ════════════ */
+    .rep-section { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+    .rep-section-title {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.8px; color: var(--text-faint); margin-bottom: 8px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .rep-add-btn {
+      font-size: 11px; font-weight: 600; color: var(--brand);
+      background: var(--brand-glow); border: 1px solid rgba(59,130,246,0.2);
+      border-radius: 6px; padding: 4px 10px; cursor: pointer; transition: all 0.15s;
+    }
+    .rep-add-btn:hover { background: rgba(59,130,246,0.25); border-color: var(--brand); }
+    .rep-list { display: flex; flex-direction: column; gap: 4px; }
+    .rep-card {
+      background: var(--bg-input); border: 1px solid var(--border);
+      border-radius: 8px; overflow: hidden; transition: border-color 0.15s;
+    }
+    .rep-card:hover { border-color: var(--border-hover); }
+    .rep-card.sortable-ghost { opacity: 0.3; border-color: var(--brand); }
+    .rep-card-header {
+      display: flex; align-items: center; gap: 6px; padding: 8px 10px;
+      cursor: pointer; user-select: none;
+    }
+    .rep-drag { cursor: grab; color: var(--text-faint); font-size: 12px; flex-shrink: 0; opacity: 0.5; }
+    .rep-card:hover .rep-drag { opacity: 1; }
+    .rep-card-title {
+      flex: 1; font-size: 12px; font-weight: 600; color: var(--text-secondary);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .rep-card-actions { display: flex; gap: 2px; flex-shrink: 0; }
+    .rep-card-actions button {
+      background: none; border: none; color: var(--text-faint); cursor: pointer;
+      font-size: 12px; width: 24px; height: 24px; display: flex;
+      align-items: center; justify-content: center; border-radius: 4px;
+      transition: all 0.15s;
+    }
+    .rep-card-actions button:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+    .rep-card-actions .rep-del:hover { color: var(--error); }
+    .rep-card-body { display: none; padding: 0 10px 10px; }
+    .rep-card.expanded .rep-card-body { display: block; }
+    .rep-card.expanded .rep-chevron { transform: rotate(90deg); }
+    .rep-chevron { font-size: 10px; color: var(--text-faint); transition: transform 0.15s; flex-shrink: 0; }
+    .rep-field { margin-bottom: 8px; }
+    .rep-field-label {
+      font-size: 10px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.4px; color: var(--text-faint); margin-bottom: 2px;
+    }
+    .rep-field-input {
+      width: 100%; padding: 6px 8px; background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border); border-radius: 6px; color: var(--text-primary);
+      font-family: inherit; font-size: 12px; outline: none; transition: border-color 0.15s;
+    }
+    .rep-field-input:focus { border-color: var(--brand); }
+    textarea.rep-field-input { min-height: 48px; resize: vertical; line-height: 1.4; }
+    .rep-lang-group { display: flex; gap: 4px; flex-direction: column; }
+    .rep-lang-row { display: flex; align-items: center; gap: 4px; }
+    .rep-lang-badge {
+      font-size: 9px; font-weight: 700; color: var(--text-faint);
+      background: var(--bg-tertiary); border-radius: 3px; padding: 1px 5px;
+      flex-shrink: 0; width: 24px; text-align: center;
+    }
+    .rep-lang-row .rep-field-input { flex: 1; }
+  </style>
+</head>
+<body>
+
+  <!-- ════════════ TOOLBAR ════════════ -->
+  <div class="toolbar">
+    <div class="toolbar-logo">Nova</div>
+    <div class="toolbar-sep"></div>
+    <div style="position:relative">
+      <button class="btn" id="btn-page-tree" style="font-family:'JetBrains Mono',monospace;font-size:12px;min-width:160px;text-align:left">
+        <span id="current-page-label">/ Homepage</span> <span style="opacity:0.4;margin-left:4px">&darr;</span>
+      </button>
+      <div id="page-tree-panel" style="display:none;position:absolute;top:calc(100% + 4px);left:0;width:320px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,0.4);z-index:200;overflow:hidden">
+        <div style="padding:8px">
+          <input id="page-search" class="field-input" type="text" placeholder="Seite suchen..." style="font-size:12px;padding:6px 10px" />
+        </div>
+        <div id="page-tree-list" style="max-height:400px;overflow-y:auto;padding:0 4px 8px"></div>
+      </div>
+    </div>
+    <button class="btn" id="btn-open-preview" title="Seite im Browser öffnen" style="font-size:13px">&#x1F517;</button>
+    <div style="display:flex;gap:2px;background:var(--bg-primary);border-radius:6px;padding:2px;border:1px solid var(--border)">
+      <button class="btn device-btn active" data-device="desktop" title="Desktop" style="font-size:14px;padding:4px 8px">&#x1F5A5;</button>
+      <button class="btn device-btn" data-device="tablet" title="Tablet" style="font-size:13px;padding:4px 8px">&#x1F4F1;</button>
+      <button class="btn device-btn" data-device="mobile" title="Mobile" style="font-size:12px;padding:4px 7px">&#x1F4F1;</button>
+    </div>
+    <div class="toolbar-spacer"></div>
+    <a class="btn" href="https://cms.zds.es/wp-admin/" target="_top">WP Admin</a>
+    <div class="toolbar-sep"></div>
+    <div class="toolbar-user">
+      <strong>{session.displayName}</strong>
+      <span class="role-badge">{session.role}</span>
+    </div>
+    <button class="btn" id="btn-logout">Logout</button>
+  </div>
+
+  <!-- ════════════ MAIN ════════════ -->
+  <div class="editor-main">
+    <iframe class="preview-frame" id="preview" src={pagePath}></iframe>
+
+    <div class="sidebar">
+      <div class="sidebar-tabs">
+        <button class="sidebar-tab active" data-tab="modules">Module</button>
+        <button class="sidebar-tab" data-tab="chat">AI Chat</button>
+        <button class="sidebar-tab" data-tab="seo">SEO</button>
+      </div>
+
+      <!-- ── Module List ── -->
+      <div class="sidebar-content" id="tab-modules">
+        <div class="module-hint">Klicke ein Modul um es zu bearbeiten</div>
+        <div id="modules-list"></div>
+
+        <div class="module-editor" id="module-editor">
+          <div class="editor-header">
+            <button class="btn-back" id="btn-back">&larr;</button>
+            <div class="editor-title" id="editor-title"></div>
+            <div class="editor-comp" id="editor-comp"></div>
+          </div>
+          <!-- Language Switch (above tabs — applies to all content) -->
+          <div class="lang-bar" id="lang-bar"></div>
+          <!-- 3-Tab Navigation -->
+          <div class="editor-tabs">
+            <button class="editor-tab active" data-editor-tab="content">Content</button>
+            <button class="editor-tab" data-editor-tab="style">Style</button>
+            <button class="editor-tab" data-editor-tab="advanced">Advanced</button>
+          </div>
+          <!-- Content Tab -->
+          <div class="editor-tab-panel active" id="editor-panel-content" data-editor-panel="content">
+            <div class="editor-fields" id="editor-fields"></div>
+          </div>
+          <!-- Style Tab -->
+          <div class="editor-tab-panel" id="editor-panel-style" data-editor-panel="style">
+            <div class="editor-tab-placeholder" id="style-tab-content">
+              <strong>Element Styles</strong>
+              Per-Element Styling (Farbe, Schriftgr&ouml;sse, Hintergrund) &mdash; wird in Unit 4 implementiert.
+            </div>
+          </div>
+          <!-- Advanced Tab -->
+          <div class="editor-tab-panel" id="editor-panel-advanced" data-editor-panel="advanced">
+            <div class="editor-tab-placeholder" id="advanced-tab-content">
+              <strong>Advanced</strong>
+              Hintergrund, Spacing, Responsive &mdash; wird in Unit 5 implementiert.
+            </div>
+          </div>
+          <div class="save-toast" id="save-toast"></div>
+          <div class="editor-actions">
+            <button class="btn-cancel" id="btn-cancel">Abbrechen</button>
+            <button class="btn-cancel" id="btn-versions" title="Versionen anzeigen" style="font-size:13px">&#128337; Versionen</button>
+            <button class="btn-save" id="btn-save">Speichern</button>
+          </div>
+          <!-- Versions Panel (hidden by default) -->
+          <div id="versions-panel" style="display:none;position:absolute;bottom:50px;right:16px;width:360px;max-height:400px;overflow-y:auto;background:#1e293b;border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:12px;box-shadow:0 8px 24px rgba(0,0,0,0.4);z-index:999">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+              <span style="font-size:13px;font-weight:600;color:#e2e8f0">Versionen</span>
+              <button onclick="document.getElementById('versions-panel').style.display='none'" style="background:none;border:none;color:#64748b;cursor:pointer;font-size:16px">&times;</button>
+            </div>
+            <div id="versions-list" style="font-size:12px;color:#94a3b8">Lade...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── AI Chat ── -->
+      <div class="sidebar-content" id="tab-chat" style="display:none">
+        <div id="chat-context-bar" style="display:none;padding:6px 10px;background:var(--brand-glow);border-radius:8px;margin-bottom:8px;font-size:11px;color:var(--brand);font-weight:600;display:flex;align-items:center;gap:6px">
+          <span id="chat-context-label"></span>
+          <button onclick="editingModule=null;document.getElementById('chat-context-bar').style.display='none'" style="margin-left:auto;background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:14px">&times;</button>
+        </div>
+        <div class="chat-messages" id="chat-messages">
+          <div class="chat-msg assistant">
+            Hallo! W&auml;hle ein Modul in der Module-Tab aus, dann wechsle hierher &mdash; ich kenne dann den Kontext. Oder frag einfach drauflos!
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SEO ── -->
+      <div class="sidebar-content" id="tab-seo" style="display:none;padding:12px">
+        <!-- Google Snippet Preview -->
+        <div style="margin-bottom:16px">
+          <div style="font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Google Preview</div>
+          <div id="seo-preview" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:12px;font-family:Arial,sans-serif">
+            <div id="seo-preview-url" style="font-size:11px;color:#70757a;margin-bottom:2px">cms.zds.es › ...</div>
+            <div id="seo-preview-title" style="font-size:16px;color:#8ab4f8;margin-bottom:4px;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Seitentitel — ZDS</div>
+            <div id="seo-preview-desc" style="font-size:12px;color:#bdc1c6;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">Meta Description der Seite...</div>
+          </div>
+        </div>
+
+        <!-- SEO Title -->
+        <div class="field-group">
+          <label class="field-label">SEO Title <span id="seo-title-count" style="float:right;font-size:10px;color:var(--text-muted)">0/60</span></label>
+          <input type="text" class="field-input" id="seo-title" placeholder="Seitentitel — ZDS" maxlength="70" />
+        </div>
+
+        <!-- Meta Description -->
+        <div class="field-group">
+          <label class="field-label">Meta Description <span id="seo-desc-count" style="float:right;font-size:10px;color:var(--text-muted)">0/160</span></label>
+          <textarea class="field-input" id="seo-description" rows="3" placeholder="Beschreibung für Suchmaschinen..." maxlength="170"></textarea>
+        </div>
+
+        <!-- Focus Keyword -->
+        <div class="field-group">
+          <label class="field-label">Focus Keyword</label>
+          <input type="text" class="field-input" id="seo-keyword" placeholder="z.B. seo agentur barcelona" />
+        </div>
+
+        <!-- Slug -->
+        <div class="field-group">
+          <label class="field-label">URL Slug</label>
+          <input type="text" class="field-input" id="seo-slug" placeholder="seitenname" style="font-family:monospace;font-size:12px" />
+        </div>
+
+        <!-- Save SEO -->
+        <button id="seo-save" style="width:100%;margin-top:12px;background:var(--brand);color:white;border:none;padding:10px;border-radius:8px;font-weight:600;cursor:pointer;font-size:13px">SEO speichern</button>
+        <div id="seo-toast" style="display:none;text-align:center;color:#22c55e;font-size:12px;margin-top:8px"></div>
+      </div>
+
+      <!-- ── Chat Input (always visible when chat tab active) ── -->
+      <div class="chat-input-area" id="chat-input-area" style="display:none">
+        <textarea class="chat-input" id="chat-input" rows="2" placeholder="Was soll ich &auml;ndern?"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <script define:vars={{ userRole: session.role, registryData }}>
+    // ═══════════ MODULE REGISTRY (from server) ═══════════
+    const MODULE_REGISTRY = JSON.parse(registryData);
+
+    // ════════════ DEBUG PANEL ════════════
+    const _dbg = new URLSearchParams(window.location.search).has('debug');
+    const _logs = [];
+    function D(label, ...args) {
+      const msg = `[${new Date().toLocaleTimeString()}] ${label}: ${args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' ')}`;
+      _logs.push(msg);
+      if (_dbg) console.log('%c[Nova]', 'color:#3b82f6;font-weight:bold', label, ...args);
+      const el = document.getElementById('debug-log');
+      if (el) { el.textContent = _logs.slice(-30).join('\n'); el.scrollTop = el.scrollHeight; }
+    }
+    window.onerror = (msg, src, line, col, err) => {
+      D('ERROR', `${msg} at line ${line}:${col}`);
+      if (err?.stack) D('STACK', err.stack.split('\n').slice(0,3).join(' | '));
+    };
+    window.addEventListener('unhandledrejection', e => D('PROMISE_ERROR', e.reason));
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', e => {
+      // Ctrl+Shift+D — Debug panel
+      if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+        const panel = document.getElementById('debug-panel');
+        if (panel) panel.style.display = panel.style.display === 'none' ? 'flex' : 'none';
+      }
+      // Ctrl+S — Save (when editing a module)
+      if (e.ctrlKey && e.key === 's' && editingModule) {
+        e.preventDefault();
+        document.getElementById('btn-save')?.click();
+      }
+      // Escape — Back to module list
+      if (e.key === 'Escape' && editingModule) {
+        document.getElementById('btn-back')?.click();
+      }
+    });
+    // Inject debug panel HTML
+    document.body.insertAdjacentHTML('beforeend', `
+      <div id="debug-panel" style="display:${_dbg ? 'flex' : 'none'};position:fixed;bottom:0;left:0;right:0;height:200px;background:#0a0e1a;border-top:2px solid #3b82f6;z-index:99999;flex-direction:column;font-family:monospace;font-size:11px">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 10px;background:#111827;flex-shrink:0">
+          <span style="color:#3b82f6;font-weight:bold">Nova Debug (Ctrl+Shift+D)</span>
+          <div>
+            <button onclick="document.getElementById('debug-log').textContent=''" style="background:none;border:1px solid #374151;color:#9ca3af;padding:2px 8px;border-radius:3px;cursor:pointer;font-size:10px">Clear</button>
+            <button onclick="navigator.clipboard.writeText(document.getElementById('debug-log').textContent)" style="background:none;border:1px solid #374151;color:#9ca3af;padding:2px 8px;border-radius:3px;cursor:pointer;font-size:10px;margin-left:4px">Copy</button>
+            <button onclick="this.closest('#debug-panel').style.display='none'" style="background:none;border:none;color:#6b7280;cursor:pointer;font-size:14px;margin-left:8px">&times;</button>
+          </div>
+        </div>
+        <pre id="debug-log" style="flex:1;overflow:auto;padding:8px 10px;color:#d1d5db;margin:0;white-space:pre-wrap;line-height:1.5"></pre>
+      </div>
+    `);
+    D('INIT', 'Nova Editor starting, userRole:', typeof userRole !== 'undefined' ? userRole : 'unknown');
+
+    // ════════════ MEDIA PICKER ════════════
+    let _mediaPickerCallback = null;
+    let _mediaSearchTimeout = null;
+    function loadMediaGrid(search) {
+      const grid = document.getElementById('media-grid');
+      grid.innerHTML = '<div style="color:var(--text-muted);padding:20px;text-align:center">Laden...</div>';
+      const searchParam = search ? '?search=' + encodeURIComponent(search) : '';
+      fetch('/api/media/list' + searchParam).then(r => r.json()).then(images => {
+        grid.innerHTML = '';
+        images.forEach(img => {
+          const thumb = img.media_details?.sizes?.thumbnail?.source_url || img.source_url;
+          const div = document.createElement('div');
+          div.style.cssText = 'cursor:pointer;border-radius:6px;overflow:hidden;border:2px solid transparent;aspect-ratio:1;background:#0f1729';
+          div.innerHTML = '<img src="' + thumb + '" style="width:100%;height:100%;object-fit:cover" loading="lazy" />';
+          div.title = img.title?.rendered || '';
+          div.addEventListener('click', () => {
+            if (_mediaPickerCallback) _mediaPickerCallback(img.source_url);
+            modal.style.display = 'none';
+          });
+          div.addEventListener('mouseenter', () => div.style.borderColor = '#3b82f6');
+          div.addEventListener('mouseleave', () => div.style.borderColor = 'transparent');
+          grid.appendChild(div);
+        });
+      }).catch(() => { grid.innerHTML = '<div style="color:#ef4444;padding:20px">Fehler beim Laden</div>'; });
+    }
+
+    function openMediaPicker(callback) {
+      _mediaPickerCallback = callback;
+      const modal = document.getElementById('media-modal');
+      const searchInput = document.getElementById('media-search');
+      modal.style.display = 'flex';
+      searchInput.value = '';
+      loadMediaGrid('');
+      // Wire up search with debounce
+      searchInput.oninput = () => {
+        clearTimeout(_mediaSearchTimeout);
+        _mediaSearchTimeout = setTimeout(() => loadMediaGrid(searchInput.value), 300);
+      };
+    }
+    // Inject media modal
+    document.body.insertAdjacentHTML('beforeend', `
+      <div id="media-modal" style="display:none;position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,0.8);align-items:center;justify-content:center">
+        <div style="background:#111827;border:1px solid rgba(255,255,255,0.1);border-radius:12px;width:90%;max-width:700px;max-height:80vh;display:flex;flex-direction:column;overflow:hidden">
+          <div style="padding:12px 16px;display:flex;justify-content:space-between;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,0.08)">
+            <span style="color:#e2e8f0;font-weight:600;font-size:14px;flex-shrink:0">Media Library</span>
+            <input id="media-search" type="text" placeholder="Suchen..." style="flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);border-radius:6px;padding:5px 10px;color:#e2e8f0;font-size:12px" />
+            <button onclick="document.getElementById('media-modal').style.display='none'" style="background:none;border:none;color:#6b7280;font-size:20px;cursor:pointer;flex-shrink:0">&times;</button>
+          </div>
+          <div id="media-grid" style="padding:12px;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;overflow-y:auto;flex:1"></div>
+        </div>
+      </div>
+    `);
+
+    // Helper: make any input a media picker
+    function makeMediaInput(input) {
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'display:flex;flex-direction:column;gap:6px';
+      input.parentNode.insertBefore(wrap, input);
+
+      // Top row: thumbnail + buttons
+      const topRow = document.createElement('div');
+      topRow.style.cssText = 'display:flex;gap:8px;align-items:center';
+
+      // Thumbnail
+      const preview = document.createElement('div');
+      preview.style.cssText = 'width:72px;height:72px;border-radius:6px;overflow:hidden;flex-shrink:0;background:#0f1729;border:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;cursor:pointer';
+      const img = document.createElement('img');
+      img.style.cssText = 'width:100%;height:100%;object-fit:cover';
+      img.src = input.value || '';
+      function updatePreview() {
+        if (input.value) { img.src = input.value; preview.innerHTML = ''; preview.appendChild(img); }
+        else { preview.innerHTML = '<span style="color:#374151;font-size:22px">\ud83d\uddbc</span>'; }
+      }
+      updatePreview();
+      topRow.appendChild(preview);
+
+      // Buttons
+      const btns = document.createElement('div');
+      btns.style.cssText = 'display:flex;flex-direction:column;gap:4px';
+      const selectBtn = document.createElement('button');
+      selectBtn.textContent = '\ud83d\uddbc Auswählen';
+      selectBtn.style.cssText = 'background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);color:#3b82f6;border-radius:4px;padding:5px 12px;cursor:pointer;font-size:11px;font-weight:600;white-space:nowrap';
+      selectBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        openMediaPicker(url => { input.value = url; updatePreview(); input.dispatchEvent(new Event('input')); });
+      });
+      preview.addEventListener('click', () => selectBtn.click());
+      const clearBtn = document.createElement('button');
+      clearBtn.textContent = '\u2715 Entfernen';
+      clearBtn.style.cssText = 'background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);color:#ef4444;border-radius:4px;padding:4px 12px;cursor:pointer;font-size:10px;white-space:nowrap';
+      clearBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        input.value = '';
+        updatePreview();
+        input.dispatchEvent(new Event('input'));
+      });
+      btns.appendChild(selectBtn);
+      btns.appendChild(clearBtn);
+      topRow.appendChild(btns);
+      wrap.appendChild(topRow);
+
+      // Bottom: URL as clickable link (hidden input)
+      input.style.display = 'none';
+      wrap.appendChild(input);
+      const urlDisplay = document.createElement('a');
+      urlDisplay.style.cssText = 'font-size:10px;color:#475569;text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block';
+      urlDisplay.target = '_blank';
+      function updateUrl() {
+        const val = input.value || '';
+        const short = val.replace(/^https?:\/\/cms\.zds\.es/, '').replace(/^\/wp-content\/uploads\//, '/uploads/');
+        urlDisplay.textContent = short || 'Kein Bild ausgewählt';
+        urlDisplay.href = val || '#';
+        urlDisplay.style.color = val ? '#475569' : '#1e293b';
+      }
+      updateUrl();
+      input.addEventListener('input', updateUrl);
+      wrap.appendChild(urlDisplay);
+    }
+
+    // ════════════ PAGE LINKER ════════════
+    function openPageLinker(callback) {
+      const modal = document.getElementById('page-linker-modal');
+      const list = document.getElementById('page-linker-list');
+      modal.style.display = 'flex';
+      list.innerHTML = '';
+      // Build from SITE_TREE (already defined below, but hoisted)
+      const allPages = typeof SITE_TREE !== 'undefined' ? SITE_TREE : [];
+      allPages.forEach(group => {
+        const header = document.createElement('div');
+        header.style.cssText = 'color:#64748b;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;padding:8px 12px 4px;margin-top:4px';
+        header.textContent = group.group;
+        list.appendChild(header);
+        group.pages.forEach(page => {
+          const item = document.createElement('div');
+          item.style.cssText = 'padding:8px 12px;cursor:pointer;color:#e2e8f0;font-size:13px;border-radius:6px;display:flex;align-items:center;gap:8px';
+          if (page.child) item.style.paddingLeft = '28px';
+          item.innerHTML = '<span>' + page.icon + '</span><span style="flex:1">' + page.label + '</span><span style="color:#475569;font-size:11px;font-family:monospace">' + page.path + '</span>';
+          item.addEventListener('mouseenter', () => item.style.background = 'rgba(59,130,246,0.1)');
+          item.addEventListener('mouseleave', () => item.style.background = 'none');
+          item.addEventListener('click', () => {
+            callback(page.path);
+            modal.style.display = 'none';
+          });
+          list.appendChild(item);
+        });
+      });
+      // Also add external URL option
+      const extDiv = document.createElement('div');
+      extDiv.style.cssText = 'padding:12px;border-top:1px solid rgba(255,255,255,0.08);margin-top:8px;display:flex;gap:6px';
+      const extInput = document.createElement('input');
+      extInput.type = 'text';
+      extInput.placeholder = 'Externe URL (https://...)';
+      extInput.style.cssText = 'flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);border-radius:6px;padding:6px 10px;color:#e2e8f0;font-size:12px';
+      const extBtn = document.createElement('button');
+      extBtn.textContent = 'OK';
+      extBtn.style.cssText = 'background:#3b82f6;color:white;border:none;border-radius:6px;padding:6px 14px;cursor:pointer;font-size:12px;font-weight:600';
+      extBtn.addEventListener('click', () => { if (extInput.value) { callback(extInput.value); modal.style.display = 'none'; } });
+      extDiv.appendChild(extInput);
+      extDiv.appendChild(extBtn);
+      list.appendChild(extDiv);
+    }
+
+    // Inject page linker modal
+    document.body.insertAdjacentHTML('beforeend', `
+      <div id="page-linker-modal" style="display:none;position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,0.8);align-items:center;justify-content:center">
+        <div style="background:#111827;border:1px solid rgba(255,255,255,0.1);border-radius:12px;width:90%;max-width:500px;max-height:80vh;display:flex;flex-direction:column;overflow:hidden">
+          <div style="padding:12px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,0.08)">
+            <span style="color:#e2e8f0;font-weight:600;font-size:14px">Seite verknüpfen</span>
+            <button onclick="document.getElementById('page-linker-modal').style.display='none'" style="background:none;border:none;color:#6b7280;font-size:20px;cursor:pointer">&times;</button>
+          </div>
+          <div id="page-linker-list" style="padding:8px;overflow-y:auto;flex:1"></div>
+        </div>
+      </div>
+    `);
+
+    // Helper: make any URL input a page linker
+    function makePageLinkInput(input) {
+      if (input.closest('[style*="display:flex"]')) return; // already wrapped
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'display:flex;gap:4px;align-items:center';
+      input.parentNode.insertBefore(wrap, input);
+      wrap.appendChild(input);
+      input.style.flex = '1';
+      const btn = document.createElement('button');
+      btn.textContent = '\ud83d\udd17';
+      btn.title = 'Seite verknüpfen';
+      btn.style.cssText = 'background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);color:#3b82f6;border-radius:4px;padding:4px 8px;cursor:pointer;font-size:14px;flex-shrink:0';
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        openPageLinker(path => { input.value = path; input.dispatchEvent(new Event('input')); });
+      });
+      wrap.appendChild(btn);
+    }
+
+    // ════════════ DEVICE SWITCH ════════════
+    document.querySelectorAll('.device-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.device-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const iframe = document.getElementById('preview');
+        const device = btn.dataset.device;
+        if (device === 'desktop') {
+          iframe.style.width = '100%';
+          iframe.style.maxWidth = 'none';
+          iframe.style.margin = '0';
+          iframe.style.borderRadius = '0';
+          iframe.style.boxShadow = 'none';
+        } else if (device === 'tablet') {
+          iframe.style.width = '768px';
+          iframe.style.maxWidth = '768px';
+          iframe.style.margin = '20px auto';
+          iframe.style.borderRadius = '12px';
+          iframe.style.boxShadow = '0 0 40px rgba(0,0,0,0.3)';
+        } else if (device === 'mobile') {
+          iframe.style.width = '375px';
+          iframe.style.maxWidth = '375px';
+          iframe.style.margin = '20px auto';
+          iframe.style.borderRadius = '16px';
+          iframe.style.boxShadow = '0 0 40px rgba(0,0,0,0.3)';
+        }
+      });
+    });
+
+    // ════════════ GLOBALS ════════════
+    const LANGS = ['es', 'en', 'de'];
+    const LANG_LABELS = { es: '\ud83c\uddea\ud83c\uddf8 ES', en: '\ud83c\uddec\ud83c\udde7 EN', de: '\ud83c\udde9\ud83c\uddea DE' };
+    const ICONS = { Hero: '\u2b50', LogoTicker: '\u267b', Stats: '\ud83d\udcca', ThreeColumns: '\u25a6', CTABand: '\ud83d\udce3', TeamSection: '\ud83d\udc65', AIShowcase: '\ud83e\udd16', ProcessSteps: '\u2699' };
+    let allModules = [];
+    let pageSections = [];
+    let pageId = null;
+    let currentPageLabel = '';
+    let currentSlug = '';
+    let editingModule = null;
+    let editingSection = null;
+    let activeLang = 'es';
+    let activeEditorTab = 'content';
+    let sortableInstance = null;
+
+    // ════════════ EDITOR 3-TAB SWITCHING ════════════
+    function switchEditorTab(tab) {
+      activeEditorTab = tab;
+      document.querySelectorAll('.editor-tab').forEach(t => t.classList.toggle('active', t.dataset.editorTab === tab));
+      document.querySelectorAll('.editor-tab-panel').forEach(p => p.classList.toggle('active', p.dataset.editorPanel === tab));
+    }
+
+    document.querySelectorAll('.editor-tab').forEach(tab => {
+      tab.addEventListener('click', () => switchEditorTab(tab.dataset.editorTab));
+    });
+
+    // ════════════ SIDEBAR TAB SWITCHING ════════════
+    document.querySelectorAll('.sidebar-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.sidebar-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        const target = tab.dataset.tab;
+        ['modules', 'chat', 'seo'].forEach(id => {
+          const el = document.getElementById('tab-' + id);
+          if (el) el.style.display = id === target ? '' : 'none';
+        });
+        document.getElementById('chat-input-area').style.display = target === 'chat' ? '' : 'none';
+        // Show active module context in chat
+        if (target === 'chat') {
+          const bar = document.getElementById('chat-context-bar');
+          const label = document.getElementById('chat-context-label');
+          if (editingModule) {
+            label.textContent = '\ud83d\udccc ' + editingModule.title + ' (' + editingModule.component + ')';
+            bar.style.display = 'flex';
+          } else {
+            bar.style.display = 'none';
+          }
+        }
+      });
+    });
+
+    // ════════════ PREVIEW BUTTON ════════════
+    document.getElementById('btn-open-preview')?.addEventListener('click', () => {
+      const url = document.getElementById('btn-open-preview').dataset.url || 'https://cms.zds.es/?preview=1';
+      window.open(url, '_blank');
+    });
+
+    // ════════════ LOGOUT ════════════
+    document.getElementById('btn-logout')?.addEventListener('click', async () => {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      window.location.href = '/admin/login';
+    });
+
+    // ════════════ PAGE TREE ════════════
+    const SITE_TREE = [
+      { group: 'Hauptseiten', pages: [
+        { path: '/', label: 'Homepage', icon: '\ud83c\udfe0' },
+        { path: '/nosotros', label: 'Nosotros', icon: '\ud83d\udc65' },
+        { path: '/contacto', label: 'Contacto', icon: '\u2709' },
+        { path: '/proyectos', label: 'Proyectos', icon: '\ud83d\udcbc' },
+        { path: '/insights', label: 'Insights / Blog', icon: '\ud83d\udcdd' },
+        { path: '/recursos', label: 'Recursos', icon: '\ud83c\udf81' },
+      ]},
+      { group: 'Enterprise Solutions', pages: [
+        { path: '/servicios', label: 'Servicios (Hub)', icon: '\u2699' },
+        { path: '/servicios/ai-visibility', label: 'AI Visibility', icon: '\ud83e\udd16', child: true },
+        { path: '/servicios/herramientas', label: 'Custom Tools', icon: '\ud83d\udee0', child: true },
+        { path: '/servicios/analytics', label: 'Data & Analytics', icon: '\ud83d\udcca', child: true },
+      ]},
+      { group: 'SEO', pages: [
+        { path: '/servicios-geo', label: 'GEO (AI Visibility)', icon: '\ud83e\udd16', child: true },
+        { path: '/servicios-seo-tecnico', label: 'SEO T\u00e9cnico', icon: '\ud83d\udd27', child: true },
+        { path: '/servicios-seo-internacional', label: 'SEO Internacional', icon: '\ud83c\udf0d', child: true },
+        { path: '/servicios-seo-local', label: 'SEO Local', icon: '\ud83d\udccd', child: true },
+        { path: '/servicios-seo-ecommerce', label: 'SEO E-Commerce', icon: '\ud83d\uded2', child: true },
+        { path: '/servicios-amazon-seo', label: 'Amazon SEO', icon: '\ud83d\udce6', child: true },
+        { path: '/servicios-relaunch-seo', label: 'Relaunch & Migration', icon: '\ud83d\udd04', child: true },
+        { path: '/servicios-core-web-vitals', label: 'Core Web Vitals', icon: '\u26a1', child: true },
+      ]},
+      { group: 'Marketing & Ads', pages: [
+        { path: '/servicios-google-ads', label: 'Google Ads', icon: '\ud83d\udcb0', child: true },
+        { path: '/servicios-amazon-ads', label: 'Amazon Ads', icon: '\ud83d\udce6', child: true },
+        { path: '/servicios-content-strategy', label: 'Content Strategy', icon: '\u270d', child: true },
+        { path: '/servicios-email-marketing', label: 'Email Marketing', icon: '\ud83d\udce7', child: true },
+        { path: '/servicios-marketing-automation', label: 'Marketing Automation', icon: '\ud83e\udd16', child: true },
+      ]},
+      { group: 'Design & Consulting', pages: [
+        { path: '/servicios-web-design', label: 'Web Design & Dev', icon: '\ud83c\udfa8', child: true },
+        { path: '/servicios-branding', label: 'Branding', icon: '\u2728', child: true },
+        { path: '/servicios-consultoria', label: 'Consultor\u00eda', icon: '\ud83d\udcac', child: true },
+        { path: '/servicios-audits', label: 'Auditor\u00edas', icon: '\ud83d\udd0e', child: true },
+        { path: '/servicios-training', label: 'Formaci\u00f3n', icon: '\ud83c\udf93', child: true },
+      ]},
+      { group: 'B2 Performance', pages: [
+        { path: '/b2-performance', label: 'B2 Performance (Hub)', icon: '\ud83d\ude80' },
+        { path: '/b2-performance/seo', label: 'SEO & Content', icon: '\ud83d\udd0d', child: true },
+        { path: '/b2-performance/ppc', label: 'PPC & Paid Media', icon: '\ud83d\udcb0', child: true },
+        { path: '/b2-performance/social', label: 'Social & Strategy', icon: '\ud83d\udce3', child: true },
+      ]},
+      { group: 'Sectores', pages: [
+        { path: '/sectores', label: 'Sectores (Hub)', icon: '\ud83c\udfed' },
+        { path: '/sectores-shk', label: 'SHK / HVAC', icon: '\ud83d\udd25', child: true },
+        { path: '/sectores-electro', label: 'Electro & Wholesale', icon: '\u26a1', child: true },
+        { path: '/sectores-turismo', label: 'Turismo & Hospitality', icon: '\u2708', child: true },
+        { path: '/sectores-retail', label: 'Retail & Consumer', icon: '\ud83d\udecd', child: true },
+        { path: '/sectores-pharma', label: 'Pharma & FMCG', icon: '\ud83e\uddea', child: true },
+        { path: '/sectores-industrial', label: 'Industrial & B2B', icon: '\ud83c\udfed', child: true },
+        { path: '/sectores-fashion', label: 'Fashion & Lifestyle', icon: '\ud83d\udc57', child: true },
+        { path: '/sectores-food', label: 'Food & Gastronom\u00eda', icon: '\ud83c\udf7d', child: true },
+        { path: '/sectores-tech', label: 'Tech & SaaS', icon: '\ud83d\udcbb', child: true },
+      ]},
+      { group: 'Legal', pages: [
+        { path: '/aviso-legal', label: 'Aviso Legal', icon: '\u2696', child: true },
+        { path: '/privacidad', label: 'Privacidad', icon: '\ud83d\udd12', child: true },
+        { path: '/cookies', label: 'Cookies', icon: '\ud83c\udf6a', child: true },
+      ]},
+    ];
+
+    let currentPagePath = '/';
+    let treeOpen = false;
+
+    function initPageSelector() {
+      const btn = document.getElementById('btn-page-tree');
+      const panel = document.getElementById('page-tree-panel');
+      const search = document.getElementById('page-search');
+
+      btn.addEventListener('click', () => {
+        treeOpen = !treeOpen;
+        panel.style.display = treeOpen ? '' : 'none';
+        if (treeOpen) { search.value = ''; renderTree(''); search.focus(); }
+      });
+
+      // Close on outside click
+      document.addEventListener('click', (e) => {
+        if (treeOpen && !e.target.closest('#page-tree-panel') && !e.target.closest('#btn-page-tree')) {
+          treeOpen = false;
+          panel.style.display = 'none';
+        }
+      });
+
+      search.addEventListener('input', () => renderTree(search.value.toLowerCase()));
+      renderTree('');
+    }
+
+    function renderTree(filter) {
+      const list = document.getElementById('page-tree-list');
+      let html = '';
+      for (const group of SITE_TREE) {
+        const filtered = group.pages.filter(p => !filter || p.label.toLowerCase().includes(filter) || p.path.includes(filter));
+        if (filtered.length === 0) continue;
+        html += `<div class="tree-group"><div class="tree-group-label">${group.group}</div>`;
+        for (const p of filtered) {
+          const active = p.path === currentPagePath ? ' active' : '';
+          const child = p.child ? ' child' : '';
+          html += `<div class="tree-item${active}${child}" data-path="${p.path}"><span class="tree-icon">${p.icon}</span> ${p.label}</div>`;
+        }
+        html += '</div>';
+      }
+      list.innerHTML = html;
+      list.querySelectorAll('.tree-item').forEach(item => {
+        item.addEventListener('click', () => {
+          navigateToPage(item.dataset.path);
+          treeOpen = false;
+          document.getElementById('page-tree-panel').style.display = 'none';
+        });
+      });
+    }
+
+    // Pages that are standalone (no WP modules) — load directly, not via /nova-preview/
+    const STANDALONE_PAGES = ['/kaufmich-demo'];
+
+    function navigateToPage(path) {
+      currentPagePath = path;
+      const slug = path === '/' ? 'homepage' : path.replace(/^\//, '').replace(/\//g, '-');
+
+      // Persist in URL (F5 stays on same page)
+      try { history.replaceState(null, '', '/admin/editor?page=' + encodeURIComponent(path)); } catch {}
+
+      // Update toolbar label + state
+      const page = SITE_TREE.flatMap(g => g.pages).find(p => p.path === path);
+      currentPageLabel = page?.label || path;
+      currentSlug = slug;
+      document.getElementById('current-page-label').textContent = page ? `${page.icon} ${page.label}` : path;
+
+      // Update preview iframe — standalone pages load directly
+      const previewUrl = STANDALONE_PAGES.includes(path) ? `${path}?nova_edit=1` : `/nova-preview${path}?nova_edit=1`;
+      document.getElementById('preview').src = previewUrl;
+
+      // Update open-in-new-tab button
+      document.getElementById('btn-open-preview').dataset.url = `https://cms.zds.es${path}?preview=1`;
+
+      // Load this page's sections
+      loadPageSections(slug);
+    }
+
+    async function loadPageSections(slug) {
+      try {
+        const pageRes = await fetch(`/api/pages/by-slug/${slug}`);
+        if (pageRes.ok) {
+          const pageData = await pageRes.json();
+          pageId = pageData.id;
+          pageSections = pageData.sections || [];
+        } else {
+          pageId = null;
+          pageSections = [];
+        }
+        renderModuleList();
+      } catch (err) { console.error('Load error:', err); }
+    }
+
+    // ════════════ LOAD PAGE + MODULES ════════════
+    async function loadPageAndModules() {
+      D('LOAD', 'loadPageAndModules started');
+      try {
+        const pageRes = await fetch('/api/pages/by-slug/homepage');
+        D('LOAD', 'pages API:', pageRes.status);
+        if (pageRes.ok) {
+          const pageData = await pageRes.json();
+          pageId = pageData.id;
+          pageSections = pageData.sections || [];
+          D('LOAD', 'pageId:', pageId, 'sections:', pageSections.length);
+        }
+
+        const modRes = await fetch('/api/modules');
+        D('LOAD', 'modules API:', modRes.status);
+        if (modRes.ok) {
+          allModules = await modRes.json();
+          D('LOAD', 'allModules:', allModules.length);
+        }
+
+        renderModuleList();
+        D('LOAD', 'renderModuleList done');
+        initPageSelector();
+        D('LOAD', 'initPageSelector done');
+      } catch (err) { D('LOAD_ERROR', err.message); console.error('Load error:', err); }
+    }
+
+    function renderModuleList() {
+      D('RENDER', 'renderModuleList, pageSections:', pageSections.length, 'allModules:', allModules.length);
+      const list = document.getElementById('modules-list');
+      const editor = document.getElementById('module-editor');
+      document.querySelector('.module-hint').style.display = '';
+      list.style.display = '';
+      editor.classList.remove('active');
+
+      // Destroy old sortable
+      if (sortableInstance) { sortableInstance.destroy(); sortableInstance = null; }
+
+      // Render modules in sections order
+      // Clear old virtual (detached) modules from previous page
+      allModules = allModules.filter(m => !m._detached);
+      D('RENDER', 'section modes:', pageSections.map(s => `${s.type}:${s.mode||'linked'}`).join(', '));
+      const orderedModules = pageSections.map((s, idx) => {
+        // Linked mode: find in allModules
+        if (s.mode !== 'detached' && s.module_id) {
+          const mod = allModules.find(m => m.id == s.module_id);
+          if (!mod) D('RENDER', 'NO MATCH for module_id:', s.module_id);
+          return mod ? { ...mod, sectionData: s } : null;
+        }
+        // Detached mode: create virtual module from inline data
+        if (s.mode === 'detached' && s.data) {
+          const virtualId = -(idx + 1); // negative ID for detached
+          const virtualMod = {
+            id: virtualId,
+            title: s._source_title || `${s.type} ${idx + 1}`,
+            component: s.type,
+            content: s.data,
+            style: {},
+            _detached: true,
+            sectionData: s,
+          };
+          // Also add to allModules so openModuleEditor can find it
+          if (!allModules.find(m => m.id === virtualId)) {
+            allModules.push(virtualMod);
+          }
+          return virtualMod;
+        }
+        return null;
+      }).filter(Boolean);
+
+      list.innerHTML = orderedModules.map(m => {
+        const icon = ICONS[m.component] || '\u25a0';
+        return `<div class="module-item" data-id="${m.id}" data-module-id="${m.id}">
+          <div class="drag-handle">\u2630</div>
+          <div class="module-icon">${icon}</div>
+          <div class="module-info">
+            <div class="module-name">${m.title}</div>
+            <div class="module-type">${m.component}</div>
+          </div>
+          <div class="module-actions-row" style="display:flex;gap:2px;margin-left:auto;flex-shrink:0">
+            <button class="btn-dup" data-dup-id="${m.id}" title="Duplizieren" style="background:none;border:1px solid var(--border);border-radius:4px;color:var(--text-muted);cursor:pointer;width:24px;height:24px;font-size:11px;display:flex;align-items:center;justify-content:center">&#x2398;</button>
+            <button class="btn-del" data-del-id="${m.id}" title="L\u00f6schen" style="background:none;border:1px solid rgba(239,68,68,0.3);border-radius:4px;color:#ef4444;cursor:pointer;width:24px;height:24px;font-size:11px;display:flex;align-items:center;justify-content:center">&times;</button>
+          </div>
+        </div>`;
+      }).join('');
+
+      // Duplicate module
+      list.querySelectorAll('.btn-dup').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const id = parseInt(btn.dataset.dupId);
+          const idx = id < 0 ? Math.abs(id) - 1 : pageSections.findIndex(s => s.module_id === id);
+          if (idx < 0 || idx >= pageSections.length) return;
+          const clone = JSON.parse(JSON.stringify(pageSections[idx]));
+          clone._source_title = (clone._source_title || '') + ' (Kopie)';
+          pageSections.splice(idx + 1, 0, clone);
+          // Save to WP
+          if (pageId) {
+            await fetch(`/api/pages/${pageId}/sections`, {
+              method: 'PUT', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ sections: pageSections }),
+            });
+          }
+          renderModuleList();
+          D('MODULE', 'Duplicated section at index', idx);
+        });
+      });
+
+      // Delete module
+      list.querySelectorAll('.btn-del').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const id = parseInt(btn.dataset.delId);
+          const idx = id < 0 ? Math.abs(id) - 1 : pageSections.findIndex(s => s.module_id === id);
+          if (idx < 0 || idx >= pageSections.length) return;
+          const name = pageSections[idx]._source_title || pageSections[idx].type || 'Modul';
+          if (!confirm(`"${name}" wirklich löschen?`)) return;
+          pageSections.splice(idx, 1);
+          if (pageId) {
+            await fetch(`/api/pages/${pageId}/sections`, {
+              method: 'PUT', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ sections: pageSections }),
+            });
+          }
+          renderModuleList();
+          D('MODULE', 'Deleted section at index', idx);
+        });
+      });
+
+      // Click to edit
+      D('RENDER', 'module-items created:', list.querySelectorAll('.module-item').length);
+      list.querySelectorAll('.module-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+          if (e.target.closest('.drag-handle') || e.target.closest('.btn-dup') || e.target.closest('.btn-del')) return;
+          D('CLICK', 'module clicked, id:', item.dataset.id);
+          openModuleEditor(parseInt(item.dataset.id));
+        });
+      });
+
+      // Init drag & drop
+      initSortable(list);
+    }
+
+    async function initSortable(list) {
+      // Dynamic import — works in ES modules
+      const { default: Sortable } = await import('https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/+esm');
+      console.log('SortableJS loaded, pageId:', pageId, 'sections:', pageSections.length);
+      sortableInstance = Sortable.create(list, {
+        handle: '.drag-handle',
+        animation: 150,
+        ghostClass: 'sortable-ghost',
+        chosenClass: 'sortable-chosen',
+        onEnd: function(evt) {
+          console.log('Drag end:', evt.oldIndex, '->', evt.newIndex);
+          if (evt.oldIndex === evt.newIndex) return;
+          const moved = pageSections.splice(evt.oldIndex, 1)[0];
+          pageSections.splice(evt.newIndex, 0, moved);
+          saveSectionsOrder();
+        }
+      });
+    }
+
+    async function saveSectionsOrder() {
+      console.log('saveSectionsOrder called, pageId:', pageId);
+      if (!pageId) { console.error('No pageId!'); return; }
+      const toast = document.getElementById('save-toast');
+      try {
+        console.log('Saving sections:', JSON.stringify(pageSections.map(s => s.module_id)));
+        const res = await fetch(`/api/pages/${pageId}/sections`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sections: pageSections }),
+        });
+        if (res.ok) {
+          toast.className = 'save-toast success';
+          toast.textContent = '\u2713 Reihenfolge gespeichert! Rebuild...';
+          toast.style.display = 'block';
+          fetch('/api/rebuild', { method: 'POST' }).then(() => {
+            toast.textContent = '\u2713 Reihenfolge live!';
+            document.getElementById('preview')?.contentWindow?.location.reload();
+            setTimeout(() => { toast.style.display = 'none'; }, 2000);
+          });
+        }
+      } catch {}
+    }
+
+    // ════════════ REPEATER REGISTRY ════════════
+    // Maps each module type to its array field(s) with field definitions
+    // tr:true = translatable (show ES/EN/DE inputs), col = field used for collapsed title
+    // Build REPEATERS dynamically from MODULE_REGISTRY (single source of truth)
+    const REPEATERS = {};
+    for (const [comp, def] of Object.entries(MODULE_REGISTRY)) {
+      if (def.repeaters && def.repeaters.length > 0) {
+        const rep = def.repeaters[0]; // use first repeater
+        REPEATERS[comp] = {
+          arr: rep.key,
+          label: rep.label,
+          col: rep.col,
+          fields: rep.fields.map(f => ({
+            key: f.key,
+            label: f.label || f.key,
+            type: f.type === 'textarea' ? 'textarea' : 'text',
+            tr: f.tr || false,
+            media: f.type === 'media',
+            pagelink: f.type === 'pagelink',
+          })),
+        };
+      }
+    }
+    D('REGISTRY', 'Built REPEATERS from MODULE_REGISTRY:', Object.keys(REPEATERS).length, 'modules');
+
+    // Legacy fallback: add any REPEATERS not in MODULE_REGISTRY
+    const LEGACY_REPEATERS = {
+      NumbersBar: { arr: 'items', label: 'Metrik', col: 'label', fields: [
+        { key: 'value', label: 'Wert' },
+        { key: 'suffix', label: 'Suffix' },
+        { key: 'label', label: 'Label', type: 'text', tr: true },
+      ]},
+      Stats: { arr: 'items', label: 'Stat', col: 'label', fields: [
+        { key: 'value', label: 'Wert' },
+        { key: 'suffix', label: 'Suffix' },
+        { key: 'label', label: 'Label', type: 'text', tr: true },
+      ]},
+      FeatureList: { arr: 'items', label: 'Feature', col: 'title', fields: [
+        { key: 'icon', label: 'Icon CSS-Klasse' },
+        { key: 'title', label: 'Titel', type: 'text', tr: true },
+        { key: 'desc', label: 'Beschreibung', type: 'textarea', tr: true },
+      ]},
+      FeatureDetail: { arr: 'features', label: 'Feature', col: 'title', fields: [
+        { key: 'image', label: 'Bild', media: true },
+        { key: 'image_position', label: 'Bild-Position (left/right)' },
+        { key: 'title', label: 'Titel', type: 'text', tr: true },
+        { key: 'desc', label: 'Beschreibung', type: 'textarea', tr: true },
+      ]},
+      ThreeColumns: { arr: 'items', label: 'Spalte', col: 'title', fields: [
+        { key: 'icon', label: 'Icon CSS-Klasse' },
+        { key: 'tag', label: 'Tag' },
+        { key: 'href', label: 'Link URL', pagelink: true },
+        { key: 'title', label: 'Titel', type: 'text', tr: true },
+        { key: 'desc', label: 'Beschreibung', type: 'textarea', tr: true },
+      ]},
+      ProcessSteps: { arr: 'steps', label: 'Schritt', col: 'title', fields: [
+        { key: 'step', label: 'Schritt-Nummer' },
+        { key: 'title', label: 'Titel', type: 'text', tr: true },
+        { key: 'desc', label: 'Beschreibung', type: 'textarea', tr: true },
+      ]},
+      CardGrid: { arr: 'items', label: 'Karte', col: 'title', fields: [
+        { key: 'icon', label: 'Icon' },
+        { key: 'image', label: 'Bild', media: true },
+        { key: 'badge', label: 'Badge', type: 'text', tr: true },
+        { key: 'title', label: 'Titel', type: 'text', tr: true },
+        { key: 'subtitle', label: 'Untertitel', type: 'text', tr: true },
+        { key: 'desc', label: 'Beschreibung', type: 'textarea', tr: true },
+        { key: 'rating', label: 'Bewertung' },
+        { key: 'price', label: 'Preis' },
+        { key: 'link_text', label: 'Link Text', type: 'text', tr: true },
+        { key: 'href', label: 'Link URL', pagelink: true },
+      ]},
+      Testimonials: { arr: 'items', label: 'Testimonial', col: 'author', fields: [
+        { key: 'avatar', label: 'Avatar', media: true },
+        { key: 'quote', label: 'Zitat', type: 'textarea', tr: true },
+        { key: 'author', label: 'Autor' },
+        { key: 'role', label: 'Rolle', type: 'text', tr: true },
+        { key: 'company', label: 'Firma' },
+      ]},
+      Timeline: { arr: 'items', label: 'Eintrag', col: 'title', fields: [
+        { key: 'year', label: 'Jahr' },
+        { key: 'title', label: 'Titel', type: 'text', tr: true },
+        { key: 'desc', label: 'Beschreibung', type: 'textarea', tr: true },
+      ]},
+      Comparison: { arr: 'items', label: 'Zeile', col: 'feature', fields: [
+        { key: 'feature', label: 'Feature', type: 'text', tr: true },
+        { key: 'left', label: 'Links (true/false/Text)' },
+        { key: 'right', label: 'Rechts (true/false/Text)' },
+      ]},
+      TeamSection: { arr: 'locations', label: 'Standort', col: 'city', fields: [
+        { key: 'flag', label: 'Flagge (Emoji)' },
+        { key: 'city', label: 'Stadt' },
+      ]},
+      CaseStudy: { arr: 'results', label: 'Ergebnis', col: 'metric', fields: [
+        { key: 'value', label: 'Wert' },
+        { key: 'metric', label: 'Metrik', type: 'text', tr: true },
+        { key: 'desc', label: 'Beschreibung', type: 'text', tr: true },
+      ]},
+      AIShowcase: { arr: 'dashboard_stats', label: 'Stat', col: 'label', fields: [
+        { key: 'label', label: 'Label' },
+        { key: 'value', label: 'Wert' },
+        { key: 'change', label: 'Veränderung' },
+        { key: 'note', label: 'Notiz' },
+      ]},
+      ImageGallery: { arr: 'items', label: 'Bild', col: 'alt', fields: [
+        { key: 'image', label: 'Bild', media: true },
+        { key: 'alt', label: 'Alt-Text', type: 'text', tr: true },
+        { key: 'caption', label: 'Bildunterschrift', type: 'text', tr: true },
+      ]},
+      LogoGrid: { arr: 'logos', label: 'Logo', col: 'name', fields: [
+        { key: 'image', label: 'Bild', media: true },
+        { key: 'name', label: 'Name', type: 'text', tr: true },
+        { key: 'url', label: 'Link URL', pagelink: true },
+      ]},
+      PricingTable: { arr: 'items', label: 'Paket', col: 'name', fields: [
+        { key: 'name', label: 'Name', type: 'text', tr: true },
+        { key: 'price', label: 'Preis' },
+        { key: 'period', label: 'Zeitraum', type: 'text', tr: true },
+        { key: 'featured', label: 'Hervorgehoben (true/false)' },
+        { key: 'badge', label: 'Badge', type: 'text', tr: true },
+        { key: 'features', label: 'Features (eins pro Zeile)', type: 'features-list', tr: true },
+        { key: 'cta_text', label: 'Button-Text', type: 'text', tr: true },
+        { key: 'cta_url', label: 'Button-URL', pagelink: true },
+      ]},
+    };
+    // Merge: registry-generated REPEATERS take priority, legacy fills gaps
+    for (const [comp, def] of Object.entries(LEGACY_REPEATERS)) {
+      if (!REPEATERS[comp]) REPEATERS[comp] = def;
+    }
+
+    /**
+     * Render a repeater section into the editor fields container.
+     * Uses textContent (not innerHTML) for user-supplied data to prevent XSS.
+     * @param {HTMLElement} container - the #editor-fields element
+     * @param {object} content - the module's content object
+     * @param {object} repDef - the REPEATERS definition for this component
+     */
+    function renderRepeater(container, content, repDef) {
+      const items = Array.isArray(content[repDef.arr]) ? JSON.parse(JSON.stringify(content[repDef.arr])) : [];
+
+      const section = document.createElement('div');
+      section.className = 'rep-section';
+      section.dataset.repArr = repDef.arr;
+
+      // Section title with add button
+      const titleRow = document.createElement('div');
+      titleRow.className = 'rep-section-title';
+      const titleSpan = document.createElement('span');
+      titleSpan.textContent = repDef.label + ' (' + items.length + ')';
+      titleRow.appendChild(titleSpan);
+      const addBtn = document.createElement('button');
+      addBtn.type = 'button';
+      addBtn.className = 'rep-add-btn';
+      addBtn.textContent = '+ ' + repDef.label;
+      addBtn.addEventListener('click', function() {
+        var newItem = {};
+        repDef.fields.forEach(function(f) {
+          if (f.tr) {
+            LANGS.forEach(function(lang) { newItem[f.key + '_' + lang] = ''; });
+          } else if (f.type === 'features-list') {
+            LANGS.forEach(function(lang) { newItem[f.key + '_' + lang] = []; });
+            newItem[f.key] = [];
+          } else {
+            newItem[f.key] = '';
+          }
+        });
+        var list = section.querySelector('.rep-list');
+        var card = buildRepCard(newItem, list.children.length, repDef);
+        card.classList.add('expanded');
+        list.appendChild(card);
+        updateRepCount(section, repDef);
+      });
+      titleRow.appendChild(addBtn);
+      section.appendChild(titleRow);
+
+      // Card list
+      var list = document.createElement('div');
+      list.className = 'rep-list';
+      items.forEach(function(item, idx) {
+        list.appendChild(buildRepCard(item, idx, repDef));
+      });
+      section.appendChild(list);
+
+      // Init SortableJS on the list
+      initRepSortable(list);
+
+      container.appendChild(section);
+    }
+
+    function initRepSortable(listEl) {
+      import('https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/+esm').then(function(mod) {
+        mod.default.create(listEl, {
+          handle: '.rep-drag',
+          animation: 150,
+          ghostClass: 'sortable-ghost',
+        });
+      });
+    }
+
+    function updateRepCount(sectionEl, repDef) {
+      var count = sectionEl.querySelector('.rep-list').children.length;
+      var titleSpan = sectionEl.querySelector('.rep-section-title span');
+      if (titleSpan) titleSpan.textContent = repDef.label + ' (' + count + ')';
+    }
+
+    function buildRepCard(item, idx, repDef) {
+      var card = document.createElement('div');
+      card.className = 'rep-card';
+
+      // Header
+      var header = document.createElement('div');
+      header.className = 'rep-card-header';
+
+      var drag = document.createElement('span');
+      drag.className = 'rep-drag';
+      drag.textContent = '\u2630';
+      header.appendChild(drag);
+
+      var chevron = document.createElement('span');
+      chevron.className = 'rep-chevron';
+      chevron.textContent = '\u25B6';
+      header.appendChild(chevron);
+
+      var title = document.createElement('span');
+      title.className = 'rep-card-title';
+      // Use the col field for the title; check translatable version first
+      var colVal = item[repDef.col + '_es'] || item[repDef.col] || (repDef.label + ' ' + (idx + 1));
+      title.textContent = colVal;
+      header.appendChild(title);
+
+      var actions = document.createElement('div');
+      actions.className = 'rep-card-actions';
+
+      var dupBtn = document.createElement('button');
+      dupBtn.type = 'button';
+      dupBtn.title = 'Duplizieren';
+      dupBtn.textContent = '\u2398';
+      dupBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var clone = card.cloneNode(true);
+        clone.classList.remove('expanded');
+        // Re-attach event listeners by rebuilding
+        var clonedItem = collectSingleCardData(card, repDef);
+        var newCard = buildRepCard(clonedItem, 0, repDef);
+        card.parentElement.insertBefore(newCard, card.nextSibling);
+        updateRepCount(card.closest('.rep-section'), repDef);
+      });
+      actions.appendChild(dupBtn);
+
+      var delBtn = document.createElement('button');
+      delBtn.type = 'button';
+      delBtn.className = 'rep-del';
+      delBtn.title = 'Löschen';
+      delBtn.textContent = '\u2715';
+      delBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var sec = card.closest('.rep-section');
+        card.remove();
+        updateRepCount(sec, repDef);
+      });
+      actions.appendChild(delBtn);
+
+      header.appendChild(actions);
+
+      // Click header to expand/collapse
+      header.addEventListener('click', function(e) {
+        if (e.target.closest('.rep-card-actions')) return;
+        card.classList.toggle('expanded');
+      });
+
+      card.appendChild(header);
+
+      // Body with fields
+      var body = document.createElement('div');
+      body.className = 'rep-card-body';
+
+      repDef.fields.forEach(function(fieldDef) {
+        var fieldWrap = document.createElement('div');
+        fieldWrap.className = 'rep-field';
+
+        var label = document.createElement('div');
+        label.className = 'rep-field-label';
+        label.textContent = fieldDef.label;
+        fieldWrap.appendChild(label);
+
+        if (fieldDef.type === 'features-list') {
+          // Special: features as textarea (one per line), translatable
+          if (fieldDef.tr) {
+            var langGroup = document.createElement('div');
+            langGroup.className = 'rep-lang-group';
+            LANGS.forEach(function(lang) {
+              var row = document.createElement('div');
+              row.className = 'rep-lang-row';
+              var badge = document.createElement('span');
+              badge.className = 'rep-lang-badge';
+              badge.textContent = lang.toUpperCase();
+              row.appendChild(badge);
+              var ta = document.createElement('textarea');
+              ta.className = 'rep-field-input';
+              ta.dataset.repField = fieldDef.key;
+              ta.dataset.repLang = lang;
+              ta.dataset.repType = 'features-list';
+              var arr = item[fieldDef.key + '_' + lang] || item[fieldDef.key] || [];
+              ta.value = Array.isArray(arr) ? arr.join('\n') : String(arr);
+              ta.rows = 3;
+              row.appendChild(ta);
+              langGroup.appendChild(row);
+            });
+            fieldWrap.appendChild(langGroup);
+          } else {
+            var ta = document.createElement('textarea');
+            ta.className = 'rep-field-input';
+            ta.dataset.repField = fieldDef.key;
+            ta.dataset.repType = 'features-list';
+            var arr = item[fieldDef.key] || [];
+            ta.value = Array.isArray(arr) ? arr.join('\n') : String(arr);
+            ta.rows = 3;
+            fieldWrap.appendChild(ta);
+          }
+        } else if (fieldDef.tr) {
+          // Translatable: show 3 rows with ES/EN/DE
+          var langGroup = document.createElement('div');
+          langGroup.className = 'rep-lang-group';
+          LANGS.forEach(function(lang) {
+            var row = document.createElement('div');
+            row.className = 'rep-lang-row';
+            var badge = document.createElement('span');
+            badge.className = 'rep-lang-badge';
+            badge.textContent = lang.toUpperCase();
+            row.appendChild(badge);
+            var isTextarea = fieldDef.type === 'textarea';
+            var input = document.createElement(isTextarea ? 'textarea' : 'input');
+            input.className = 'rep-field-input';
+            input.dataset.repField = fieldDef.key;
+            input.dataset.repLang = lang;
+            input.value = item[fieldDef.key + '_' + lang] || '';
+            if (!isTextarea) input.type = 'text';
+            if (isTextarea) input.rows = 2;
+            // Update card title when ES value of the col field changes
+            if (fieldDef.key === repDef.col && lang === 'es') {
+              input.addEventListener('input', function() {
+                title.textContent = input.value || (repDef.label + ' ' + (Array.from(card.parentElement.children).indexOf(card) + 1));
+              });
+            }
+            row.appendChild(input);
+            langGroup.appendChild(row);
+          });
+          fieldWrap.appendChild(langGroup);
+        } else {
+          // Simple field
+          var input = document.createElement('input');
+          input.type = 'text';
+          input.className = 'rep-field-input';
+          input.dataset.repField = fieldDef.key;
+          input.value = String(item[fieldDef.key] != null ? item[fieldDef.key] : '');
+          // Update card title when col field changes
+          if (fieldDef.key === repDef.col) {
+            input.addEventListener('input', function() {
+              title.textContent = input.value || (repDef.label + ' ' + (Array.from(card.parentElement.children).indexOf(card) + 1));
+            });
+          }
+          fieldWrap.appendChild(input);
+        }
+
+        body.appendChild(fieldWrap);
+      });
+
+      // ── Attach media pickers & page linkers inside repeater items ──
+      repDef.fields.forEach(function(fieldDef) {
+        if (fieldDef.tr || fieldDef.type === 'features-list' || fieldDef.type === 'textarea') return;
+        var inp = body.querySelector('[data-rep-field="' + fieldDef.key + '"]:not([data-rep-lang])');
+        if (!inp) return;
+        if (fieldDef.media) {
+          makeMediaInput(inp);
+        } else if (fieldDef.pagelink) {
+          makePageLinkInput(inp);
+        }
+      });
+
+      card.appendChild(body);
+      return card;
+    }
+
+    /**
+     * Collect data from a single repeater card.
+     */
+    function collectSingleCardData(card, repDef) {
+      var itemData = {};
+      repDef.fields.forEach(function(fieldDef) {
+        if (fieldDef.type === 'features-list') {
+          if (fieldDef.tr) {
+            LANGS.forEach(function(lang) {
+              var ta = card.querySelector('[data-rep-field="' + fieldDef.key + '"][data-rep-lang="' + lang + '"]');
+              var val = ta ? ta.value.split('\n').map(function(s) { return s.trim(); }).filter(Boolean) : [];
+              itemData[fieldDef.key + '_' + lang] = val;
+            });
+            // Also set base key from ES
+            var esTA = card.querySelector('[data-rep-field="' + fieldDef.key + '"][data-rep-lang="es"]');
+            itemData[fieldDef.key] = esTA ? esTA.value.split('\n').map(function(s) { return s.trim(); }).filter(Boolean) : [];
+          } else {
+            var ta = card.querySelector('[data-rep-field="' + fieldDef.key + '"]');
+            itemData[fieldDef.key] = ta ? ta.value.split('\n').map(function(s) { return s.trim(); }).filter(Boolean) : [];
+          }
+        } else if (fieldDef.tr) {
+          LANGS.forEach(function(lang) {
+            var input = card.querySelector('[data-rep-field="' + fieldDef.key + '"][data-rep-lang="' + lang + '"]');
+            itemData[fieldDef.key + '_' + lang] = input ? input.value : '';
+          });
+        } else {
+          var input = card.querySelector('[data-rep-field="' + fieldDef.key + '"]');
+          var val = input ? input.value : '';
+          // Preserve boolean-ish values
+          if (val === 'true') val = true;
+          else if (val === 'false') val = false;
+          itemData[fieldDef.key] = val;
+        }
+      });
+      return itemData;
+    }
+
+    /**
+     * Collect all repeater data from the editor and merge into the content object.
+     * @param {object} updatedContent - the content object being built for save
+     */
+    function collectRepeaterData(updatedContent) {
+      document.querySelectorAll('#editor-fields .rep-section').forEach(function(section) {
+        var arrKey = section.dataset.repArr;
+        if (!arrKey) return;
+        var cards = section.querySelectorAll('.rep-list > .rep-card');
+        // Find the matching repDef
+        var repDef = null;
+        for (var comp in REPEATERS) {
+          if (REPEATERS[comp].arr === arrKey) { repDef = REPEATERS[comp]; break; }
+        }
+        if (!repDef) return;
+        var items = [];
+        cards.forEach(function(card) {
+          items.push(collectSingleCardData(card, repDef));
+        });
+        updatedContent[arrKey] = items;
+      });
+    }
+
+    /**
+     * Render LogoTicker clients (string[]) as a simple textarea.
+     */
+    function renderLogoTickerEditor(container, content) {
+      var clients = Array.isArray(content.clients) ? content.clients : [];
+      var section = document.createElement('div');
+      section.className = 'rep-section';
+
+      var titleEl = document.createElement('div');
+      titleEl.className = 'rep-section-title';
+      var titleSpan = document.createElement('span');
+      titleSpan.textContent = 'Clients (' + clients.length + ')';
+      titleEl.appendChild(titleSpan);
+      section.appendChild(titleEl);
+
+      var hint = document.createElement('div');
+      hint.style.cssText = 'font-size:10px;color:var(--text-faint);margin-bottom:4px';
+      hint.textContent = 'Ein Name pro Zeile';
+      section.appendChild(hint);
+
+      var ta = document.createElement('textarea');
+      ta.className = 'field-input';
+      ta.id = 'logoticker-clients';
+      ta.value = clients.join('\n');
+      ta.rows = Math.max(6, Math.min(20, clients.length + 2));
+      ta.style.fontFamily = "'JetBrains Mono', monospace";
+      ta.style.fontSize = '12px';
+      section.appendChild(ta);
+
+      container.appendChild(section);
+    }
+
+    /**
+     * Collect LogoTicker clients data.
+     */
+    function collectLogoTickerData(updatedContent) {
+      var ta = document.getElementById('logoticker-clients');
+      if (ta) {
+        updatedContent.clients = ta.value.split('\n').map(function(s) { return s.trim(); }).filter(Boolean);
+      }
+    }
+
+    // ════════════ REGISTRY-BASED CONTENT RENDERING ════════════
+
+    /**
+     * Render a single field control based on registry field definition.
+     * Returns the created input/textarea element (with data-key set).
+     */
+    function renderField(field, content, lang) {
+      // Look up value with alias resolution
+      const lookup = contentLookup(content, field.key, field.tr ? lang : null);
+      const key = lookup.key; // Use the ACTUAL key found in content (may be alias)
+      const val = String(lookup.val || '');
+      const fallbackLookup = field.tr ? contentLookup(content, field.key, 'es') : { val: '' };
+      const fallbackVal = String(fallbackLookup.val || '');
+
+      const group = document.createElement('div');
+      group.className = 'field-group';
+
+      const label = document.createElement('label');
+      label.className = 'field-label';
+      label.textContent = field.label || field.key.replace(/_/g, ' ');
+      group.appendChild(label);
+
+      let input;
+
+      switch (field.type) {
+        case 'textarea':
+          input = document.createElement('textarea');
+          input.className = 'field-input';
+          input.value = val;
+          input.rows = 3;
+          break;
+
+        case 'richtext':
+          input = document.createElement('textarea');
+          input.className = 'field-input tiptap-target';
+          input.value = val;
+          input.rows = 4;
+          break;
+
+        case 'select':
+          input = document.createElement('select');
+          input.className = 'field-input';
+          (field.options || []).forEach(opt => {
+            const o = document.createElement('option');
+            o.value = opt; o.textContent = opt;
+            if (opt === val) o.selected = true;
+            input.appendChild(o);
+          });
+          break;
+
+        case 'toggle':
+          input = document.createElement('input');
+          input.type = 'checkbox';
+          input.checked = val === 'true' || val === '1';
+          input.style.cssText = 'width:auto;margin-right:8px';
+          break;
+
+        default: // text, media, pagelink, icon, color, size
+          input = document.createElement('input');
+          input.type = field.type === 'color' ? 'color' : 'text';
+          input.className = 'field-input';
+          input.value = val;
+          break;
+      }
+
+      input.dataset.key = key;
+      if (field.hint) input.placeholder = field.hint;
+      if (!val && lang && lang !== 'es' && fallbackVal) {
+        input.placeholder = fallbackVal.substring(0, 60) + '...';
+      }
+
+      group.appendChild(input);
+
+      // Auto-attach special controls
+      if (field.type === 'media') setTimeout(() => makeMediaInput(input), 0);
+      if (field.type === 'pagelink') {
+        // Compact: show as inline icon button next to input
+        input.style.paddingRight = '36px';
+        group.style.position = 'relative';
+        setTimeout(() => makePageLinkInput(input), 0);
+      }
+
+      return group;
+    }
+
+    /**
+     * Render the Content-Tab from MODULE_REGISTRY.
+     * Returns true if registry was used, false for fallback.
+     */
+    // Field name aliases (same as normalize-content.ts) for editor content lookup
+    const FIELD_ALIASES = {
+      badge:'label', section_label:'label', body:'subtitle', description:'subtitle',
+      cta_primary_text:'cta_text', button_text:'cta_text', footer_link_text:'cta_text',
+      cta_primary_url:'cta_url', button_url:'cta_url', footer_link_url:'cta_url',
+      cta_secondary_text:'cta2_text', cta_secondary_url:'cta2_url',
+      background_image:'image', hero_image:'image', photo:'image', person_image:'image',
+    };
+    // Build reverse map: normalized → [original names]
+    const REVERSE_ALIASES = {};
+    for (const [old, norm] of Object.entries(FIELD_ALIASES)) {
+      if (!REVERSE_ALIASES[norm]) REVERSE_ALIASES[norm] = [];
+      REVERSE_ALIASES[norm].push(old);
+    }
+
+    /**
+     * Look up a field value in content, trying the key itself and all known aliases.
+     * For translatable fields, tries key_lang and alias_lang variants.
+     */
+    function contentLookup(content, key, lang) {
+      const fullKey = lang ? `${key}_${lang}` : key;
+      if (content[fullKey] !== undefined && content[fullKey] !== '') return { key: fullKey, val: content[fullKey] };
+      // Try reverse aliases
+      const aliases = REVERSE_ALIASES[key] || [];
+      for (const alias of aliases) {
+        const aliasKey = lang ? `${alias}_${lang}` : alias;
+        if (content[aliasKey] !== undefined && content[aliasKey] !== '') return { key: aliasKey, val: content[aliasKey] };
+      }
+      // Try the key without lang suffix as fallback
+      if (lang && content[key] !== undefined) return { key, val: content[key] };
+      return { key: fullKey, val: '' };
+    }
+
+    function renderRegistryContent(mod, fieldsEl, langBar) {
+      const reg = MODULE_REGISTRY[mod.component];
+      if (!reg) return false;
+
+      const content = mod.content || {};
+      const hasTranslatable = reg.content.some(s => s.fields.some(f => f.tr));
+
+      // Language tabs
+      if (hasTranslatable) {
+        LANGS.forEach(lang => {
+          const btn = document.createElement('button');
+          btn.className = 'lang-btn' + (lang === activeLang ? ' active' : '');
+          btn.textContent = LANG_LABELS[lang];
+          btn.dataset.lang = lang;
+          btn.addEventListener('click', () => switchLang(lang));
+          langBar.appendChild(btn);
+        });
+      }
+
+      // Render content sections
+      for (const section of reg.content) {
+        // Section header (collapsible)
+        const header = document.createElement('div');
+        header.className = 'shared-divider';
+        header.style.cssText = 'cursor:pointer;user-select:none;display:flex;justify-content:space-between;align-items:center';
+        header.innerHTML = `${section.section} <span style="font-size:10px;color:var(--text-muted)">&#9660;</span>`;
+
+        const sectionBody = document.createElement('div');
+        sectionBody.className = 'registry-section';
+
+        let collapsed = section.collapsed || false;
+        header.addEventListener('click', () => {
+          collapsed = !collapsed;
+          sectionBody.style.display = collapsed ? 'none' : '';
+          header.querySelector('span').innerHTML = collapsed ? '&#9654;' : '&#9660;';
+        });
+
+        fieldsEl.appendChild(header);
+
+        // Separate translatable and shared fields
+        const trFields = section.fields.filter(f => f.tr);
+        const sharedFields = section.fields.filter(f => !f.tr);
+
+        // Translatable fields with language containers
+        if (trFields.length > 0) {
+          LANGS.forEach(lang => {
+            const container = document.createElement('div');
+            container.className = 'lang-fields' + (lang === activeLang ? ' active' : '');
+            container.dataset.lang = lang;
+
+            for (const field of trFields) {
+              container.appendChild(renderField(field, content, lang));
+            }
+            sectionBody.appendChild(container);
+          });
+        }
+
+        // Non-translatable fields
+        for (const field of sharedFields) {
+          sectionBody.appendChild(renderField(field, content, null));
+        }
+
+        fieldsEl.appendChild(sectionBody);
+      }
+
+      // Render repeaters
+      for (const rep of reg.repeaters) {
+        const repDef = {
+          field: rep.key,
+          label: rep.label,
+          titleField: rep.col,
+          fields: rep.fields.map(f => ({
+            key: f.key,
+            label: f.label || f.key,
+            type: f.type === 'textarea' ? 'textarea' : 'text',
+            translatable: f.tr || false,
+          })),
+        };
+        // Use existing renderRepeater with adapted format
+        const existingRepDef = REPEATERS[mod.component];
+        if (existingRepDef) {
+          renderRepeater(fieldsEl, content, existingRepDef);
+        }
+      }
+
+      // Tiptap will be initialized by the existing init block in openModuleEditor
+      // .tiptap-target class marks fields for rich text editing
+      return true;
+    }
+
+    // ════════════ MODULE EDITOR ════════════
+    function openModuleEditor(moduleId) {
+      D('EDITOR', 'openModuleEditor called, moduleId:', moduleId);
+      const mod = allModules.find(m => m.id === moduleId);
+      if (!mod) { D('EDITOR', 'MODULE NOT FOUND! moduleId:', moduleId, 'available:', allModules.map(m=>m.id).join(',')); return; }
+      D('EDITOR', 'found module:', mod.component, mod.title);
+      editingModule = JSON.parse(JSON.stringify(mod));
+
+      document.getElementById('modules-list').style.display = 'none';
+      document.querySelector('.module-hint').style.display = 'none';
+      const editor = document.getElementById('module-editor');
+      editor.classList.add('active');
+
+      document.getElementById('editor-title').textContent = mod.title;
+      document.getElementById('editor-comp').textContent = mod.component;
+
+      // Reset to Content tab
+      switchEditorTab('content');
+
+      const content = mod.content || {};
+      const langBar = document.getElementById('lang-bar');
+      const fieldsEl = document.getElementById('editor-fields');
+      langBar.innerHTML = '';
+      fieldsEl.innerHTML = '';
+
+      // Try registry-based rendering first
+      const usedRegistry = renderRegistryContent(mod, fieldsEl, langBar);
+      if (usedRegistry) {
+        D('EDITOR', 'Rendered from MODULE_REGISTRY:', mod.component);
+        // Skip to element design panel (after repeaters)
+        // Jump past the old field rendering code
+      }
+
+      // ── FALLBACK: Dynamic field detection (for unregistered modules) ──
+      if (!usedRegistry) {
+      D('EDITOR', 'Fallback: dynamic field detection for', mod.component);
+
+      // Categorize fields
+      const translatableFields = new Map();
+      const sharedFields = new Map();
+
+      for (const [key, value] of Object.entries(content)) {
+        if (Array.isArray(value) || (typeof value === 'object' && value !== null)) continue;
+        const m = key.match(/^(.+)_(es|en|de)$/);
+        if (m) {
+          if (!translatableFields.has(m[1])) translatableFields.set(m[1], {});
+          translatableFields.get(m[1])[m[2]] = String(value || '');
+        } else {
+          sharedFields.set(key, String(value || ''));
+        }
+      }
+
+      // Language tabs
+      if (translatableFields.size > 0) {
+        LANGS.forEach(lang => {
+          const btn = document.createElement('button');
+          btn.className = 'lang-btn' + (lang === activeLang ? ' active' : '');
+          btn.textContent = LANG_LABELS[lang];
+          btn.dataset.lang = lang;
+          btn.addEventListener('click', () => switchLang(lang));
+          langBar.appendChild(btn);
+        });
+
+        LANGS.forEach(lang => {
+          const container = document.createElement('div');
+          container.className = 'lang-fields' + (lang === activeLang ? ' active' : '');
+          container.dataset.lang = lang;
+
+          for (const [base, values] of translatableFields) {
+            const group = document.createElement('div');
+            group.className = 'field-group';
+            const label = document.createElement('label');
+            label.className = 'field-label';
+            label.textContent = base.replace(/_/g, ' ');
+            const val = values[lang] || '';
+            const isLong = val.length > 50 || (values.es || '').length > 50;
+            const input = document.createElement(isLong ? 'textarea' : 'input');
+            input.className = 'field-input';
+            input.value = val;
+            input.dataset.key = base + '_' + lang;
+            if (!val && lang !== 'es' && values.es) input.placeholder = values.es.substring(0, 60) + '...';
+            if (!isLong) input.type = 'text';
+            group.appendChild(label);
+            group.appendChild(input);
+            container.appendChild(group);
+          }
+          fieldsEl.appendChild(container);
+        });
+      } else {
+        langBar.style.display = 'none';
+      }
+
+      if (sharedFields.size > 0) {
+        if (translatableFields.size > 0) {
+          const divider = document.createElement('div');
+          divider.className = 'shared-divider';
+          divider.textContent = 'Allgemein';
+          fieldsEl.appendChild(divider);
+        }
+        for (const [key, value] of sharedFields) {
+          const group = document.createElement('div');
+          group.className = 'field-group';
+          const label = document.createElement('label');
+          label.className = 'field-label';
+          label.textContent = key.replace(/_/g, ' ');
+          const isMedia = key.match(/image|photo|poster|logo|avatar/i);
+          const isUrl = key.match(/url$|href$/i) && !isMedia;
+          const input = document.createElement((!isMedia && value.length > 50) ? 'textarea' : 'input');
+          input.className = 'field-input';
+          input.value = value;
+          input.dataset.key = key;
+          if (input.tagName === 'INPUT') input.type = 'text';
+          group.appendChild(label);
+          group.appendChild(input);
+          fieldsEl.appendChild(group);
+          if (isMedia) makeMediaInput(input);
+          if (isUrl) makePageLinkInput(input);
+        }
+      }
+
+      // ── Registry: add missing fields that auto-detect skipped ──
+      const EXTRA_FIELDS = {
+        Hero: [{key:'background_image',label:'Hintergrundbild',hint:'URL oder aus Media Library'},{key:'highlight_word',label:'Highlight-Wort'},{key:'cta_primary_url',label:'CTA Primär URL'},{key:'cta_secondary_url',label:'CTA Sekundär URL'}],
+        CaseStudy: [{key:'image',label:'Bild URL'},{key:'link_url',label:'Link URL'}],
+        FeatureDetail: [{key:'image',label:'Bild URL'}],
+        TeamSection: [{key:'founder_photo',label:'Foto URL'},{key:'team_photo',label:'Team-Foto URL'}],
+        VideoEmbed: [{key:'video_url',label:'Video URL'},{key:'poster_image',label:'Vorschaubild URL'}],
+        FeatureList: [{key:'layout',label:'Layout (grid/list)'}],
+        CardGrid: [{key:'columns',label:'Spalten (2/3/4)'}],
+        ThreeColumns: [{key:'section_sublabel',label:'Section Sublabel'},{key:'footer_link_url',label:'Footer-Link URL'}],
+        AIShowcase: [{key:'cta_url',label:'CTA URL'}],
+        ImageGallery: [{key:'columns',label:'Spalten (2/3/4)'}],
+        ContactForm: [{key:'email_to',label:'E-Mail Empfänger'}],
+      };
+      const extraFields = EXTRA_FIELDS[mod.component] || [];
+      const alreadyRendered = new Set([...translatableFields.keys()].flatMap(k => LANGS.map(l => k+'_'+l)).concat([...sharedFields.keys()]));
+      const missingFields = extraFields.filter(f => !alreadyRendered.has(f.key));
+      if (missingFields.length > 0) {
+        if (!document.querySelector('#editor-fields .shared-divider')) {
+          const divider = document.createElement('div');
+          divider.className = 'shared-divider';
+          divider.textContent = 'Allgemein';
+          fieldsEl.appendChild(divider);
+        }
+        missingFields.forEach(field => {
+          const group = document.createElement('div');
+          group.className = 'field-group';
+          const label = document.createElement('label');
+          label.className = 'field-label';
+          label.textContent = field.label;
+          const val = String(content[field.key] || '');
+          const input = document.createElement(val.length > 80 ? 'textarea' : 'input');
+          input.className = 'field-input';
+          input.value = val;
+          input.dataset.key = field.key;
+          if (val.length <= 80) input.type = 'text';
+          if (field.hint) input.placeholder = field.hint;
+          group.appendChild(label);
+          group.appendChild(input);
+          fieldsEl.appendChild(group);
+          // Auto-attach media picker to image/photo fields
+          if (field.key.match(/image|photo|poster|logo|avatar/i)) {
+            makeMediaInput(input);
+          }
+          // Auto-attach page linker to URL fields
+          if (field.key.match(/url$/i) && !field.key.match(/image|photo|poster|logo|avatar/i)) {
+            makePageLinkInput(input);
+          }
+        });
+      }
+
+      // Also attach media pickers to any auto-detected image fields
+      fieldsEl.querySelectorAll('[data-key]').forEach(input => {
+        if (input.dataset.key.match(/image|photo|poster|logo|avatar/) && !input.closest('[style*="display:flex"]')) {
+          makeMediaInput(input);
+        }
+      });
+
+      // ── Repeater rendering for array fields ──
+      if (mod.component === 'LogoTicker') {
+        renderLogoTickerEditor(fieldsEl, content);
+      } else {
+        const repDef = REPEATERS[mod.component];
+        if (repDef) renderRepeater(fieldsEl, content, repDef);
+      }
+
+      // ── TeamGrid Members Editor ──
+      if (mod.component === 'TeamGrid' && content.members && Array.isArray(content.members)) {
+        const divider = document.createElement('div');
+        divider.className = 'shared-divider';
+        divider.textContent = `Team (${content.members.length} Mitglieder)`;
+        fieldsEl.appendChild(divider);
+
+        content.members.forEach((member, idx) => {
+          const card = document.createElement('div');
+          card.style.cssText = 'display:grid;grid-template-columns:56px 1fr;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.06)';
+          card.className = 'member-card';
+          card.dataset.idx = idx;
+
+          // Avatar preview
+          const img = document.createElement('img');
+          img.src = member.photo || '';
+          img.style.cssText = 'width:56px;height:56px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,0.1)';
+          img.style.objectPosition = member.photo_position || 'center 25%';
+          card.appendChild(img);
+
+          // Right side: name, role, position
+          const right = document.createElement('div');
+          right.style.cssText = 'display:flex;flex-direction:column;gap:4px';
+
+          // Name input
+          const nameInput = document.createElement('input');
+          nameInput.type = 'text';
+          nameInput.value = member.name || '';
+          nameInput.placeholder = 'Name';
+          nameInput.className = 'member-name';
+          nameInput.dataset.idx = idx;
+          nameInput.style.cssText = 'background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:4px 8px;color:#e2e8f0;font-size:13px;font-weight:600';
+          right.appendChild(nameInput);
+
+          // Role input
+          const roleInput = document.createElement('input');
+          roleInput.type = 'text';
+          roleInput.value = member.role_es || member.role || '';
+          roleInput.placeholder = 'Rolle';
+          roleInput.className = 'member-role';
+          roleInput.dataset.idx = idx;
+          roleInput.style.cssText = 'background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:3px 8px;color:#94a3b8;font-size:12px';
+          right.appendChild(roleInput);
+
+          // Position row: buttons + number input
+          const posRow = document.createElement('div');
+          posRow.style.cssText = 'display:flex;align-items:center;gap:4px;margin-top:2px';
+
+          const posLabel = document.createElement('span');
+          posLabel.textContent = 'Pos:';
+          posLabel.style.cssText = 'color:#475569;font-size:10px';
+          posRow.appendChild(posLabel);
+
+          const posMatch = (member.photo_position || 'center 25%').match(/(\d+)%/);
+          const currentPos = posMatch ? parseInt(posMatch[1]) : 25;
+
+          const btnUp = document.createElement('button');
+          btnUp.textContent = '\u25B2';
+          btnUp.style.cssText = 'background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:3px;color:#94a3b8;font-size:10px;width:24px;height:22px;cursor:pointer;display:flex;align-items:center;justify-content:center';
+          btnUp.title = 'Foto nach oben';
+
+          const posInput = document.createElement('input');
+          posInput.type = 'number';
+          posInput.min = '0';
+          posInput.max = '60';
+          posInput.value = currentPos;
+          posInput.className = 'member-pos-slider';
+          posInput.dataset.idx = idx;
+          posInput.style.cssText = 'width:42px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);border-radius:3px;color:#e2e8f0;font-size:11px;text-align:center;padding:2px;font-family:monospace';
+
+          const btnDown = document.createElement('button');
+          btnDown.textContent = '\u25BC';
+          btnDown.style.cssText = 'background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:3px;color:#94a3b8;font-size:10px;width:24px;height:22px;cursor:pointer;display:flex;align-items:center;justify-content:center';
+          btnDown.title = 'Foto nach unten';
+
+          const pctLabel = document.createElement('span');
+          pctLabel.textContent = '%';
+          pctLabel.style.cssText = 'color:#475569;font-size:10px';
+
+          function updatePos(val) {
+            val = Math.max(0, Math.min(60, val));
+            posInput.value = val;
+            img.style.objectPosition = 'center ' + val + '%';
+          }
+
+          btnUp.addEventListener('click', (e) => { e.preventDefault(); updatePos(parseInt(posInput.value) - 5); });
+          btnDown.addEventListener('click', (e) => { e.preventDefault(); updatePos(parseInt(posInput.value) + 5); });
+          posInput.addEventListener('change', () => updatePos(parseInt(posInput.value) || 25));
+
+          posRow.appendChild(btnUp);
+          posRow.appendChild(posInput);
+          posRow.appendChild(btnDown);
+          posRow.appendChild(pctLabel);
+          right.appendChild(posRow);
+
+          card.appendChild(right);
+          fieldsEl.appendChild(card);
+        });
+      }
+
+      } // end fallback (!usedRegistry)
+
+      // ── Element Design Panel → Style Tab ──
+      // Find the matching section (linked by module_id or detached by index)
+      let section;
+      if (mod._detached) {
+        const realIdx = Math.abs(mod.id) - 1;
+        section = pageSections[realIdx];
+      } else {
+        section = pageSections.find(s => s.module_id === mod.id);
+      }
+      editingSection = section;
+      const savedElements = section?.visual_overrides?.elements || {};
+
+      // Build element registry from MODULE_REGISTRY.style (single source of truth)
+      const regStyle = MODULE_REGISTRY[mod.component]?.style || [];
+      const elements = {};
+      for (const s of regStyle) {
+        elements[s.element] = {
+          label: s.section,
+          props: s.fields.map(f => ({ key: f.prop, label: f.label || f.prop, type: f.type })),
+        };
+      }
+      const styleTabEl = document.getElementById('style-tab-content');
+      if (Object.keys(elements).length > 0 || regStyle.length > 0) {
+        // Render into Style tab instead of Content tab
+        const designPanel = document.createElement('div');
+        designPanel.style.padding = '12px';
+        styleTabEl.innerHTML = ''; // Remove placeholder
+        styleTabEl.appendChild(designPanel);
+
+        let html = '';
+
+        for (const [elId, elDef] of Object.entries(elements)) {
+          const saved = savedElements[elId] || {};
+          const hasValues = Object.keys(saved).length > 0;
+          const propHtml = elDef.props.map(prop => {
+            const val = saved[prop.key] || '';
+            if (prop.type === 'color') {
+              return `<input type="color" class="color-swatch" data-el="${elId}" data-prop="${prop.key}" value="${val || '#000000'}" title="${prop.label}" style="width:24px;height:24px" />
+                <input class="field-input" type="text" data-el="${elId}" data-prop="${prop.key}" value="${val}" placeholder="${prop.label}" style="width:70px;font-size:10px;padding:4px 6px" />`;
+            }
+            return `<input class="field-input" type="text" data-el="${elId}" data-prop="${prop.key}" value="${val}" placeholder="${prop.label}" title="${prop.label}" style="width:60px;font-size:10px;padding:4px 6px" />`;
+          }).join('');
+          html += `<div style="display:flex;align-items:center;gap:4px;padding:3px 0;border-bottom:1px solid var(--border)">
+            <span style="font-size:11px;color:var(--text-secondary);width:90px;flex-shrink:0">${elDef.label}</span>
+            <div style="display:flex;align-items:center;gap:3px;flex-wrap:wrap;flex:1">${propHtml}</div>
+          </div>`;
+        }
+        designPanel.innerHTML = html;
+
+        // Sync color swatches and live preview
+        designPanel.querySelectorAll('.color-swatch').forEach(swatch => {
+          const textInput = swatch.parentElement.querySelector('input[type="text"]');
+          if (textInput) {
+            swatch.addEventListener('input', () => { textInput.value = swatch.value; sendElementPreview(swatch.dataset.el, swatch.dataset.prop, swatch.value); });
+            textInput.addEventListener('input', () => { if (textInput.value.match(/^#[0-9a-f]{3,8}$/i)) { swatch.value = textInput.value; sendElementPreview(textInput.dataset.el, textInput.dataset.prop, textInput.value); } });
+          }
+        });
+
+        // Size inputs live preview
+        designPanel.querySelectorAll('input[type="text"]:not(.color-input-wrap input)').forEach(input => {
+          if (!input.dataset.el) return;
+          input.addEventListener('input', () => { sendElementPreview(input.dataset.el, input.dataset.prop, input.value); });
+        });
+      }
+
+      // ── Advanced Tab: Background, Spacing, Responsive ──
+      const advTabEl = document.getElementById('advanced-tab-content');
+      const modStyle = mod.style || {};
+      advTabEl.innerHTML = `
+        <div style="padding:12px">
+          <div class="shared-divider">Hintergrund</div>
+          <div class="field-group">
+            <label class="field-label">Hintergrundbild</label>
+            <input class="field-input" type="text" data-style-key="background_image" value="${modStyle.background_image || ''}" placeholder="URL oder Media Library" />
+          </div>
+          <div class="field-group" style="display:flex;gap:8px">
+            <div style="flex:1">
+              <label class="field-label">Hintergrundfarbe</label>
+              <input class="field-input" type="text" data-style-key="background_color" value="${modStyle.background_color || ''}" placeholder="#0a101f" />
+            </div>
+            <div style="flex:1">
+              <label class="field-label">Overlay</label>
+              <input class="field-input" type="text" data-style-key="background_overlay" value="${modStyle.background_overlay || ''}" placeholder="rgba(0,0,0,0.5)" />
+            </div>
+          </div>
+
+          <div class="shared-divider">Spacing</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div class="field-group">
+              <label class="field-label">Padding oben</label>
+              <input class="field-input" type="text" data-style-key="padding_top" value="${modStyle.padding_top || ''}" placeholder="24px" />
+            </div>
+            <div class="field-group">
+              <label class="field-label">Padding unten</label>
+              <input class="field-input" type="text" data-style-key="padding_bottom" value="${modStyle.padding_bottom || ''}" placeholder="24px" />
+            </div>
+            <div class="field-group">
+              <label class="field-label">Margin oben</label>
+              <input class="field-input" type="text" data-style-key="margin_top" value="${modStyle.margin_top || ''}" placeholder="0" />
+            </div>
+            <div class="field-group">
+              <label class="field-label">Margin unten</label>
+              <input class="field-input" type="text" data-style-key="margin_bottom" value="${modStyle.margin_bottom || ''}" placeholder="0" />
+            </div>
+          </div>
+
+          <div class="shared-divider">Responsive</div>
+          <div style="display:flex;gap:16px;padding:8px 0">
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-secondary);cursor:pointer">
+              <input type="checkbox" data-style-key="hide_mobile" ${modStyle.hide_mobile ? 'checked' : ''} /> Mobile ausblenden
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-secondary);cursor:pointer">
+              <input type="checkbox" data-style-key="hide_tablet" ${modStyle.hide_tablet ? 'checked' : ''} /> Tablet ausblenden
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-secondary);cursor:pointer">
+              <input type="checkbox" data-style-key="hide_desktop" ${modStyle.hide_desktop ? 'checked' : ''} /> Desktop ausblenden
+            </label>
+          </div>
+
+          <div class="shared-divider">Theme</div>
+          <div class="field-group">
+            <label class="field-label">Theme</label>
+            <select class="field-input" data-style-key="theme">
+              <option value="" ${!modStyle.theme ? 'selected' : ''}>Standard (dunkel)</option>
+              <option value="light" ${modStyle.theme === 'light' ? 'selected' : ''}>Hell (section-light)</option>
+            </select>
+          </div>
+          <div class="shared-divider">Versionierung</div>
+          <div id="snapshot-list" style="padding:4px 0"></div>
+        </div>
+      `;
+
+      // Attach media picker to background image
+      const bgInput = advTabEl.querySelector('[data-style-key="background_image"]');
+      if (bgInput) makeMediaInput(bgInput);
+
+      // Render snapshot restore list
+      const snapList = document.getElementById('snapshot-list');
+      const snaps = getSnapshots(mod.id);
+      if (snaps.length > 0) {
+        snapList.innerHTML = snaps.map((s, i) => {
+          const date = new Date(s.ts);
+          const timeStr = date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+          const dateStr = date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+          return `<button class="btn-sm" data-snap-idx="${i}" style="margin:2px 0;width:100%;text-align:left;font-size:11px">
+            &#8617; ${dateStr} ${timeStr}
+          </button>`;
+        }).join('');
+        snapList.querySelectorAll('[data-snap-idx]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const idx = parseInt(btn.dataset.snapIdx);
+            if (confirm('Version wiederherstellen? Aktuelle Änderungen gehen verloren.')) {
+              restoreSnapshot(mod.id, snaps[idx]);
+            }
+          });
+        });
+      } else {
+        snapList.innerHTML = '<p style="font-size:11px;color:var(--text-muted)">Noch keine Versionen. Nach dem ersten Speichern erscheinen hier Snapshots.</p>';
+      }
+
+      const toast = document.getElementById('save-toast');
+      toast.className = 'save-toast';
+      toast.style.display = 'none';
+
+      // Fetch actual computed colors from iframe for empty pickers
+      try {
+        const iframe = document.getElementById('preview');
+        iframe?.contentWindow?.postMessage({ type: 'nova-get-styles', moduleId: mod.id, elements: Object.keys(elements) }, '*');
+      } catch {}
+
+      // Send element preview to iframe
+      function sendElementPreview(elId, prop, value) {
+        const iframe = document.getElementById('preview');
+        if (!iframe) return;
+        iframe.contentWindow?.postMessage({
+          type: 'nova-preview-element',
+          elementId: elId,
+          props: { [prop]: value },
+        }, '*');
+      }
+
+      // ── Tiptap: init rich text editing on body/subtitle/description textareas ──
+      if (window.__tiptap) {
+        // Destroy previous instances
+        (window.__tiptapEditors || []).forEach(e => e.destroy());
+        window.__tiptapEditors = [];
+
+        const richFields = ['body_html', 'subtitle', 'body', 'description', 'teaser'];
+        // Wait for Tiptap to load (retry up to 3s instead of fixed 500ms)
+        function initTiptapEditors() {
+          if (!window.__tiptap) {
+            if (Date.now() - _tiptapWaitStart < 3000) { setTimeout(initTiptapEditors, 200); return; }
+            D('TIPTAP', 'Tiptap not loaded after 3s — skipping rich text init');
+            return;
+          }
+          document.querySelectorAll('#editor-fields textarea.field-input[data-key]').forEach(ta => {
+            const key = ta.dataset.key.replace(/_(es|en|de)$/, '');
+            if (richFields.some(f => key.includes(f)) || ta.value.includes('<') || ta.classList.contains('tiptap-target')) {
+              // Hide textarea, create editor container
+              ta.style.display = 'none';
+              const wrap = document.createElement('div');
+              wrap.className = 'tiptap-wrap';
+              ta.parentElement.appendChild(wrap);
+
+              // Toolbar
+              const toolbar = document.createElement('div');
+              toolbar.className = 'tiptap-toolbar';
+              toolbar.innerHTML = '<button data-cmd="h2" title="H2">H2</button><button data-cmd="h3" title="H3">H3</button><button data-cmd="h4" title="H4">H4</button><span class="sep"></span><button data-cmd="bold" title="Bold"><b>B</b></button><button data-cmd="italic" title="Italic"><i>I</i></button><span class="sep"></span><button data-cmd="bulletList" title="List">&#8226;</button><button data-cmd="orderedList" title="Numbered">1.</button><span class="sep"></span><button data-cmd="link" title="Link">&#128279;</button><button data-cmd="image" title="Image">&#128247;</button><span class="sep"></span><button data-cmd="code" title="HTML">&lt;/&gt;</button>';
+              wrap.appendChild(toolbar);
+
+              // Editor element
+              const editorEl = document.createElement('div');
+              editorEl.className = 'tiptap-editor';
+              wrap.appendChild(editorEl);
+
+              const { Editor, StarterKit, Link, Image } = window.__tiptap;
+              const editor = new Editor({
+                element: editorEl,
+                extensions: [
+                  StarterKit,
+                  Link.configure({ openOnClick: false }),
+                  Image,
+                ],
+                content: ta.value || '<p></p>',
+                onUpdate: ({ editor: ed }) => {
+                  ta.value = ed.getHTML();
+                },
+              });
+              window.__tiptapEditors.push(editor);
+
+              // Toolbar actions
+              let showingCode = false;
+              const codeArea = document.createElement('textarea');
+              codeArea.className = 'field-input tiptap-code';
+              codeArea.style.display = 'none';
+              wrap.appendChild(codeArea);
+
+              toolbar.querySelectorAll('button').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                  e.preventDefault();
+                  const cmd = btn.dataset.cmd;
+                  if (cmd === 'h2') editor.chain().focus().toggleHeading({ level: 2 }).run();
+                  else if (cmd === 'h3') editor.chain().focus().toggleHeading({ level: 3 }).run();
+                  else if (cmd === 'h4') editor.chain().focus().toggleHeading({ level: 4 }).run();
+                  else if (cmd === 'bold') editor.chain().focus().toggleBold().run();
+                  else if (cmd === 'italic') editor.chain().focus().toggleItalic().run();
+                  else if (cmd === 'bulletList') editor.chain().focus().toggleBulletList().run();
+                  else if (cmd === 'orderedList') editor.chain().focus().toggleOrderedList().run();
+                  else if (cmd === 'link') {
+                    const url = prompt('URL:');
+                    if (url) editor.chain().focus().setLink({ href: url }).run();
+                  }
+                  else if (cmd === 'image') {
+                    const src = prompt('Image URL:');
+                    if (src) editor.chain().focus().setImage({ src }).run();
+                  }
+                  else if (cmd === 'code') {
+                    showingCode = !showingCode;
+                    if (showingCode) {
+                      codeArea.value = editor.getHTML();
+                      codeArea.style.display = '';
+                      editorEl.style.display = 'none';
+                    } else {
+                      editor.commands.setContent(codeArea.value);
+                      ta.value = codeArea.value;
+                      codeArea.style.display = 'none';
+                      editorEl.style.display = '';
+                    }
+                  }
+                });
+              });
+            }
+          });
+        }
+        var _tiptapWaitStart = Date.now();
+        initTiptapEditors();
+      }
+    }
+
+    function switchLang(lang) {
+      activeLang = lang;
+      document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+      document.querySelectorAll('.lang-fields').forEach(c => c.classList.toggle('active', c.dataset.lang === lang));
+
+      // Also update preview iframe to show correct locale
+      const basePath = currentPagePath || '/';
+      const localePath = lang === 'es' ? basePath : `/${lang}${basePath}`;
+      const STANDALONE_PAGES = ['/kaufmich-demo'];
+      const previewUrl = STANDALONE_PAGES.includes(basePath) ? `${localePath}?nova_edit=1` : `/nova-preview${localePath}?nova_edit=1`;
+      document.getElementById('preview').src = previewUrl;
+    }
+
+    // ════════════ BACK / CANCEL ════════════
+    function cleanupAndBack() {
+      (window.__tiptapEditors || []).forEach(e => e.destroy());
+      window.__tiptapEditors = [];
+      document.querySelectorAll('.tiptap-wrap').forEach(w => w.remove());
+      renderModuleList();
+    }
+    document.getElementById('btn-back')?.addEventListener('click', cleanupAndBack);
+    document.getElementById('btn-cancel')?.addEventListener('click', cleanupAndBack);
+
+    // ════════════ SAVE ════════════
+    // ═══════════ SNAPSHOT SYSTEM ═══════════
+    function saveSnapshot(moduleId, content) {
+      try {
+        const key = `nova_snapshot_${pageId}_${moduleId}`;
+        const snapshots = JSON.parse(localStorage.getItem(key) || '[]');
+        snapshots.unshift({ ts: Date.now(), content: JSON.parse(JSON.stringify(content)) });
+        if (snapshots.length > 10) snapshots.length = 10; // max 10
+        localStorage.setItem(key, JSON.stringify(snapshots));
+        D('SNAPSHOT', `Saved snapshot for module ${moduleId}, total: ${snapshots.length}`);
+      } catch (e) { D('SNAPSHOT', 'Error saving:', e.message); }
+    }
+
+    function getSnapshots(moduleId) {
+      try {
+        const key = `nova_snapshot_${pageId}_${moduleId}`;
+        return JSON.parse(localStorage.getItem(key) || '[]');
+      } catch { return []; }
+    }
+
+    function restoreSnapshot(moduleId, snapshot) {
+      if (!editingModule || !snapshot?.content) return;
+      editingModule.content = snapshot.content;
+      // Re-open the editor to refresh fields
+      openModuleEditor(moduleId);
+      const toast = document.getElementById('save-toast');
+      toast.className = 'save-toast success';
+      toast.textContent = '\u21b6 Version wiederhergestellt — jetzt speichern!';
+      toast.style.display = '';
+      setTimeout(() => { toast.style.display = 'none'; }, 4000);
+    }
+
+    document.getElementById('btn-save')?.addEventListener('click', async () => {
+      if (!editingModule) return;
+      const btn = document.getElementById('btn-save');
+      const toast = document.getElementById('save-toast');
+      btn.disabled = true;
+      btn.textContent = 'Speichert...';
+
+      // Save snapshot BEFORE collecting new content
+      saveSnapshot(editingModule.id, editingModule.content);
+
+      // Sync Tiptap content back to textareas before collecting
+      (window.__tiptapEditors || []).forEach(ed => {
+        // Tiptap auto-syncs via onUpdate, but ensure latest
+      });
+
+      // Collect content (start with deep copy of original)
+      const updatedContent = JSON.parse(JSON.stringify(editingModule.content || {}));
+      document.querySelectorAll('#editor-fields [data-key]').forEach(input => {
+        updatedContent[input.dataset.key] = input.type === 'checkbox' ? String(input.checked) : input.value;
+      });
+
+      // Collect repeater data (generic array fields)
+      collectRepeaterData(updatedContent);
+      // Collect LogoTicker clients
+      collectLogoTickerData(updatedContent);
+
+      // Safety check: warn if content would become significantly emptier
+      const origKeys = Object.keys(editingModule.content || {}).length;
+      const newKeys = Object.keys(updatedContent).length;
+      if (origKeys > 3 && newKeys < origKeys * 0.5) {
+        if (!confirm(`Warnung: Content wird von ${origKeys} auf ${newKeys} Felder reduziert. Trotzdem speichern?`)) {
+          btn.disabled = false;
+          btn.textContent = 'Speichern';
+          return;
+        }
+      }
+
+      // Collect TeamGrid member edits (name, role, photo position)
+      if (updatedContent.members && Array.isArray(updatedContent.members)) {
+        document.querySelectorAll('.member-name').forEach(input => {
+          const idx = parseInt(input.dataset.idx);
+          if (updatedContent.members[idx]) updatedContent.members[idx].name = input.value;
+        });
+        document.querySelectorAll('.member-role').forEach(input => {
+          const idx = parseInt(input.dataset.idx);
+          if (updatedContent.members[idx]) {
+            updatedContent.members[idx].role_es = input.value;
+            updatedContent.members[idx].role_en = input.value;
+            updatedContent.members[idx].role_de = input.value;
+          }
+        });
+        document.querySelectorAll('.member-pos-slider').forEach(slider => {
+          const idx = parseInt(slider.dataset.idx);
+          if (updatedContent.members[idx]) {
+            updatedContent.members[idx].photo_position = 'center ' + slider.value + '%';
+          }
+        });
+      }
+
+      // Collect style from ALL tabs (Content, Style, Advanced)
+      const updatedStyle = { ...(editingModule.style || {}) };
+      document.querySelectorAll('#module-editor [data-style-key]').forEach(input => {
+        const val = input.type === 'checkbox' ? (input.checked ? 'true' : '') : input.value;
+        if (val) updatedStyle[input.dataset.styleKey] = val;
+        else delete updatedStyle[input.dataset.styleKey];
+      });
+
+      // Collect element design overrides from Style tab
+      const elementOverrides = {};
+      document.querySelectorAll('#module-editor [data-el][data-prop]').forEach(input => {
+        if (input.type === 'color') return; // use text input value
+        const elId = input.dataset.el;
+        const prop = input.dataset.prop;
+        if (input.value) {
+          if (!elementOverrides[elId]) elementOverrides[elId] = {};
+          elementOverrides[elId][prop] = input.value;
+        }
+      });
+
+      // Save element overrides on page sections
+      if (pageId && editingSection) {
+        editingSection.visual_overrides = Object.keys(elementOverrides).length
+          ? { elements: elementOverrides }
+          : undefined;
+        fetch(`/api/pages/${pageId}/sections`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sections: pageSections }),
+        });
+      }
+
+      try {
+        // Save revision BEFORE overwriting (auto-versioning)
+        if (pageId) {
+          fetch('/api/revisions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pageId }),
+          }).catch(() => {}); // fire-and-forget, don't block save
+        }
+
+        let res;
+
+        if (editingModule._detached && pageId) {
+          // Detached module: save content inline in page sections_json
+          // Virtual IDs are -(idx+1), so real index = |id| - 1
+          const realIdx = Math.abs(editingModule.id) - 1;
+          if (realIdx >= 0 && realIdx < pageSections.length && pageSections[realIdx].mode === 'detached') {
+            pageSections[realIdx].data = updatedContent;
+          }
+          res = await fetch(`/api/pages/${pageId}/sections`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sections: pageSections }),
+          });
+          // Also update the virtual module in allModules
+          const idx = allModules.findIndex(m => m.id === editingModule.id);
+          if (idx >= 0) allModules[idx].content = updatedContent;
+        } else {
+          // Linked module: save to WP module API
+          res = await fetch(`/api/modules/${editingModule.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: updatedContent, style: updatedStyle }),
+          });
+        }
+
+        if (res.ok) {
+          toast.className = 'save-toast success';
+          toast.textContent = '\u2713 Gespeichert! Rebuild l\u00e4uft...';
+          toast.style.display = 'block';
+          const idx = allModules.findIndex(m => m.id === editingModule.id);
+          if (idx >= 0) allModules[idx].content = updatedContent;
+
+          fetch('/api/rebuild', { method: 'POST' }).then(r => {
+            if (r.ok) {
+              toast.textContent = '\u2713 Gespeichert & live!';
+              document.getElementById('preview')?.contentWindow?.location.reload();
+            }
+          });
+        } else {
+          toast.className = 'save-toast error';
+          toast.textContent = 'Fehler beim Speichern';
+          toast.style.display = 'block';
+        }
+      } catch {
+        toast.className = 'save-toast error';
+        toast.textContent = 'Verbindungsfehler';
+        toast.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Speichern';
+      }
+    });
+
+    // ════════════ AI CHAT (Claude via OpenRouter SSE) ════════════
+    let chatHistory = [];
+    let isStreaming = false;
+
+    document.getElementById('chat-input')?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendChatMessage();
+      }
+    });
+
+    async function sendChatMessage() {
+      const input = document.getElementById('chat-input');
+      const msg = input.value.trim();
+      if (!msg || isStreaming) return;
+
+      const messagesEl = document.getElementById('chat-messages');
+      input.value = '';
+
+      // Add user message
+      messagesEl.innerHTML += `<div class="chat-msg user">${escapeHtml(msg)}</div>`;
+      chatHistory.push({ role: 'user', content: msg });
+
+      // Create assistant bubble for streaming
+      const assistantBubble = document.createElement('div');
+      assistantBubble.className = 'chat-msg assistant';
+      assistantBubble.textContent = '...';
+      messagesEl.appendChild(assistantBubble);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+
+      isStreaming = true;
+
+      try {
+        const res = await fetch('/api/ai/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: msg,
+            history: chatHistory.slice(-10), // last 10 messages for context
+            activeModule: editingModule || null,
+            context: {
+              pageId: pageId,
+              pageName: currentPageLabel || currentSlug || 'Unbekannt',
+              sections: pageSections.map(s => {
+                const mod = allModules.find(m => m.id === s.module_id);
+                return { type: s.type, component: mod?.component || s.type, title: mod?.title || s.type, id: s.module_id, module_id: s.module_id };
+              }),
+            },
+          }),
+        });
+
+        if (!res.ok) {
+          assistantBubble.textContent = 'Fehler: ' + (await res.json()).error;
+          isStreaming = false;
+          return;
+        }
+
+        // Read SSE stream
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let fullText = '';
+        assistantBubble.textContent = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split('\n');
+
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            const data = line.slice(6);
+            if (data === '[DONE]') continue;
+
+            try {
+              const parsed = JSON.parse(data);
+              const delta = parsed.choices?.[0]?.delta?.content;
+              if (delta) {
+                fullText += delta;
+                assistantBubble.innerHTML = formatChat(fullText);
+                messagesEl.scrollTop = messagesEl.scrollHeight;
+              }
+            } catch {}
+          }
+        }
+
+        chatHistory.push({ role: 'assistant', content: fullText });
+      } catch (err) {
+        assistantBubble.textContent = 'Verbindungsfehler';
+      }
+
+      isStreaming = false;
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    function rgbToHex(rgb) {
+      if (!rgb) return null;
+      if (rgb.startsWith('#')) return rgb;
+      const match = rgb.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+      if (!match) return null;
+      return '#' + [match[1], match[2], match[3]].map(x => parseInt(x).toString(16).padStart(2, '0')).join('');
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    // Store pending actions from AI responses
+    let pendingActions = [];
+
+    function formatChat(text) {
+      // Extract nova-action blocks BEFORE escaping
+      const actionRegex = /```nova-action\s*([\s\S]*?)```/g;
+      pendingActions = [];
+      const cleanText = text.replace(actionRegex, (match, json) => {
+        try {
+          const action = JSON.parse(json.trim());
+          const idx = pendingActions.length;
+          pendingActions.push(action);
+          return `\x00ACTION_${idx}\x00`;
+        } catch { return ''; }
+      });
+
+      // Escape HTML
+      let html = cleanText
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/`([^`]+)`/g, '<code style="background:rgba(255,255,255,0.06);padding:1px 4px;border-radius:3px;font-size:12px">$1</code>')
+        .replace(/\n/g, '<br>');
+
+      // Re-insert action buttons (using placeholder markers)
+      html = html.replace(/\x00ACTION_(\d+)\x00/g, (_, idx) => {
+        const action = pendingActions[parseInt(idx)];
+        if (!action) return '';
+        const hasPreview = ['update_design', 'update_style', 'update_element'].includes(action.action);
+        // Context-aware button labels
+        let label = '\u2713 Anwenden';
+        let icon = '';
+        if (action.action === 'create_module') { label = `\u2795 ${action.component} erstellen`; icon = '\ud83d\udce6'; }
+        else if (action.action === 'generate_image') { label = '\ud83c\udfa8 Bild generieren'; icon = ''; }
+        else if (action.action === 'delete_module') { label = '\ud83d\uddd1 Entfernen'; icon = ''; }
+        else if (action.action === 'translate_module') { label = '\ud83c\udf10 Übersetzen'; icon = ''; }
+        return `<div class="chat-action-row" style="margin-top:8px">${hasPreview ? `<button onclick="previewAction(${idx})" class="chat-action-btn chat-action-preview">\ud83d\udc41 Vorschau</button>` : ''}<button onclick="applyAction(${idx})" class="chat-action-btn chat-action-apply">${icon} ${label}</button></div>`;
+      });
+
+      return html;
+    }
+
+    window.previewAction = function(idx) {
+      const action = pendingActions[idx];
+      if (!action) return;
+      const btn = event.target;
+      const iframe = document.getElementById('preview');
+
+      if (btn.classList.contains('active')) {
+        btn.classList.remove('active');
+        btn.textContent = '\ud83d\udc41 Vorschau';
+        iframe?.contentWindow?.postMessage({ type: 'nova-revert-preview' }, '*');
+        return;
+      }
+
+      btn.classList.add('active');
+      btn.textContent = '\u21a9 Zur\u00fccksetzen';
+
+      if (action.action === 'update_element' && action.element_id && action.changes) {
+        iframe?.contentWindow?.postMessage({
+          type: 'nova-preview-element',
+          elementId: action.element_id,
+          props: action.changes,
+        }, '*');
+      } else if (action.action === 'update_design' && action.changes) {
+        iframe?.contentWindow?.postMessage({
+          type: 'nova-preview-element',
+          elementId: Object.keys(action.changes)[0],
+          props: action.changes,
+        }, '*');
+      }
+    };
+
+    window.applyAction = async function(idx) {
+      const action = pendingActions[idx];
+      if (!action) return;
+      const btn = event.target;
+      btn.disabled = true;
+      btn.textContent = 'Wird angewendet...';
+
+      try {
+        // Helper: save detached module changes via WP REST API (sections_json)
+        async function saveDetachedChanges(moduleId, changes, type) {
+          const sectionIdx = -(moduleId) - 1;
+          if (sectionIdx < 0 || sectionIdx >= pageSections.length) return false;
+          const section = pageSections[sectionIdx];
+          if (type === 'content') section.data = { ...(section.data || {}), ...changes };
+          else if (type === 'style') section.visual_overrides = { ...(section.visual_overrides || {}), ...changes };
+          try {
+            const res = await fetch(`http://cms.zds.es:8090/index.php/?rest_route=/wp/v2/pages/${pageId}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Host: 'cms.zds.es' },
+              body: JSON.stringify({ meta: { sections_json: JSON.stringify(pageSections) } }),
+            });
+            return res.ok;
+          } catch { return false; }
+        }
+
+        if ((action.action === 'update_module' || action.action === 'translate_module') && action.module_id && action.changes) {
+          // Detached module (negative ID) — save via page sections
+          if (action.module_id < 0) {
+            const mod = allModules.find(m => m.id === action.module_id);
+            if (mod) {
+              Object.assign(mod.content, action.changes);
+              const ok = await saveDetachedChanges(action.module_id, action.changes, 'content');
+              if (ok) {
+                btn.textContent = '\u2713 Angewendet!';
+                btn.style.background = 'rgba(34,197,94,0.2)';
+                btn.style.color = '#22c55e';
+                document.getElementById('preview')?.contentWindow?.location.reload();
+                return;
+              }
+            }
+          }
+          const mod = allModules.find(m => m.id === action.module_id);
+          if (mod) {
+            const updated = { ...mod.content, ...action.changes };
+            const res = await fetch(`/api/modules/${action.module_id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ content: updated }),
+            });
+            if (res.ok) {
+              mod.content = updated;
+              btn.textContent = '\u2713 Angewendet!';
+              btn.style.background = 'rgba(34,197,94,0.2)';
+              btn.style.color = '#22c55e';
+              document.getElementById('preview')?.contentWindow?.location.reload();
+              return;
+            }
+          }
+        } else if (action.action === 'update_element' && action.module_id && action.element_id && action.changes) {
+          // Element-level style change (button color, title size, etc.)
+          const section = pageSections.find(s => s.module_id === action.module_id);
+          if (section && pageId) {
+            if (!section.visual_overrides) section.visual_overrides = {};
+            if (!section.visual_overrides.elements) section.visual_overrides.elements = {};
+            section.visual_overrides.elements[action.element_id] = {
+              ...(section.visual_overrides.elements[action.element_id] || {}),
+              ...action.changes
+            };
+            await fetch(`/api/pages/${pageId}/sections`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ sections: pageSections }),
+            });
+            btn.textContent = '\u2713 Angewendet!';
+            btn.style.background = 'rgba(34,197,94,0.2)';
+            btn.style.color = '#22c55e';
+            document.getElementById('preview')?.contentWindow?.location.reload();
+            return;
+          }
+        } else if (action.action === 'update_style' && action.module_id && action.changes) {
+          if (action.module_id < 0) {
+            const ok = await saveDetachedChanges(action.module_id, action.changes, 'style');
+            if (ok) {
+              btn.textContent = '\u2713 Angewendet!';
+              btn.style.background = 'rgba(34,197,94,0.2)';
+              btn.style.color = '#22c55e';
+              document.getElementById('preview')?.contentWindow?.location.reload();
+              return;
+            }
+          }
+          const mod = allModules.find(m => m.id === action.module_id);
+          if (mod) {
+            const updated = { ...(mod.style || {}), ...action.changes };
+            await fetch(`/api/modules/${action.module_id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ style: updated }),
+            });
+            mod.style = updated;
+            btn.textContent = '\u2713 Angewendet!';
+            btn.style.background = 'rgba(34,197,94,0.2)';
+            btn.style.color = '#22c55e';
+            document.getElementById('preview')?.contentWindow?.location.reload();
+            return;
+          }
+        } else if (action.action === 'update_design' && action.module_id && action.changes) {
+          const section = pageSections.find(s => s.module_id === action.module_id);
+          if (section && pageId) {
+            section.visual_overrides = { ...(section.visual_overrides || {}), ...action.changes };
+            await fetch(`/api/pages/${pageId}/sections`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ sections: pageSections }),
+            });
+            btn.textContent = '\u2713 Angewendet!';
+            btn.style.background = 'rgba(34,197,94,0.2)';
+            btn.style.color = '#22c55e';
+            document.getElementById('preview')?.contentWindow?.location.reload();
+            return;
+          }
+        } else if (action.action === 'reorder_sections' && action.order) {
+          pageSections = action.order.map(id => pageSections.find(s => s.module_id === id)).filter(Boolean);
+          await fetch(`/api/pages/${pageId}/sections`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sections: pageSections }),
+          });
+          btn.textContent = '\u2713 Angewendet!';
+          btn.style.background = 'rgba(34,197,94,0.2)';
+          btn.style.color = '#22c55e';
+          renderModuleList();
+          document.getElementById('preview')?.contentWindow?.location.reload();
+          return;
+
+        } else if (action.action === 'create_module' && action.component && action.content) {
+          // PAGE BUILDER: Create new module + insert into page
+          btn.textContent = 'Erstelle Modul...';
+          const res = await fetch('/api/modules/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              title: action.title || `${action.component} (AI)`,
+              component: action.component,
+              content: action.content,
+              style: action.style || { theme: 'dark' },
+              pageId: action.pageId || pageId,
+              position: action.position,
+            }),
+          });
+          if (res.ok) {
+            const data = await res.json();
+            btn.textContent = `\u2713 Modul #${data.id} erstellt!`;
+            btn.style.background = 'rgba(34,197,94,0.2)';
+            btn.style.color = '#22c55e';
+            // Refresh module list and preview
+            await loadPageAndModules();
+            document.getElementById('preview')?.contentWindow?.location.reload();
+            return;
+          }
+
+        } else if (action.action === 'generate_image' && action.prompt) {
+          // IMAGE GENERATOR: Generate image via Gemini + optionally set on module/page
+          btn.textContent = 'Generiere Bild...';
+          const payload = { prompt: action.prompt };
+          if (action.pageId || pageId) payload.pageId = action.pageId || pageId;
+          if (action.set_featured) payload.pageId = action.pageId || pageId;
+          const res = await fetch('/api/media/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          if (res.ok) {
+            const data = await res.json();
+            // If targeting a module field, update the module
+            if (action.module_id && action.field) {
+              await fetch(`/api/modules/${action.module_id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: { [action.field]: data.url } }),
+              });
+            }
+            btn.textContent = `\u2713 Bild generiert!`;
+            btn.style.background = 'rgba(34,197,94,0.2)';
+            btn.style.color = '#22c55e';
+            document.getElementById('preview')?.contentWindow?.location.reload();
+            return;
+          }
+
+        } else if (action.action === 'delete_module' && action.module_id) {
+          // Remove module from page sections (don't delete from WP)
+          pageSections = pageSections.filter(s => s.module_id !== action.module_id);
+          await fetch(`/api/pages/${pageId}/sections`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sections: pageSections }),
+          });
+          btn.textContent = '\u2713 Entfernt!';
+          btn.style.background = 'rgba(34,197,94,0.2)';
+          btn.style.color = '#22c55e';
+          renderModuleList();
+          document.getElementById('preview')?.contentWindow?.location.reload();
+          return;
+        }
+        btn.textContent = 'Fehler';
+        btn.style.color = '#ef4444';
+      } catch {
+        btn.textContent = 'Fehler';
+        btn.style.color = '#ef4444';
+      }
+    };
+
+    // ════════════ SEO PANEL ════════════
+    async function loadSeoData() {
+      if (!pageId) return;
+      try {
+        const res = await fetch(`/api/pages/by-slug/${currentSlug || 'homepage'}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        // Load RankMath meta from WP
+        const wpRes = await fetch(`http://cms.zds.es:8090/index.php/?rest_route=/wp/v2/pages/${data.id}&_fields=meta,slug,title&_t=${Date.now()}`, {
+          headers: { Host: new URL('http://cms.zds.es:8090').host },
+        });
+        if (!wpRes.ok) return;
+        const wp = await wpRes.json();
+        const meta = wp.meta || {};
+        const seoTitle = meta.rank_math_title || wp.title?.rendered || '';
+        const seoDesc = meta.rank_math_description || '';
+        const focusKw = meta.rank_math_focus_keyword || '';
+        const slug = wp.slug || '';
+
+        document.getElementById('seo-title').value = seoTitle;
+        document.getElementById('seo-description').value = seoDesc;
+        document.getElementById('seo-keyword').value = focusKw;
+        document.getElementById('seo-slug').value = slug;
+        updateSeoPreview();
+      } catch(e) { D('SEO', 'load error:', e.message); }
+    }
+
+    function updateSeoPreview() {
+      const title = document.getElementById('seo-title').value || 'Seitentitel — ZDS';
+      const desc = document.getElementById('seo-description').value || 'Meta Description...';
+      const slug = document.getElementById('seo-slug').value || '';
+      document.getElementById('seo-preview-title').textContent = title;
+      document.getElementById('seo-preview-desc').textContent = desc;
+      document.getElementById('seo-preview-url').textContent = 'cms.zds.es › ' + (slug || '...');
+      // Character counts with color
+      const titleCount = document.getElementById('seo-title').value.length;
+      const descCount = document.getElementById('seo-description').value.length;
+      document.getElementById('seo-title-count').textContent = titleCount + '/60';
+      document.getElementById('seo-title-count').style.color = titleCount > 60 ? '#ef4444' : titleCount > 50 ? '#f59e0b' : '#22c55e';
+      document.getElementById('seo-desc-count').textContent = descCount + '/160';
+      document.getElementById('seo-desc-count').style.color = descCount > 160 ? '#ef4444' : descCount > 140 ? '#f59e0b' : '#22c55e';
+    }
+
+    // Live preview on input
+    ['seo-title', 'seo-description', 'seo-slug'].forEach(id => {
+      document.getElementById(id)?.addEventListener('input', updateSeoPreview);
+    });
+
+    // Save SEO data to RankMath via WP REST API
+    document.getElementById('seo-save')?.addEventListener('click', async () => {
+      if (!pageId) return;
+      const btn = document.getElementById('seo-save');
+      const toast = document.getElementById('seo-toast');
+      btn.disabled = true;
+      btn.textContent = 'Speichert...';
+      try {
+        const res = await fetch(`/api/pages/${pageId}/seo`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            rank_math_title: document.getElementById('seo-title').value,
+            rank_math_description: document.getElementById('seo-description').value,
+            rank_math_focus_keyword: document.getElementById('seo-keyword').value,
+            slug: document.getElementById('seo-slug').value,
+          }),
+        });
+        if (res.ok) {
+          toast.textContent = '\u2713 SEO gespeichert!';
+          toast.style.display = 'block';
+          setTimeout(() => { toast.style.display = 'none'; }, 3000);
+        }
+      } catch {}
+      btn.disabled = false;
+      btn.textContent = 'SEO speichern';
+    });
+
+    // Load SEO when switching to SEO tab
+    document.querySelector('[data-tab="seo"]')?.addEventListener('click', () => loadSeoData());
+
+    // ════════════ INIT ════════════
+    loadPageAndModules().then(() => {
+      const p = new URLSearchParams(window.location.search).get('page');
+      if (p && p !== '/') navigateToPage(p);
+    });
+
+    // ════════════ VERSIONS PANEL ════════════
+    document.getElementById('btn-versions')?.addEventListener('click', async () => {
+      const panel = document.getElementById('versions-panel');
+      const list = document.getElementById('versions-list');
+      if (panel.style.display === 'none') {
+        panel.style.display = 'block';
+        list.innerHTML = 'Lade Versionen...';
+        try {
+          const res = await fetch(`/api/revisions?pageId=${pageId}`);
+          const revisions = await res.json();
+          if (!revisions.length) {
+            list.innerHTML = '<p style="color:#64748b">Noch keine Versionen gespeichert. Nach dem nächsten Speichern erscheint hier die erste Version.</p>';
+            return;
+          }
+          list.innerHTML = revisions.map(r => `
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px;border-bottom:1px solid rgba(255,255,255,0.05)">
+              <div>
+                <div style="color:#e2e8f0;font-size:12px">${new Date(r.timestamp).toLocaleString('de-DE')}</div>
+                <div style="color:#64748b;font-size:11px">${r.sectionCount} Module · ${r.author}</div>
+              </div>
+              <button onclick="restoreRevision(${r.index})" style="background:#1e3a5f;color:#93c5fd;border:none;padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer">Wiederherstellen</button>
+            </div>
+          `).join('');
+        } catch { list.innerHTML = '<p style="color:#ef4444">Fehler beim Laden.</p>'; }
+      } else {
+        panel.style.display = 'none';
+      }
+    });
+
+    window.restoreRevision = async function(idx) {
+      if (!confirm('Version wiederherstellen? Die aktuelle Version wird vorher gesichert.')) return;
+      try {
+        const res = await fetch('/api/revisions', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pageId, revisionIndex: idx }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          alert('Version vom ' + new Date(data.restored).toLocaleString('de-DE') + ' wiederhergestellt!');
+          // Reload the page sections
+          location.reload();
+        } else {
+          alert('Fehler beim Wiederherstellen');
+        }
+      } catch { alert('Verbindungsfehler'); }
+    };
+
+    // ════════════ LISTEN FOR IFRAME MESSAGES ════════════
+    window.addEventListener('message', (e) => {
+      // Computed styles response from iframe — fill empty color pickers
+      if (e.data?.type === 'nova-styles-response' && e.data.styles) {
+        for (const [elId, styles] of Object.entries(e.data.styles)) {
+          for (const [prop, val] of Object.entries(styles)) {
+            // Find empty inputs for this element+prop
+            const inputs = document.querySelectorAll(`[data-el="${elId}"][data-prop="${prop}"]`);
+            const hex = rgbToHex(val);
+            inputs.forEach(input => {
+              if (input.type === 'color') {
+                // Always update swatch to show real color (unless user set a custom value)
+                const textSibling = input.parentElement?.querySelector('input[type="text"]');
+                if (!textSibling?.value && hex) input.value = hex;
+              } else {
+                // Text input: show as placeholder if empty
+                if (!input.value && hex) input.placeholder = hex;
+                else if (!input.value) input.placeholder = val;
+              }
+            });
+          }
+        }
+      }
+
+      // Navigation from preview iframe
+      if (e.data?.type === 'nova-navigate' && e.data.path) {
+        const path = e.data.path;
+        const select = document.getElementById('page-select');
+        // Check if this path is in our page map
+        if (select) {
+          const option = select.querySelector(`option[value="${path}"]`);
+          if (option) {
+            select.value = path;
+            navigateToPage(path);
+          } else {
+            // Unknown page — just load the iframe
+            document.getElementById('preview').src = `/nova-preview${path}?nova_edit=1`;
+          }
+        }
+      }
+
+      if (e.data?.type === 'nova-select-module' && e.data.moduleId) {
+        // Switch to modules tab
+        document.querySelectorAll('.sidebar-tab').forEach(t => t.classList.remove('active'));
+        document.querySelector('[data-tab="modules"]').classList.add('active');
+        ['modules', 'chat', 'seo'].forEach(id => {
+          const el = document.getElementById('tab-' + id);
+          if (el) el.style.display = id === 'modules' ? '' : 'none';
+        });
+        document.getElementById('chat-input-area').style.display = 'none';
+        openModuleEditor(e.data.moduleId);
+      }
+    });
+  </script>
+</body>
+</html>

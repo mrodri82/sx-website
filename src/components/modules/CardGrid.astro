@@ -1,0 +1,95 @@
+---
+import { t, tItems } from '@/lib/i18n';
+import type { Locale } from '@/lib/i18n';
+
+interface Props {
+  content: Record<string, unknown>;
+  style: Record<string, string>;
+  overrides?: Record<string, string>;
+  locale?: Locale;
+}
+
+const { content, style, overrides, locale = 'es' } = Astro.props;
+const theme = overrides?.theme || style?.theme || 'dark';
+
+const label = t(content, 'label', locale);
+const headline = t(content, 'headline', locale);
+const subtitle = t(content, 'subtitle', locale);
+const columns = parseInt(String(content.columns || '3')) || 3;
+const items = tItems((content.items as Record<string, unknown>[]) || [], locale);
+const ctaText = t(content, 'cta_text', locale);
+const ctaUrl = (content.cta_url as string) || '';
+
+const isLight = theme === 'light';
+const colClass = columns === 2 ? 'md:grid-cols-2' : columns === 4 ? 'sm:grid-cols-2 lg:grid-cols-4' : columns === 6 ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-6' : 'sm:grid-cols-2 lg:grid-cols-3';
+---
+
+<section data-nova-el="cardgrid-section" class={isLight ? 'section-light py-24' : 'py-24'}>
+  <div class="max-w-7xl mx-auto px-6">
+    {(label || headline) && (
+      <div class="mb-12">
+        {label && <p data-nova-el="cardgrid-label" data-animate="fade-up" class={`text-xs font-mono uppercase tracking-widest mb-4 ${isLight ? 'text-brand-700' : 'text-brand-400'}`}>{label}</p>}
+        {headline && <h2 data-nova-el="cardgrid-title" data-animate="fade-up" data-delay="0.1" class={`text-3xl sm:text-4xl lg:text-5xl font-display font-bold mb-4 ${isLight ? 'text-navy-900' : 'text-white'}`}>{headline}</h2>}
+        {subtitle && <p data-animate="fade-up" data-delay="0.2" class={`text-lg max-w-2xl ${isLight ? 'text-navy-700' : 'text-navy-400'}`}>{subtitle}</p>}
+      </div>
+    )}
+
+    <div class={`grid grid-cols-1 ${colClass} gap-6 mobile-slider`} data-stagger="0.05">
+      {items.map((item) => (
+        <div data-nova-el="cardgrid-card" data-animate="fade-up" class={`group rounded-xl overflow-hidden transition-all hover:shadow-xl ${isLight ? 'bg-white border border-gray-200 hover:border-gray-300' : 'bg-navy-800/30 border border-navy-700/30 hover:border-navy-600/50'}`}>
+          {item.image ? (
+            <div class="aspect-[4/3] overflow-hidden">
+              <img src={item.image} alt={item.title || ''} class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+            </div>
+          ) : item.icon ? (
+            <div class={`flex items-center justify-center py-6 ${isLight ? 'bg-gray-50' : 'bg-navy-800/50'}`}>
+              <i class={`${item.icon} text-3xl ${isLight ? 'text-brand-600' : 'text-brand-400'}`}></i>
+            </div>
+          ) : null}
+          <div class="p-5">
+            {item.badge && (
+              <span data-nova-el="cardgrid-badge" class={`inline-block text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full mb-2 ${isLight ? 'bg-brand-100 text-brand-700' : 'bg-brand-500/10 text-brand-400 border border-brand-500/20'}`}>
+                {item.badge}
+              </span>
+            )}
+            {item.title && (
+              <h3 data-nova-el="cardgrid-card-title" class={`font-display font-bold text-lg mb-1 ${isLight ? 'text-navy-900' : 'text-white'}`}>
+                {item.title}
+              </h3>
+            )}
+            {item.subtitle && (
+              <p class={`text-sm mb-2 ${isLight ? 'text-navy-700' : 'text-navy-400'}`}>{item.subtitle}</p>
+            )}
+            {item.desc && (
+              <p data-nova-el="cardgrid-card-text" class={`text-sm leading-relaxed ${isLight ? 'text-navy-700' : 'text-navy-400'}`}>{item.desc}</p>
+            )}
+            {item.rating && (
+              <div class="flex items-center gap-1 mt-2">
+                <span class="text-yellow-400 text-sm">{'★'.repeat(Math.floor(Number(item.rating)))}</span>
+                <span class={`text-xs ${isLight ? 'text-navy-700' : 'text-navy-400'}`}>{item.rating}</span>
+              </div>
+            )}
+            {item.price && (
+              <div class={`mt-2 font-display font-bold ${isLight ? 'text-brand-700' : 'text-brand-400'}`}>{item.price}</div>
+            )}
+            {item.href && (
+              <a href={item.href} class={`inline-flex items-center gap-1 text-xs mt-3 ${isLight ? 'text-brand-600' : 'text-brand-400'} hover:underline`}>
+                {item.link_text || 'Mehr erfahren'}
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+              </a>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+
+    {ctaText && (
+      <div data-animate="fade-up" class="mt-10 text-center">
+        <a data-nova-el="cardgrid-cta" href={ctaUrl || '#'} class={`inline-flex items-center gap-2 px-8 py-4 rounded-xl text-base font-medium transition-all hover:shadow-xl hover:-translate-y-0.5 ${isLight ? 'bg-navy-900 hover:bg-navy-800 text-white' : 'bg-brand-500 hover:bg-brand-600 text-white'}`}>
+          {ctaText}
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+        </a>
+      </div>
+    )}
+  </div>
+</section>

@@ -1,0 +1,45 @@
+---
+import { t, tItems } from '@/lib/i18n';
+import type { Locale } from '@/lib/i18n';
+
+interface Props {
+  content: Record<string, unknown>;
+  style: Record<string, string>;
+  overrides?: Record<string, string>;
+  locale?: Locale;
+}
+
+const { content, style, overrides, locale = 'es' } = Astro.props;
+const theme = overrides?.theme || style?.theme || 'light';
+
+const label = t(content, 'label', locale);
+const headline = t(content, 'headline', locale);
+const steps = tItems((content.steps as Record<string, unknown>[]) || [], locale);
+
+const isLight = theme === 'light';
+---
+
+<section data-nova-el="process-section" class={isLight ? 'section-light py-24' : 'py-24'}>
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="text-center mb-16">
+      <p data-nova-el="process-label" data-animate="fade-up" class={`text-xs font-mono uppercase tracking-widest mb-4 ${isLight ? 'text-brand-700' : 'text-brand-400'}`}>{label}</p>
+      <h2 data-nova-el="process-title" data-animate="fade-up" data-delay="0.1" class={`text-3xl sm:text-4xl lg:text-5xl font-display font-bold ${isLight ? 'text-navy-900' : 'text-white'}`}>
+        {headline}
+      </h2>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8" data-stagger="0.1">
+      {steps.map((item) => (
+        <div data-animate="fade-up" class="relative">
+          <div data-nova-el="process-step-number" class={`text-6xl font-display font-bold mb-4 ${isLight ? 'text-brand-500' : 'text-brand-400'}`}>{item.step}</div>
+          <h3 data-nova-el="process-step-title" class={`font-display font-bold text-xl mb-2 ${isLight ? 'text-navy-900' : 'text-white'}`}>
+            {item.title}
+          </h3>
+          <p data-nova-el="process-step-desc" class={`text-sm leading-relaxed ${isLight ? 'text-navy-700' : 'text-navy-300'}`}>
+            {item.desc}
+          </p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

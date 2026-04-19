@@ -1,0 +1,32 @@
+---
+import { t, tItems } from '@/lib/i18n';
+import type { Locale } from '@/lib/i18n';
+
+interface Props {
+  content: Record<string, unknown>;
+  style: Record<string, string>;
+  overrides?: Record<string, string>;
+  locale?: Locale;
+}
+
+const { content, style, overrides, locale = 'es' } = Astro.props;
+const items = tItems((content.items as Record<string, unknown>[]) || [], locale);
+---
+
+<section data-nova-el="stats-section" class="py-24">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-8" data-stagger="0.15">
+      {items.map((stat) => (
+        <div data-animate="fade-up" class="text-center">
+          <div data-nova-el="stats-value" class="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-2"
+               data-count-to={stat.value} data-count-suffix={stat.suffix}>
+            {stat.value}{stat.suffix}
+          </div>
+          <p data-nova-el="stats-label" class="text-sm text-navy-400 font-mono uppercase tracking-wider">
+            {stat.label}
+          </p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

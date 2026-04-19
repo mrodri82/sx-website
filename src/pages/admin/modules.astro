@@ -1,0 +1,405 @@
+---
+export const prerender = false;
+
+import { getTokenFromCookies, getSession } from '@/lib/auth';
+import { getModules } from '@/lib/wordpress';
+import { site } from '@/config/site';
+
+const token = getTokenFromCookies(Astro.request.headers.get('cookie'));
+const session = token ? getSession(token) : null;
+if (!session) return Astro.redirect('/admin/login');
+
+// Fetch all modules
+let allModules: any[] = [];
+try { allModules = await getModules(); } catch {}
+
+// Fetch all pages to build usage map
+const WP_URL = site.cmsUrl;
+const WP_USER = import.meta.env.WP_CMS_USER || '';
+const WP_PASS = import.meta.env.WP_CMS_APP_PASSWORD || '';
+const auth = WP_USER ? { Authorization: `Basic ${btoa(`${WP_USER}:${WP_PASS}`)}` } : {};
+
+let pages: any[] = [];
+try {
+  const res = await fetch(`${WP_URL}/index.php/?rest_route=/wp/v2/pages&per_page=100&_fields=id,slug,title,meta&_t=${Date.now()}`, {
+    headers: { Host: new URL(WP_URL).host, ...auth }, cache: 'no-store',
+  });
+  if (res.ok) pages = await res.json();
+} catch {}
+
+// Build usage map: module_id → page slugs (linked) OR component type → page slugs (detached)
+const usage = new Map<number, string[]>();
+const templateUsage = new Map<string, string[]>(); // component → pages using it (detached)
+for (const p of pages) {
+  const sj = p.meta?.sections_json || '';
+  if (!sj) continue;
+  try {
+    const sections = JSON.parse(sj);
+    for (const s of sections) {
+      if (s.module_id && s.mode !== 'detached') {
+        if (!usage.has(s.module_id)) usage.set(s.module_id, []);
+        usage.get(s.module_id)!.push(p.slug);
+      }
+      // Track detached usage by component type
+      if (s.mode === 'detached' && s.type) {
+        if (!templateUsage.has(s.type)) templateUsage.set(s.type, []);
+        if (!templateUsage.get(s.type)!.includes(p.slug)) {
+          templateUsage.get(s.type)!.push(p.slug);
+        }
+      }
+    }
+  } catch {}
+}
+
+// Group by component, sort alphabetically
+const byComponent = new Map<string, any[]>();
+for (const m of allModules) {
+  const comp = m.meta?.component || 'Unknown';
+  if (!byComponent.has(comp)) byComponent.set(comp, []);
+  const directUsage = usage.get(m.id) || [];
+  const typeUsage = templateUsage.get(comp) || [];
+  byComponent.get(comp)!.push({
+    id: m.id,
+    title: m.title?.rendered || '',
+    component: comp,
+    usedIn: directUsage.length > 0 ? directUsage : typeUsage,
+    isTemplate: true, // All remaining modules are templates after consolidation
+    isOrphan: false,
+    pagesUsingType: typeUsage.length,
+  });
+}
+
+const sortedComponents = [...byComponent.keys()].sort();
+const totalTemplates = allModules.length;
+const totalPagesWithContent = new Set([...templateUsage.values()].flat()).size;
+---
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Module Library — Nova</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'DM Sans', -apple-system, sans-serif;
+      background: #0a101f;
+      color: #e2e8f0;
+      min-height: 100vh;
+    }
+
+    .topbar {
+      background: #111827;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .topbar-logo { color: #3b82f6; font-weight: 700; font-size: 18px; }
+    .topbar-title { font-size: 14px; color: #94a3b8; }
+    .topbar-spacer { flex: 1; }
+    .topbar a {
+      font-size: 13px; color: #94a3b8; text-decoration: none;
+      padding: 6px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.08);
+    }
+    .topbar a:hover { color: #e2e8f0; background: rgba(255,255,255,0.04); }
+
+    .stats {
+      display: flex; gap: 24px; padding: 20px 24px; background: #111827;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .stat { text-align: center; }
+    .stat-value { font-size: 28px; font-weight: 700; color: #3b82f6; }
+    .stat-label { font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    .filters {
+      padding: 16px 24px; display: flex; gap: 8px; flex-wrap: wrap;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .filter-btn {
+      font-size: 12px; padding: 5px 12px; border-radius: 6px; cursor: pointer;
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+      color: #94a3b8; font-family: inherit;
+    }
+    .filter-btn:hover { color: #e2e8f0; background: rgba(255,255,255,0.08); }
+    .filter-btn.active { color: #3b82f6; border-color: #3b82f6; background: rgba(59,130,246,0.1); }
+
+    .search-input {
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 6px; padding: 5px 12px; color: #e2e8f0; font-size: 13px;
+      font-family: inherit; width: 200px;
+    }
+    .search-input:focus { outline: none; border-color: #3b82f6; }
+
+    .content { padding: 24px; max-width: 1600px; margin: 0 auto; }
+
+    .component-group {
+      margin-bottom: 40px;
+    }
+
+    .component-header {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 16px;
+      padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .component-name {
+      font-size: 18px; font-weight: 700; color: #e2e8f0;
+    }
+    .component-count {
+      font-size: 11px; color: #64748b; background: rgba(255,255,255,0.06);
+      padding: 2px 8px; border-radius: 10px; font-family: 'JetBrains Mono', monospace;
+    }
+
+    .module-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 12px;
+    }
+
+    .module-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 10px;
+      overflow: hidden;
+      transition: all 0.15s ease;
+      display: flex;
+      flex-direction: column;
+    }
+    .module-card:hover { border-color: rgba(255,255,255,0.12); }
+    .module-card.orphan { border-color: rgba(239,68,68,0.3); }
+
+    /* Thumbnail image */
+    .module-thumb {
+      width: 100%;
+      aspect-ratio: 3 / 2;
+      overflow: hidden;
+      background: #0a101f;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      cursor: zoom-in;
+    }
+    .module-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top center;
+    }
+
+    .module-info {
+      padding: 10px 12px;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .module-id {
+      font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #64748b;
+      background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px;
+      min-width: 36px; text-align: center; flex-shrink: 0;
+    }
+    .module-title {
+      font-size: 13px; font-weight: 600; color: #e2e8f0;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1;
+    }
+
+    .module-pages {
+      font-size: 11px; color: #64748b; display: flex; gap: 4px; flex-wrap: wrap; flex-shrink: 0;
+    }
+    .page-tag {
+      background: rgba(59,130,246,0.1); color: #3b82f6;
+      padding: 1px 6px; border-radius: 4px; font-size: 10px;
+    }
+    .orphan-tag {
+      background: rgba(239,68,68,0.15); color: #ef4444;
+      padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 600;
+    }
+
+    .module-actions {
+      display: flex; gap: 6px; flex-shrink: 0;
+    }
+    .btn-sm {
+      font-size: 11px; padding: 3px 8px; border-radius: 4px; cursor: pointer;
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+      color: #94a3b8; font-family: inherit;
+    }
+    .btn-sm:hover { color: #e2e8f0; background: rgba(255,255,255,0.1); }
+    .btn-sm.delete { color: #ef4444; border-color: rgba(239,68,68,0.3); }
+    .btn-sm.delete:hover { background: rgba(239,68,68,0.15); }
+
+    /* Zoom modal */
+    .zoom-overlay {
+      display: none; position: fixed; inset: 0; z-index: 9999;
+      background: rgba(0,0,0,0.85); cursor: zoom-out;
+      align-items: center; justify-content: center;
+    }
+    .zoom-overlay.open { display: flex; }
+    .zoom-overlay iframe {
+      width: 90vw; height: 85vh; border: none; border-radius: 12px;
+      background: #0a101f;
+    }
+    .zoom-label {
+      position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
+      font-size: 14px; color: #94a3b8; background: rgba(17,24,39,0.95);
+      padding: 6px 16px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08); z-index: 10000;
+    }
+    .zoom-label strong { color: #3b82f6; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <span class="topbar-logo">Nova</span>
+    <span class="topbar-title">Module Library</span>
+    <div class="topbar-spacer"></div>
+    <a href="/admin/live/homepage">Editor</a>
+    <a href="/admin/modules">Refresh</a>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-value">{totalTemplates}</div><div class="stat-label">Templates</div></div>
+    <div class="stat"><div class="stat-value">{sortedComponents.length}</div><div class="stat-label">Modul-Typen</div></div>
+    <div class="stat"><div class="stat-value">{totalPagesWithContent}</div><div class="stat-label">Seiten mit Content</div></div>
+  </div>
+
+  <div class="filters">
+    <button class="filter-btn active" data-filter="all">Alle Templates</button>
+    <input type="text" class="search-input" id="search" placeholder="Suche nach Name oder ID..." />
+  </div>
+
+  <div class="content" id="module-list">
+    {sortedComponents.map(comp => {
+      const modules = byComponent.get(comp)!.sort((a: any, b: any) => a.title.localeCompare(b.title));
+      const orphanCount = modules.filter((m: any) => m.isOrphan).length;
+      return (
+        <div class="component-group" data-component={comp}>
+          <div class="component-header">
+            <span class="component-name">{comp}</span>
+            <span class="component-count">{modules.length}</span>
+            {(templateUsage.get(comp) || []).length > 0 && <span class="component-count" style="color:#22c55e">auf {(templateUsage.get(comp) || []).length} Seiten</span>}
+          </div>
+          <div class="module-grid">
+            {modules.map((m: any) => (
+              <div class={`module-card ${m.isOrphan ? 'orphan' : ''}`} data-id={m.id} data-orphan={m.isOrphan}>
+                <div class="module-thumb" data-zoom-id={m.id}>
+                  <img src={`/module-thumbs/${m.id}.jpg`} alt={m.title} loading="lazy" />
+                </div>
+                <div class="module-info">
+                  <span class="module-id">#{m.id}</span>
+                  <span class="module-title" title={m.title}>{m.title}</span>
+                  <span class="page-tag" style="background:rgba(34,197,94,0.1);color:#22c55e">TEMPLATE</span>
+                </div>
+                <div class="module-info" style="padding-top:0">
+                  <div class="module-pages">
+                    {!m.isOrphan && m.usedIn.slice(0, 3).map((slug: string) => <span class="page-tag">{slug}</span>)}
+                    {m.usedIn.length > 3 && <span class="page-tag">+{m.usedIn.length - 3}</span>}
+                  </div>
+                  <div class="module-actions" style="margin-left:auto">
+                    {m.pagesUsingType > 0 && <span style="font-size:10px;color:#64748b">{m.pagesUsingType} Seiten</span>}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    })}
+  </div>
+
+  <!-- Zoom Modal -->
+  <div class="zoom-overlay" id="zoom-overlay">
+    <div class="zoom-label" id="zoom-label"></div>
+  </div>
+
+  <script>
+    // Filter
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const filter = btn.dataset.filter;
+        document.querySelectorAll('.module-card').forEach(card => {
+          const isOrphan = card.dataset.orphan === 'true';
+          card.style.display =
+            filter === 'all' ? '' :
+            filter === 'used' ? (isOrphan ? 'none' : '') :
+            filter === 'orphan' ? (isOrphan ? '' : 'none') : '';
+        });
+        // Hide empty groups
+        document.querySelectorAll('.component-group').forEach(g => {
+          const visible = g.querySelectorAll('.module-card:not([style*="display: none"])').length;
+          g.style.display = visible > 0 ? '' : 'none';
+        });
+      });
+    });
+
+    // Search
+    document.getElementById('search').addEventListener('input', (e) => {
+      const q = e.target.value.toLowerCase();
+      document.querySelectorAll('.module-card').forEach(card => {
+        const title = card.querySelector('.module-title').textContent.toLowerCase();
+        const id = card.dataset.id;
+        card.style.display = (!q || title.includes(q) || id.includes(q)) ? '' : 'none';
+      });
+      document.querySelectorAll('.component-group').forEach(g => {
+        const visible = g.querySelectorAll('.module-card:not([style*="display: none"])').length;
+        g.style.display = visible > 0 ? '' : 'none';
+      });
+    });
+
+    // Click thumbnail → zoom modal
+    document.querySelectorAll('.module-thumb').forEach(thumb => {
+      thumb.addEventListener('click', () => {
+        const id = thumb.dataset.zoomId;
+        const card = thumb.closest('.module-card');
+        const title = card.querySelector('.module-title')?.textContent || '';
+        const overlay = document.getElementById('zoom-overlay');
+        const label = document.getElementById('zoom-label');
+        label.innerHTML = `<strong>#${id}</strong> ${title}`;
+        // Remove old iframe if any
+        const old = overlay.querySelector('iframe');
+        if (old) old.remove();
+        const iframe = document.createElement('iframe');
+        iframe.src = `/admin/module-preview?id=${id}`;
+        overlay.appendChild(iframe);
+        overlay.classList.add('open');
+      });
+    });
+
+    // Close zoom
+    document.getElementById('zoom-overlay').addEventListener('click', (e) => {
+      if (e.target.tagName === 'IFRAME') return;
+      const overlay = document.getElementById('zoom-overlay');
+      overlay.classList.remove('open');
+      const iframe = overlay.querySelector('iframe');
+      if (iframe) iframe.remove();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        const overlay = document.getElementById('zoom-overlay');
+        overlay.classList.remove('open');
+        const iframe = overlay.querySelector('iframe');
+        if (iframe) iframe.remove();
+      }
+    });
+
+    // Delete orphan
+    document.querySelectorAll('[data-delete-id]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.deleteId;
+        if (!confirm(`Modul #${id} wirklich löschen?`)) return;
+        btn.textContent = '...';
+        try {
+          const res = await fetch(`/api/modules/${id}`, { method: 'DELETE' });
+          if (res.ok) {
+            btn.closest('.module-card').remove();
+          } else {
+            alert('Fehler beim Löschen');
+          }
+        } catch { alert('Netzwerkfehler'); }
+      });
+    });
+  </script>
+</body>
+</html>

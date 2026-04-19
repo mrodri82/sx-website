@@ -1,0 +1,64 @@
+---
+/**
+ * SX Festival — Footer
+ *
+ * Matches sxtech.eu: dark, logo + social left, contact form middle,
+ * links right; imprint row at bottom.
+ */
+import { site } from '@/config/site';
+const year = new Date().getFullYear();
+---
+
+<footer class="bg-black text-white border-t border-white/5 pt-16 pb-8">
+  <div class="max-w-[1600px] mx-auto px-6">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
+      {/* Left: Logo + Social */}
+      <div>
+        <div class="text-white font-black text-xs uppercase tracking-tight leading-tight mb-4">
+          <span class="block">sxfestival</span>
+          <span class="block">expo</span>
+          <span class="block text-brand-500">berlin</span>
+        </div>
+        <div class="flex gap-3 items-center text-white/70">
+          <a href="https://instagram.com/sxtecheu" target="_blank" rel="noopener" aria-label="Instagram" class="hover:text-brand-500 transition-colors">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.2c3.2 0 3.58.01 4.85.07 3.25.15 4.77 1.69 4.92 4.92.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.15 3.22-1.66 4.77-4.92 4.92-1.27.06-1.65.07-4.85.07s-3.58-.01-4.85-.07c-3.26-.15-4.77-1.7-4.92-4.92C2.17 15.58 2.16 15.2 2.16 12s.01-3.58.07-4.85C2.38 3.88 3.89 2.37 7.15 2.22 8.42 2.16 8.8 2.15 12 2.15zm0-2.15C8.74 0 8.33.01 7.05.07 2.7.27.27 2.69.07 7.05.01 8.33 0 8.74 0 12s.01 3.67.07 4.95c.2 4.36 2.62 6.78 6.98 6.98 1.28.06 1.69.07 4.95.07s3.67-.01 4.95-.07c4.35-.2 6.78-2.62 6.98-6.98.06-1.28.07-1.69.07-4.95s-.01-3.67-.07-4.95c-.2-4.35-2.62-6.78-6.98-6.98C15.67.01 15.26 0 12 0zm0 5.84a6.16 6.16 0 1 0 0 12.32 6.16 6.16 0 0 0 0-12.32zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.4-11.85a1.44 1.44 0 1 0 0 2.88 1.44 1.44 0 0 0 0-2.88z"/></svg>
+          </a>
+          <a href={site.linkedinUrl} target="_blank" rel="noopener" aria-label="LinkedIn" class="hover:text-brand-500 transition-colors">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.03-1.85-3.03-1.85 0-2.13 1.45-2.13 2.94v5.66H9.36V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.44a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13zm1.78 13.01H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.72v20.56C0 23.23.79 24 1.77 24h20.44c.99 0 1.78-.77 1.78-1.72V1.72C24 .77 23.21 0 22.22 0z"/></svg>
+          </a>
+        </div>
+      </div>
+
+      {/* Middle: Contact Form */}
+      <div>
+        <h3 class="text-xs font-bold uppercase tracking-widest text-white/70 mb-4">Contact Us</h3>
+        <form action={`mailto:${site.contactEmail}`} method="post" enctype="text/plain" class="space-y-3">
+          <input type="text" name="name" placeholder="NAME" class="w-full bg-white text-black px-4 py-2 text-sm font-bold uppercase tracking-wider placeholder-black/40" required />
+          <input type="email" name="email" placeholder="YOUR EMAIL" class="w-full bg-white text-black px-4 py-2 text-sm font-bold uppercase tracking-wider placeholder-black/40" required />
+          <button type="submit" class="sx-btn text-xs">SEND TO US</button>
+        </form>
+      </div>
+
+      {/* Right: Links + Imprint */}
+      <div>
+        <ul class="space-y-2 mb-6 text-xs font-bold uppercase tracking-wider">
+          <li><a href="/media-apply" class="text-brand-500 hover:text-white transition-colors">MEDIA APPLY</a></li>
+          <li><a href="/media-kit" class="text-brand-500 hover:text-white transition-colors">MEDIA KIT 2026</a></li>
+          <li><a href="/cfp-form" class="text-brand-500 hover:text-white transition-colors">SPEAKERS CFP</a></li>
+          <li><a href="/brand-ambassadors" class="text-brand-500 hover:text-white transition-colors">BRAND AMBASSADORS</a></li>
+        </ul>
+        <div class="text-[10px] text-white/60 uppercase tracking-wider leading-relaxed">
+          <strong class="text-white">IMPRINT</strong><br />
+          {site.legalName} HRB 2584 19 B6<br />
+          {site.streetAddress},<br />
+          Potsdamer Platz, {site.city} {site.postalCode}
+        </div>
+      </div>
+    </div>
+
+    <div class="border-t border-white/10 pt-6 flex flex-col md:flex-row items-center justify-between gap-3 text-[10px] uppercase tracking-wider text-white/40">
+      <p>&copy; {year} all rights reserved</p>
+      <p>copy by sxtecheu</p>
+    </div>
+  </div>
+</footer>

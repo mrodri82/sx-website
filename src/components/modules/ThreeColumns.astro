@@ -1,0 +1,92 @@
+---
+import { t, tItems } from '@/lib/i18n';
+import type { Locale } from '@/lib/i18n';
+
+interface Props {
+  content: Record<string, unknown>;
+  style: Record<string, string>;
+  overrides?: Record<string, string>;
+  locale?: Locale;
+}
+
+const { content, style, overrides, locale = 'es' } = Astro.props;
+const theme = overrides?.theme || style?.theme || 'dark';
+
+const sectionLabel = t(content, 'section_label', locale);
+const sectionSublabel = (content.section_sublabel as string) || '';
+const headline = t(content, 'headline', locale);
+const subtitle = t(content, 'subtitle', locale);
+const footerLinkText = t(content, 'footer_link_text', locale);
+const footerLinkUrl = (content.footer_link_url as string) || '';
+const items = tItems((content.items as Record<string, unknown>[]) || [], locale);
+
+const headlineLines = headline.split('\n');
+---
+
+<section data-nova-el="columns-section" class="py-24 relative">
+  {theme === 'dark' && (
+    <div class="absolute inset-0 bg-gradient-to-b from-transparent via-brand-500/[0.02] to-transparent"></div>
+  )}
+  <div class="max-w-7xl mx-auto px-6 relative z-10">
+    <div class="max-w-2xl mb-16">
+      {sectionSublabel ? (
+        <div data-animate="fade-up" class="flex items-center gap-3 mb-4">
+          <p data-nova-el="columns-label" class="text-xs font-mono text-navy-400 uppercase tracking-widest">{sectionLabel}</p>
+          <span class="text-[10px] font-mono text-navy-300 bg-navy-800 px-2 py-0.5 rounded">{sectionSublabel}</span>
+        </div>
+      ) : (
+        <p data-nova-el="columns-label" data-animate="fade-up" class="text-xs font-mono text-brand-400 uppercase tracking-widest mb-4">{sectionLabel}</p>
+      )}
+      <h2 data-nova-el="columns-title" data-animate="fade-up" data-delay="0.1" class="text-3xl sm:text-4xl lg:text-5xl font-display font-bold mb-6">
+        {headlineLines.map((line, i) => (
+          <>{i > 0 && <br />}{line}</>
+        ))}
+      </h2>
+      <p data-nova-el="columns-subtitle" data-animate="fade-up" data-delay="0.2" class="text-navy-400 text-lg leading-relaxed">
+        {subtitle}
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mobile-slider" data-stagger="0.08">
+      {items.map((svc) => {
+        const hasLink = (svc.href || svc.url) && (svc.href || svc.url) !== '#';
+        const Tag = hasLink ? 'a' : 'div';
+        return (
+        <Tag data-nova-el="columns-card" href={hasLink ? (svc.href || svc.url) : undefined}
+           data-animate="fade-up"
+           class="glass-card group relative rounded-2xl p-8">
+          {svc.tag && (
+            <span class="absolute top-4 right-4 text-[10px] font-mono font-bold uppercase tracking-wider bg-brand-500/10 text-brand-400 px-2.5 py-1 rounded-full border border-brand-500/20">
+              {svc.tag}
+            </span>
+          )}
+          {svc.icon && (
+            <i class={`${svc.icon} text-2xl text-brand-400 mb-4 block`}></i>
+          )}
+          <h3 data-nova-el="columns-card-title" class={`font-display font-bold text-white text-xl mb-3 ${hasLink ? 'group-hover:text-brand-400' : ''} transition-colors`}>
+            {svc.title}
+          </h3>
+          <p data-nova-el="columns-card-text" class="text-sm text-navy-400 leading-relaxed">
+            {svc.desc}
+          </p>
+          {hasLink && (
+          <div class="mt-6 flex items-center gap-1 text-xs text-brand-400 opacity-0 group-hover:opacity-100 transition-opacity">
+            <span>Saber m&aacute;s</span>
+            <svg class="w-3 h-3 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+          </div>
+          )}
+        </Tag>
+        );
+      })}
+    </div>
+
+    {footerLinkText && (
+      <div data-animate="fade-up" class="mt-8 text-center">
+        <a href={footerLinkUrl} class="inline-flex items-center gap-2 text-sm text-navy-300 hover:text-brand-400 transition-colors">
+          {footerLinkText}
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+        </a>
+      </div>
+    )}
+  </div>
+</section>

@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wow Module Prototype — Tabs, Counters, Before/After, Expandable Cards</title>
+<style>
+  :root { --bg: #0d1117; --surface: #161b22; --surface2: #1c2128; --border: #30363d; --text: #e6edf3; --text-muted: #8b949e; --text-dim: #484f58; --accent: #2f81f7; --accent-dim: rgba(47,129,247,0.15); --green: #3fb950; --orange: #d29922; --teal: #39d2c0; --radius: 8px; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', -apple-system, sans-serif; max-width: 800px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 20px; text-align: center; margin-bottom: 4px; }
+  .sub { text-align: center; font-size: 12px; color: var(--text-muted); margin-bottom: 24px; }
+  .module { margin-bottom: 32px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .module-header { padding: 12px 16px; background: var(--accent-dim); border-bottom: 1px solid var(--border); }
+  .module-header h2 { font-size: 14px; color: var(--accent); }
+  .module-header p { font-size: 11px; color: var(--text-muted); }
+  .module-body { padding: 20px; }
+  .label { font-size: 10px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+
+  /* ═══ 1. TABBED CONTENT ═══ */
+  .tabs { display: flex; border-bottom: 2px solid var(--border); margin-bottom: 16px; overflow-x: auto; scrollbar-width: none; gap: 0; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { padding: 10px 16px; font-size: 13px; font-weight: 600; color: var(--text-dim); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; white-space: nowrap; transition: all 0.2s; background: none; border-top: none; border-left: none; border-right: none; }
+  .tab:hover { color: var(--text-muted); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .tab-content h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+  .tab-content p { font-size: 13px; color: var(--text-muted); line-height: 1.6; margin-bottom: 10px; }
+  .tab-content ul { padding-left: 16px; margin-bottom: 10px; }
+  .tab-content li { font-size: 13px; color: var(--text-muted); line-height: 1.6; margin-bottom: 4px; }
+  .tab-content li strong { color: var(--text); }
+  .tab-link { color: var(--accent); font-size: 13px; text-decoration: none; font-weight: 600; }
+  .tab-link:hover { text-decoration: underline; }
+  .tab-img { width: 100%; height: 140px; object-fit: cover; border-radius: var(--radius); margin-bottom: 12px; }
+
+  /* ═══ 2. ANIMATED COUNTERS ═══ */
+  .counters { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  @media (max-width: 600px) { .counters { grid-template-columns: repeat(2, 1fr); } }
+  .counter { text-align: center; padding: 20px 12px; background: var(--surface2); border-radius: var(--radius); border: 1px solid var(--border); }
+  .counter-value { font-size: 36px; font-weight: 800; font-family: 'DM Sans', sans-serif; background: linear-gradient(135deg, var(--accent), var(--teal)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .counter-label { font-size: 11px; color: var(--text-muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .counter-change { font-size: 11px; color: var(--green); margin-top: 2px; }
+
+  /* ═══ 3. BEFORE/AFTER SLIDER ═══ */
+  .ba-container { position: relative; border-radius: var(--radius); overflow: hidden; aspect-ratio: 16/9; cursor: col-resize; }
+  .ba-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .ba-after { clip-path: inset(0 0 0 50%); transition: clip-path 0.1s; }
+  .ba-handle { position: absolute; top: 0; bottom: 0; left: 50%; width: 4px; background: var(--accent); transform: translateX(-50%); z-index: 2; transition: left 0.1s; }
+  .ba-handle::before { content: '◀▶'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--accent); color: #fff; font-size: 10px; padding: 6px 8px; border-radius: 20px; white-space: nowrap; }
+  .ba-label { position: absolute; top: 12px; padding: 4px 12px; font-size: 11px; font-weight: 600; border-radius: 20px; z-index: 1; }
+  .ba-label-before { left: 12px; background: rgba(248,81,73,0.9); color: #fff; }
+  .ba-label-after { right: 12px; background: rgba(63,185,80,0.9); color: #fff; }
+
+  /* ═══ 4. EXPANDABLE CARDS ═══ */
+  .expand-cards { display: flex; flex-direction: column; gap: 8px; }
+  .expand-card { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; transition: all 0.3s; }
+  .expand-card:hover { border-color: rgba(47,129,247,0.3); }
+  .expand-card.open { border-color: var(--accent); }
+  .expand-head { padding: 14px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; }
+  .expand-head:hover { background: rgba(255,255,255,0.02); }
+  .expand-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .expand-head-text { flex: 1; }
+  .expand-head-title { font-size: 14px; font-weight: 600; }
+  .expand-head-sub { font-size: 11px; color: var(--text-muted); }
+  .expand-arrow { color: var(--text-dim); font-size: 12px; transition: transform 0.3s; }
+  .expand-card.open .expand-arrow { transform: rotate(180deg); color: var(--accent); }
+  .expand-body { display: none; padding: 0 16px 16px; font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+  .expand-card.open .expand-body { display: block; animation: fadeIn 0.3s ease; }
+
+  /* ═══ 5. INTERACTIVE COMPARISON ═══ */
+  .compare-toggle { display: flex; background: var(--surface2); border-radius: 8px; padding: 3px; margin-bottom: 16px; }
+  .compare-opt { flex: 1; padding: 8px; text-align: center; font-size: 13px; font-weight: 600; cursor: pointer; border-radius: 6px; color: var(--text-muted); transition: all 0.2s; }
+  .compare-opt.active { background: var(--accent); color: #fff; }
+  .compare-table { width: 100%; font-size: 13px; border-collapse: collapse; }
+  .compare-table th { text-align: left; padding: 8px 12px; color: var(--text-dim); font-size: 11px; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+  .compare-table td { padding: 10px 12px; border-bottom: 1px solid rgba(48,54,61,0.5); }
+  .compare-table .check { color: var(--green); }
+  .compare-table .cross { color: var(--text-dim); }
+  .compare-table .highlight { color: var(--accent); font-weight: 600; }
+
+  /* ═══ 6. MINI WIDGETS 2-GRID ═══ */
+  .widget-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  @media (min-width: 600px) { .widget-grid { grid-template-columns: repeat(3, 1fr); } }
+  .widget { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; text-align: center; transition: all 0.2s; cursor: pointer; }
+  .widget:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(47,129,247,0.1); }
+  .widget-emoji { font-size: 28px; margin-bottom: 8px; }
+  .widget-name { font-size: 12px; font-weight: 700; margin-bottom: 2px; }
+  .widget-desc { font-size: 10px; color: var(--text-dim); }
+</style>
+</head>
+<body>
+
+<h1>Wow Module Prototypes</h1>
+<p class="sub">Interaktive Module die viel Content kompakt und visuell zeigen</p>
+
+<!-- ═══ 1. TABBED CONTENT ═══ -->
+<div class="module">
+  <div class="module-header">
+    <h2>1. Tabbed Content — 9 Services auf 1 Screen</h2>
+    <p>Statt 9 Cards untereinander: Tabs. Jeder Tab hat Bild + Text + Link. Klick = neuer Inhalt, gleicher Platz.</p>
+  </div>
+  <div class="module-body">
+    <div class="label">Nuestros servicios SEO</div>
+    <div class="tabs" id="tabs1">
+      <button class="tab active" onclick="switchTab('tabs1','t1a',this)">GEO</button>
+      <button class="tab" onclick="switchTab('tabs1','t1b',this)">Tecnico</button>
+      <button class="tab" onclick="switchTab('tabs1','t1c',this)">Internacional</button>
+      <button class="tab" onclick="switchTab('tabs1','t1d',this)">Local</button>
+      <button class="tab" onclick="switchTab('tabs1','t1e',this)">E-Commerce</button>
+      <button class="tab" onclick="switchTab('tabs1','t1f',this)">Linkbuilding</button>
+    </div>
+    <div class="tab-panel active" id="t1a">
+      <div class="tab-content">
+        <img class="tab-img" src="https://cms.zds.es/wp-content/uploads/2026/03/ai-seo-fabricantes-b2b-1.png" />
+        <h3>GEO — Generative Engine Optimization</h3>
+        <p>Posiciona tu marca en las respuestas de ChatGPT, Gemini, Perplexity y Claude. La nueva frontera del SEO.</p>
+        <ul>
+          <li><strong>AI Visibility Tracker</strong> — monitoriza menciones en 6+ modelos</li>
+          <li><strong>Content para LLMs</strong> — optimizado para ser citado</li>
+          <li><strong>Digital PR</strong> — autoridad que los LLMs reconocen</li>
+        </ul>
+        <a href="/servicios-geo" class="tab-link">Mas sobre GEO →</a>
+      </div>
+    </div>
+    <div class="tab-panel" id="t1b">
+      <div class="tab-content">
+        <h3>SEO Tecnico</h3>
+        <p>Arquitectura, Core Web Vitals, crawl budget, indexacion. La base tecnica que Google exige.</p>
+        <ul>
+          <li><strong>Auditoria tecnica completa</strong></li>
+          <li><strong>Core Web Vitals</strong> — LCP, FID, CLS</li>
+          <li><strong>Schema Markup</strong> avanzado</li>
+        </ul>
+        <a href="/servicios-seo-tecnico" class="tab-link">Mas sobre SEO Tecnico →</a>
+      </div>
+    </div>
+    <div class="tab-panel" id="t1c">
+      <div class="tab-content">
+        <h3>SEO Internacional</h3>
+        <p>14+ idiomas, hreflang, localizacion. No es traducir — es adaptar al mercado local.</p>
+        <ul>
+          <li><strong>Hreflang</strong> correcto desde el dia 1</li>
+          <li><strong>Redactores nativos</strong> en cada idioma</li>
+          <li><strong>Estrategia por mercado</strong> (DACH, UK, Latam)</li>
+        </ul>
+        <a href="/servicios-seo-internacional" class="tab-link">Mas sobre SEO Internacional →</a>
+      </div>
+    </div>
+    <div class="tab-panel" id="t1d">
+      <div class="tab-content">
+        <h3>SEO Local</h3>
+        <p>Google Business Profile, resenas, local pack. Para negocios con presencia fisica.</p>
+        <a href="/servicios-seo-local" class="tab-link">Mas sobre SEO Local →</a>
+      </div>
+    </div>
+    <div class="tab-panel" id="t1e">
+      <div class="tab-content">
+        <h3>SEO E-Commerce</h3>
+        <p>Fichas de producto, categorias, Google Shopping. Shopify, WooCommerce, Magento.</p>
+        <a href="/servicios-seo-ecommerce" class="tab-link">Mas sobre SEO E-Commerce →</a>
+      </div>
+    </div>
+    <div class="tab-panel" id="t1f">
+      <div class="tab-content">
+        <h3>Linkbuilding & Offpage</h3>
+        <p>Digital PR, contenido linkable, outreach manual. Solo white hat.</p>
+        <a href="/servicios-linkbuilding" class="tab-link">Mas sobre Linkbuilding →</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 2. ANIMATED COUNTERS ═══ -->
+<div class="module">
+  <div class="module-header">
+    <h2>2. Animated Counters — Zahlen die zaehlen</h2>
+    <p>Gradient-Zahlen mit Animation. 2er Grid auf Mobile, 4er auf Desktop.</p>
+  </div>
+  <div class="module-body">
+    <div class="label">Resultados reales</div>
+    <div class="counters">
+      <div class="counter">
+        <div class="counter-value">+340%</div>
+        <div class="counter-label">AI Mentions</div>
+        <div class="counter-change">in 3 Monaten</div>
+      </div>
+      <div class="counter">
+        <div class="counter-value">#1</div>
+        <div class="counter-label">Google Position</div>
+        <div class="counter-change">+ KI-Box</div>
+      </div>
+      <div class="counter">
+        <div class="counter-value">87%</div>
+        <div class="counter-label">Sentimiento</div>
+        <div class="counter-change">positiv</div>
+      </div>
+      <div class="counter">
+        <div class="counter-value">47</div>
+        <div class="counter-label">Citaciones</div>
+        <div class="counter-change">Perplexity</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 3. EXPANDABLE ACCORDION CARDS ═══ -->
+<div class="module">
+  <div class="module-header">
+    <h2>3. Expandable Cards — Viel Content, wenig Platz</h2>
+    <p>Wie FAQ aber fuer Services. Klick = Details ausklappen. Icon + Kurzbeschreibung immer sichtbar.</p>
+  </div>
+  <div class="module-body">
+    <div class="label">15+ GEO Aktivitaeten</div>
+    <div class="expand-cards">
+      <div class="expand-card open" onclick="this.classList.toggle('open')">
+        <div class="expand-head">
+          <div class="expand-icon" style="background:var(--accent-dim);color:var(--accent)">&#129302;</div>
+          <div class="expand-head-text">
+            <div class="expand-head-title">AI Crawler Optimization</div>
+            <div class="expand-head-sub">Deine Inhalte fuer KI-Crawler sichtbar machen</div>
+          </div>
+          <div class="expand-arrow">&#9660;</div>
+        </div>
+        <div class="expand-body">
+          Konfiguration von <strong>LLMs.txt</strong>, Schema Markup, strukturierte Daten und semantische HTML-Struktur. Wir stellen sicher, dass ChatGPT, Gemini und Perplexity deine Inhalte korrekt crawlen, verstehen und zitieren koennen. Inklusive Monitoring ob deine Seiten im Training-Dataset der Modelle erscheinen.
+        </div>
+      </div>
+      <div class="expand-card" onclick="this.classList.toggle('open')">
+        <div class="expand-head">
+          <div class="expand-icon" style="background:rgba(63,185,80,0.15);color:var(--green)">&#128200;</div>
+          <div class="expand-head-text">
+            <div class="expand-head-title">Share of Voice Monitoring</div>
+            <div class="expand-head-sub">Deine Marke vs Wettbewerber in KI-Antworten</div>
+          </div>
+          <div class="expand-arrow">&#9660;</div>
+        </div>
+        <div class="expand-body">
+          Wie oft erwaehnt ChatGPT deine Marke vs Wettbewerber? Wir tracken <strong>Share of Voice</strong> ueber alle relevanten Prompts und Modelle. Monatliche Reports mit Trends, Sentiment-Analyse und konkreten Handlungsempfehlungen.
+        </div>
+      </div>
+      <div class="expand-card" onclick="this.classList.toggle('open')">
+        <div class="expand-head">
+          <div class="expand-icon" style="background:rgba(210,153,34,0.15);color:var(--orange)">&#128221;</div>
+          <div class="expand-head-text">
+            <div class="expand-head-title">LLM Content Strategy</div>
+            <div class="expand-head-sub">Inhalte die KI-Modelle zitieren WOLLEN</div>
+          </div>
+          <div class="expand-arrow">&#9660;</div>
+        </div>
+        <div class="expand-body">
+          Nicht jeder Content wird von LLMs zitiert. Wir erstellen <strong>authoritative, zitierbare Inhalte</strong>: Studien, Datenpunkte, klare Definitionen und Expert Commentary. Jeder Abschnitt ist so strukturiert, dass er als eigenstaendige Antwort funktioniert.
+        </div>
+      </div>
+      <div class="expand-card" onclick="this.classList.toggle('open')">
+        <div class="expand-head">
+          <div class="expand-icon" style="background:rgba(57,210,192,0.15);color:var(--teal)">&#127760;</div>
+          <div class="expand-head-text">
+            <div class="expand-head-title">Digital PR fuer AI Authority</div>
+            <div class="expand-head-sub">Medien-Praesenz die LLMs als Quelle nutzen</div>
+          </div>
+          <div class="expand-arrow">&#9660;</div>
+        </div>
+        <div class="expand-body">
+          LLMs zitieren bevorzugt anerkannte Quellen. Wir platzieren deine Expertise in <strong>Fachmedien, Blogs und Nachrichtenportalen</strong> — nicht fuer Backlinks, sondern fuer <strong>AI Authority</strong>. Je oefter du in vertrauenswuerdigen Quellen erscheinst, desto oefter zitiert die KI dich.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 4. MINI WIDGETS 2-GRID ═══ -->
+<div class="module">
+  <div class="module-header">
+    <h2>4. Mini Widget Grid — 6 Plattformen kompakt</h2>
+    <p>2er Grid auf Mobile, 3er auf Desktop. Hover-Effekt. Kein Slider noetig.</p>
+  </div>
+  <div class="module-body">
+    <div class="label">Optimizamos para todas las plataformas IA</div>
+    <div class="widget-grid">
+      <div class="widget">
+        <div class="widget-emoji">&#128172;</div>
+        <div class="widget-name">ChatGPT</div>
+        <div class="widget-desc">OpenAI — Conversational</div>
+      </div>
+      <div class="widget">
+        <div class="widget-emoji">&#129504;</div>
+        <div class="widget-name">Gemini</div>
+        <div class="widget-desc">Google — AI Overviews</div>
+      </div>
+      <div class="widget">
+        <div class="widget-emoji">&#128269;</div>
+        <div class="widget-name">Perplexity</div>
+        <div class="widget-desc">AI Search + Sources</div>
+      </div>
+      <div class="widget">
+        <div class="widget-emoji">&#129302;</div>
+        <div class="widget-name">Claude</div>
+        <div class="widget-desc">Anthropic — Enterprise</div>
+      </div>
+      <div class="widget">
+        <div class="widget-emoji">&#128187;</div>
+        <div class="widget-name">Copilot</div>
+        <div class="widget-desc">Microsoft — Bing + Office</div>
+      </div>
+      <div class="widget">
+        <div class="widget-emoji">&#128279;</div>
+        <div class="widget-name">Meta AI</div>
+        <div class="widget-desc">WhatsApp + Instagram</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 5. INTERACTIVE COMPARISON ═══ -->
+<div class="module">
+  <div class="module-header">
+    <h2>5. Toggle Comparison — SEO vs GEO vs Beides</h2>
+    <p>Vergleich mit Toggle statt statischer Tabelle. User waehlt Perspektive.</p>
+  </div>
+  <div class="module-body">
+    <div class="compare-toggle" id="ct1">
+      <div class="compare-opt active" onclick="switchCompare('ct1',0,this)">Solo SEO</div>
+      <div class="compare-opt" onclick="switchCompare('ct1',1,this)">Solo GEO</div>
+      <div class="compare-opt" onclick="switchCompare('ct1',2,this)">SEO + GEO</div>
+    </div>
+    <table class="compare-table">
+      <thead><tr><th>Metric</th><th>Ergebnis</th></tr></thead>
+      <tbody id="ct1-body">
+        <tr><td>Google Organic Traffic</td><td class="check">&#10003; Stark</td></tr>
+        <tr><td>AI Mentions (ChatGPT etc.)</td><td class="cross">&#10007; Keine</td></tr>
+        <tr><td>Local Pack</td><td class="check">&#10003; Ja</td></tr>
+        <tr><td>AI Overview / KI-Box</td><td class="cross">&#10007; Zufall</td></tr>
+        <tr><td>Langfristiger ROI</td><td class="check">&#10003; Hoch</td></tr>
+        <tr><td>Zero-Click Protection</td><td class="cross">&#10007; Nein</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  function switchTab(tabsId, panelId, btn) {
+    const parent = btn.closest('.module-body');
+    parent.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    parent.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(panelId).classList.add('active');
+  }
+
+  const compareData = [
+    // Solo SEO
+    [['Google Organic Traffic','check','✓ Stark'],['AI Mentions','cross','✗ Keine'],['Local Pack','check','✓ Ja'],['AI Overview','cross','✗ Zufall'],['Langfristiger ROI','check','✓ Hoch'],['Zero-Click Protection','cross','✗ Nein']],
+    // Solo GEO
+    [['Google Organic Traffic','cross','✗ Kein Fokus'],['AI Mentions','check','✓ Stark'],['Local Pack','cross','✗ Nein'],['AI Overview','check','✓ Gezielt'],['Langfristiger ROI','check','✓ Wachsend'],['Zero-Click Protection','check','✓ Ja']],
+    // SEO + GEO
+    [['Google Organic Traffic','highlight','★ Maximum'],['AI Mentions','highlight','★ Maximum'],['Local Pack','check','✓ Ja'],['AI Overview','highlight','★ Gezielt + Organisch'],['Langfristiger ROI','highlight','★ Maximaler ROI'],['Zero-Click Protection','highlight','★ Komplett']],
+  ];
+
+  function switchCompare(id, idx, btn) {
+    btn.parentElement.querySelectorAll('.compare-opt').forEach(o => o.classList.remove('active'));
+    btn.classList.add('active');
+    const body = document.getElementById(id + '-body');
+    body.innerHTML = compareData[idx].map(r => '<tr><td>'+r[0]+'</td><td class="'+r[1]+'">'+r[2]+'</td></tr>').join('');
+  }
+</script>
+
+</body>
+</html>

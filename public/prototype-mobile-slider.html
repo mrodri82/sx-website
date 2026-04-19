@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mobile Slider Prototype — Cards vs Slider</title>
+<style>
+  :root { --bg: #0d1117; --surface: #161b22; --border: #30363d; --text: #e6edf3; --text-muted: #8b949e; --accent: #2f81f7; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', -apple-system, sans-serif; padding: 20px; max-width: 420px; margin: 0 auto; }
+  h1 { font-size: 18px; text-align: center; margin-bottom: 8px; }
+  .subtitle { text-align: center; font-size: 12px; color: var(--text-muted); margin-bottom: 24px; }
+  .section { margin-bottom: 32px; }
+  .section-label { font-size: 10px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+  .section-title { font-size: 16px; font-weight: 700; margin-bottom: 12px; }
+  .section-note { font-size: 11px; color: var(--text-muted); margin-bottom: 12px; padding: 6px 10px; background: rgba(47,129,247,0.08); border-radius: 6px; border: 1px solid rgba(47,129,247,0.15); }
+
+  /* ═══ OPTION A: Normal Stack (current) ═══ */
+  .stack .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 20px; margin-bottom: 12px;
+  }
+  .stack .card-img { width: 100%; height: 140px; object-fit: cover; border-radius: 8px; margin-bottom: 12px; }
+  .stack .card-title { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+  .stack .card-desc { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+
+  /* ═══ OPTION B: Swipe Slider (scroll-snap) ═══ */
+  .slider-wrap { position: relative; margin: 0 -20px; }
+  .slider {
+    display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory;
+    padding: 0 20px 16px; -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .slider::-webkit-scrollbar { display: none; }
+  .slider .card {
+    flex: 0 0 280px; scroll-snap-align: start;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 16px; min-height: 200px;
+  }
+  .slider .card-img { width: 100%; height: 120px; object-fit: cover; border-radius: 8px; margin-bottom: 10px; }
+  .slider .card-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+  .slider .card-desc { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
+  /* Scroll indicators */
+  .slider-dots { display: flex; justify-content: center; gap: 6px; margin-top: 4px; }
+  .slider-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); }
+  .slider-dot.active { background: var(--accent); }
+  /* Fade edges */
+  .slider-wrap::after { content: ''; position: absolute; top: 0; right: 0; bottom: 16px; width: 40px; background: linear-gradient(to right, transparent, var(--bg)); pointer-events: none; }
+
+  /* ═══ OPTION C: Compact Mini-Cards (no slider needed) ═══ */
+  .mini-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .mini-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px; text-align: center;
+  }
+  .mini-card .icon { font-size: 24px; margin-bottom: 8px; }
+  .mini-card .mini-title { font-size: 12px; font-weight: 700; margin-bottom: 2px; }
+  .mini-card .mini-desc { font-size: 10px; color: var(--text-muted); }
+
+  /* ═══ OPTION D: Adaptive — slider ONLY when cards are tall ═══ */
+  .adaptive { display: flex; flex-direction: column; gap: 12px; }
+  /* CSS check: if card has image (tall), switch to slider */
+  .adaptive.has-images {
+    flex-direction: row; overflow-x: auto; scroll-snap-type: x mandatory;
+    margin: 0 -20px; padding: 0 20px 12px;
+    scrollbar-width: none;
+  }
+  .adaptive.has-images::-webkit-scrollbar { display: none; }
+  .adaptive.has-images .card { flex: 0 0 280px; scroll-snap-align: start; }
+
+  .verdict { margin-top: 8px; padding: 10px; font-size: 11px; color: var(--text-muted); background: rgba(47,129,247,0.05); border: 1px solid rgba(47,129,247,0.15); border-radius: 6px; line-height: 1.5; }
+  .verdict strong { color: var(--accent); }
+
+  .divider { height: 1px; background: var(--border); margin: 24px 0; }
+
+  .tag { display: inline-block; font-size: 9px; padding: 2px 8px; border-radius: 3px; font-weight: 600; margin-left: 4px; }
+  .tag-red { background: rgba(248,81,73,0.15); color: #f85149; }
+  .tag-green { background: rgba(63,185,80,0.15); color: #3fb950; }
+  .tag-blue { background: rgba(47,129,247,0.15); color: #60a5fa; }
+  .tag-purple { background: rgba(168,85,247,0.15); color: #c084fc; }
+</style>
+</head>
+<body>
+
+<h1>Mobile Cards: Stack vs Slider</h1>
+<p class="subtitle">Scrolle durch die 4 Optionen. Am besten auf dem Handy testen.</p>
+
+<!-- ═══ A: NORMAL STACK ═══ -->
+<div class="section">
+  <div class="section-label">Option A <span class="tag tag-red">Aktuell</span></div>
+  <div class="section-title">Vertikaler Stack (grosse Cards mit Bild)</div>
+  <div class="section-note">Problem: 3 Cards mit Bildern = 900px+ vertikaler Platz. User muss endlos scrollen.</div>
+
+  <div class="stack">
+    <div class="card">
+      <img class="card-img" src="https://cms.zds.es/wp-content/uploads/2026/03/ai-seo-fabricantes-b2b-1.png" alt="" />
+      <div class="card-title">SHK / HVAC</div>
+      <div class="card-desc">Calefaccion, sanitario, climatizacion. ETIM, catalogos, B2B. Experiencia con mayoristas en DACH y Espana.</div>
+    </div>
+    <div class="card">
+      <img class="card-img" src="https://cms.zds.es/wp-content/uploads/2026/03/ai-seo-hoteles-competir-booking-1.png" alt="" />
+      <div class="card-title">Turismo & Hotels</div>
+      <div class="card-desc">Hotels, OTAs, destinos. SEO multiidioma, Schema, Local SEO. Competir contra Booking y Expedia.</div>
+    </div>
+    <div class="card">
+      <img class="card-img" src="https://cms.zds.es/wp-content/uploads/2026/03/ai-seo-ecommerce-guia-2026-1.png" alt="" />
+      <div class="card-title">Retail & E-Commerce</div>
+      <div class="card-desc">Tiendas online, marketplaces, D2C. SEO de producto, Google Shopping, Amazon.</div>
+    </div>
+  </div>
+  <div class="verdict"><strong>Verdict:</strong> Viel zu lang. 3 Cards = fast 3 Bildschirme scrollen. User verliert den Uberblick.</div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ═══ B: SWIPE SLIDER ═══ -->
+<div class="section">
+  <div class="section-label">Option B <span class="tag tag-green">Empfohlen fur grosse Cards</span></div>
+  <div class="section-title">Swipe Slider (grosse Cards mit Bild)</div>
+  <div class="section-note">Gleiche Cards, aber horizontal swipebar. Spart 600px+ vertikalen Platz. Fade-Edge zeigt "mehr kommt".</div>
+
+  <div class="slider-wrap">
+    <div class="slider">
+      <div class="card">
+        <img class="card-img" src="https://cms.zds.es/wp-content/uploads/2026/03/ai-seo-fabricantes-b2b-1.png" alt="" />
+        <div class="card-title">SHK / HVAC</div>
+        <div class="card-desc">Calefaccion, sanitario, climatizacion. ETIM, catalogos, B2B.</div>
+      </div>
+      <div class="card">
+        <img class="card-img" src="https://cms.zds.es/wp-content/uploads/2026/03/ai-seo-hoteles-competir-booking-1.png" alt="" />
+        <div class="card-title">Turismo & Hotels</div>
+        <div class="card-desc">Hotels, OTAs, destinos. SEO multiidioma, Schema, Local SEO.</div>
+      </div>
+      <div class="card">
+        <img class="card-img" src="https://cms.zds.es/wp-content/uploads/2026/03/ai-seo-ecommerce-guia-2026-1.png" alt="" />
+        <div class="card-title">Retail & E-Commerce</div>
+        <div class="card-desc">Tiendas online, marketplaces, D2C. Google Shopping, Amazon.</div>
+      </div>
+    </div>
+    <div class="slider-dots"><div class="slider-dot active"></div><div class="slider-dot"></div><div class="slider-dot"></div></div>
+  </div>
+  <div class="verdict"><strong>Verdict:</strong> Spart 2/3 des vertikalen Platzes. Swipe ist auf Mobile nativ. Fade-Edge signalisiert "mehr". Dots zeigen Position.</div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ═══ C: MINI CARDS ═══ -->
+<div class="section">
+  <div class="section-label">Option C <span class="tag tag-blue">Fur kleine Widgets</span></div>
+  <div class="section-title">2-Spalten Mini Grid (ohne Bilder)</div>
+  <div class="section-note">Fur kompakte Cards ohne Bilder. Kein Slider notig — passt alles auf einen Screen.</div>
+
+  <div class="mini-grid">
+    <div class="mini-card">
+      <div class="icon">&#128172;</div>
+      <div class="mini-title">ChatGPT</div>
+      <div class="mini-desc">Conversational AI</div>
+    </div>
+    <div class="mini-card">
+      <div class="icon">&#129504;</div>
+      <div class="mini-title">Gemini</div>
+      <div class="mini-desc">Google AI</div>
+    </div>
+    <div class="mini-card">
+      <div class="icon">&#128269;</div>
+      <div class="mini-title">Perplexity</div>
+      <div class="mini-desc">AI Search</div>
+    </div>
+    <div class="mini-card">
+      <div class="icon">&#128187;</div>
+      <div class="mini-title">Claude</div>
+      <div class="mini-desc">Anthropic</div>
+    </div>
+    <div class="mini-card">
+      <div class="icon">&#128421;</div>
+      <div class="mini-title">Copilot</div>
+      <div class="mini-desc">Microsoft</div>
+    </div>
+    <div class="mini-card">
+      <div class="icon">&#128279;</div>
+      <div class="mini-title">Meta AI</div>
+      <div class="mini-desc">WhatsApp, IG</div>
+    </div>
+  </div>
+  <div class="verdict"><strong>Verdict:</strong> Perfekt fur Icon-basierte Widgets. Kompakt, alles sichtbar, kein Scrollen notig. Kein Slider.</div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ═══ D: ADAPTIVE ═══ -->
+<div class="section">
+  <div class="section-label">Option D <span class="tag tag-purple">Smart Hybrid</span></div>
+  <div class="section-title">Adaptive: Auto-Slider ab Hohe X</div>
+  <div class="section-note">CSS-Regel: Wenn Card-Container hoher als ~250px wird (= hat Bilder), automatisch Slider. Sonst Stack/Grid.</div>
+
+  <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;font-weight:600">Kleine Cards → Grid bleiben:</div>
+  <div class="mini-grid" style="margin-bottom:16px">
+    <div class="mini-card">
+      <div class="icon">&#9881;</div>
+      <div class="mini-title">SEO Tecnico</div>
+    </div>
+    <div class="mini-card">
+      <div class="icon">&#127758;</div>
+      <div class="mini-title">SEO Internacional</div>
+    </div>
+    <div class="mini-card">
+      <div class="icon">&#128205;</div>
+      <div class="mini-title">SEO Local</div>
+    </div>
+    <div class="mini-card">
+      <div class="icon">&#128722;</div>
+      <div class="mini-title">E-Commerce</div>
+    </div>
+  </div>
+
+  <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;font-weight:600">Grosse Cards (mit Bild) → Auto-Slider:</div>
+  <div class="slider-wrap">
+    <div class="slider">
+      <div class="card">
+        <img class="card-img" src="https://cms.zds.es/wp-content/uploads/2026/03/ai-seo-fabricantes-b2b-1.png" alt="" />
+        <div class="card-title">Industria & B2B</div>
+        <div class="card-desc">Fabricantes, distribuidores, ingenieria. Ciclos de venta largos donde la IA es el nuevo Google.</div>
+      </div>
+      <div class="card">
+        <img class="card-img" src="https://cms.zds.es/wp-content/uploads/2026/03/ai-seo-hoteles-competir-booking-1.png" alt="" />
+        <div class="card-title">Turismo</div>
+        <div class="card-desc">Hotels, OTAs, destinos. GEO posiciona tu hotel en respuestas de IA.</div>
+      </div>
+      <div class="card">
+        <img class="card-img" src="https://cms.zds.es/wp-content/uploads/2026/03/ai-seo-ecommerce-guia-2026-1.png" alt="" />
+        <div class="card-title">SaaS & Tech</div>
+        <div class="card-desc">CTOs evaluan herramientas via ChatGPT. Visibilidad en IA = pipeline.</div>
+      </div>
+    </div>
+    <div class="slider-dots"><div class="slider-dot active"></div><div class="slider-dot"></div><div class="slider-dot"></div></div>
+  </div>
+
+  <div class="verdict"><strong>Verdict:</strong> Das Beste aus beiden Welten. Eine CSS-Regel entscheidet automatisch: kleine Cards → Grid, grosse Cards (Bilder/Teamfotos) → Slider. Kein manuelles Umschalten.</div>
+</div>
+
+<div class="divider"></div>
+
+<div style="padding:16px;background:var(--surface);border-radius:10px;border:1px solid var(--border);margin-top:16px">
+  <div style="font-size:14px;font-weight:700;color:var(--accent);margin-bottom:8px">Empfehlung</div>
+  <div style="font-size:12px;color:var(--text-muted);line-height:1.6">
+    <strong style="color:var(--text)">Option D (Adaptive)</strong> implementieren:<br>
+    <code style="font-size:11px;color:var(--accent)">@media (max-width: 768px)</code> — Cards mit Bildern oder Hohe &gt; 200px → horizontaler <code>scroll-snap</code> Slider.<br>
+    Kleine Icon-Cards → 2-Spalten Grid.<br><br>
+    Betrifft: ThreeColumns, CardGrid, FeatureList, TeamGrid.<br>
+    Implementierung: Pure CSS (<code>scroll-snap-type: x mandatory</code>), kein JS nötig.
+  </div>
+</div>
+
+</body>
+</html>

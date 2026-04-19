@@ -1,0 +1,298 @@
+---
+/**
+ * ModuleRenderer — maps a module's component name to the actual Astro component
+ * and renders it with the module's content and style data.
+ */
+import type { ModuleData } from '@/lib/wordpress';
+import { generateOverrideCSS } from '@/lib/nova-elements';
+import { normalizeContent } from '@/lib/normalize-content';
+import { resolveContentLinks } from '@/lib/resolve-links';
+import RawHTML from './RawHTML.astro';
+import Hero from './Hero.astro';
+import LogoTicker from './LogoTicker.astro';
+import Stats from './Stats.astro';
+import ThreeColumns from './ThreeColumns.astro';
+import CTABand from './CTABand.astro';
+import TeamSection from './TeamSection.astro';
+import AIShowcase from './AIShowcase.astro';
+import ProcessSteps from './ProcessSteps.astro';
+import FeatureDetail from './FeatureDetail.astro';
+import FAQ from './FAQ.astro';
+import ContactForm from './ContactForm.astro';
+import Testimonials from './Testimonials.astro';
+import TextBlock from './TextBlock.astro';
+import CaseStudy from './CaseStudy.astro';
+import TeamGrid from './TeamGrid.astro';
+import VideoEmbed from './VideoEmbed.astro';
+import CardGrid from './CardGrid.astro';
+import FeatureList from './FeatureList.astro';
+import PricingTable from './PricingTable.astro';
+import Timeline from './Timeline.astro';
+import NumbersBar from './NumbersBar.astro';
+import ImageGallery from './ImageGallery.astro';
+import LogoGrid from './LogoGrid.astro';
+import Comparison from './Comparison.astro';
+import Quote from './Quote.astro';
+import CTAForm from './CTAForm.astro';
+import TabbedContent from './TabbedContent.astro';
+import MagazineCard from './MagazineCard.astro';
+import ProgressiveReveal from './ProgressiveReveal.astro';
+import StickyTOC from './StickyTOC.astro';
+import ScrollCarousel from './ScrollCarousel.astro';
+import BeforeAfter from './BeforeAfter.astro';
+import ExpandableCards from './ExpandableCards.astro';
+import WidgetGrid from './WidgetGrid.astro';
+import LiquidGlass from './LiquidGlass.astro';
+
+import { getLocaleFromPath } from '@/lib/i18n';
+import type { Locale } from '@/lib/i18n';
+
+interface Props {
+  sections: ModuleData[];
+  locale?: Locale;
+}
+
+const { sections, locale: propLocale } = Astro.props;
+const locale = propLocale || getLocaleFromPath(Astro.url.pathname);
+
+// Pre-resolve page:ID links in all sections (async, cached)
+const resolvedSections = await Promise.all(
+  sections.map(async (s) => ({
+    ...s,
+    content: await resolveContentLinks(normalizeContent(s.content)),
+  }))
+);
+
+// Collect all element overrides from sections and generate a single <style> block
+const allOverrides: Record<string, Record<string, string>> = {};
+for (const section of sections) {
+  const elOverrides = section.overrides?.elements as Record<string, Record<string, string>> | undefined;
+  if (elOverrides) {
+    Object.assign(allOverrides, elOverrides);
+  }
+}
+const overrideCSS = generateOverrideCSS(allOverrides);
+
+const componentMap: Record<string, any> = {
+  RawHTML,
+  Hero,
+  LogoTicker,
+  Stats,
+  ThreeColumns,
+  CTABand,
+  TeamSection,
+  AIShowcase,
+  ProcessSteps,
+  FeatureDetail,
+  FAQ,
+  ContactForm,
+  Testimonials,
+  TextBlock,
+  CaseStudy,
+  TeamGrid,
+  VideoEmbed,
+  CardGrid,
+  FeatureList,
+  PricingTable,
+  Timeline,
+  NumbersBar,
+  ImageGallery,
+  LogoGrid,
+  Comparison,
+  Quote,
+  CTAForm,
+  TabbedContent,
+  MagazineCard,
+  ProgressiveReveal,
+  StickyTOC,
+  ScrollCarousel,
+  BeforeAfter,
+  ExpandableCards,
+  WidgetGrid,
+  LiquidGlass,
+};
+---
+
+{resolvedSections.map((section) => {
+  const Component = componentMap[section.component];
+  if (!Component) {
+    return <div class="text-red-500 text-center py-8">Unknown module: {section.component}</div>;
+  }
+
+  const s = section.style || {};
+  const ov = section.overrides || {};
+  const hasBg = s.background_image || s.background_video;
+  const isLight = s.theme === 'light' || section.content?.theme === 'light';
+  const wrapperStyle = [
+    s.background_image ? `background-image:url(${s.background_image});background-size:${s.background_size || 'cover'};background-position:${s.background_position || 'center'}` : '',
+    s.background_color ? `background-color:${s.background_color}` : '',
+    hasBg ? 'position:relative;overflow:hidden' : '',
+  ].filter(Boolean).join(';');
+
+  // Module-level visual overrides (spacing, animation)
+  const spacingClass = s.spacing === 'compact' ? 'nova-spacing-compact'
+    : s.spacing === 'spacious' ? 'nova-spacing-spacious'
+    : '';
+  const animationClass = s.animation && s.animation !== 'none' && s.animation !== 'fade-up'
+    ? 'nova-anim-' + s.animation
+    : '';
+  const animationDisabled = s.animation === 'none';
+  const wrapperClass = [
+    isLight ? 'section-light' : '',
+    spacingClass,
+    animationClass,
+    animationDisabled ? 'nova-anim-off' : '',
+  ].filter(Boolean).join(' ') || undefined;
+
+  return (
+    <div data-nova-module={section.id} data-nova-title={section.title} data-nova-component={section.component} class={wrapperClass} style={wrapperStyle || undefined}>
+      {s.background_video && (
+        <video autoplay muted loop playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;">
+          <source src={s.background_video} type="video/mp4" />
+        </video>
+      )}
+      {s.background_overlay && (
+        <div style={`position:absolute;inset:0;background:${s.background_overlay};z-index:1;`}></div>
+      )}
+      <div style={hasBg ? 'position:relative;z-index:2' : undefined}>
+        <Component
+          content={section.content}
+          style={section.style}
+          overrides={section.overrides}
+          locale={locale}
+        />
+      </div>
+    </div>
+  );
+})}
+
+<style is:global>
+  /* Module-level visual override classes set by the Live Editor */
+  [data-nova-module].nova-spacing-compact > div > * { padding-top: 2rem !important; padding-bottom: 2rem !important; }
+  [data-nova-module].nova-spacing-spacious > div > * { padding-top: 8rem !important; padding-bottom: 8rem !important; }
+  [data-nova-module].nova-anim-off [data-animate] { opacity: 1 !important; transform: none !important; }
+  [data-nova-module].nova-anim-scale-in [data-animate] { animation: nova-scale-in 0.6s ease forwards; }
+  [data-nova-module].nova-anim-fade-left [data-animate] { animation: nova-fade-left 0.6s ease forwards; }
+  @keyframes nova-scale-in { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+  @keyframes nova-fade-left { from { opacity: 0; transform: translateX(-24px); } to { opacity: 1; transform: translateX(0); } }
+</style>
+
+<!-- Nova Element Overrides (generated from page settings) -->
+{overrideCSS && <style set:html={overrideCSS} />}
+
+<!-- Nova Editor Bridge: enables click-to-edit when loaded in editor iframe -->
+<script>
+  if (window.location.search.includes('nova_edit=1') || window.parent !== window) {
+    const style = document.createElement('style');
+    style.textContent = `
+      [data-nova-module] { position: relative; }
+      [data-nova-module] .nova-overlay {
+        position: absolute; inset: 0; z-index: 9990;
+        cursor: pointer; transition: all 0.15s;
+        border: 2px solid transparent;
+      }
+      [data-nova-module] .nova-overlay:hover {
+        border-color: rgba(59,130,246,0.6);
+        background: rgba(59,130,246,0.03);
+      }
+      [data-nova-module] .nova-label {
+        position: absolute; top: 8px; right: 8px; z-index: 9991;
+        background: #3b82f6; color: #fff;
+        font-size: 11px; font-weight: 600; font-family: 'DM Sans', sans-serif;
+        padding: 4px 10px; border-radius: 6px;
+        opacity: 0; transition: opacity 0.15s;
+        pointer-events: none;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      }
+      [data-nova-module] .nova-overlay:hover + .nova-label,
+      [data-nova-module]:hover .nova-label { opacity: 1; }
+      [data-animate] { opacity: 1 !important; transform: none !important; }
+    `;
+    document.head.appendChild(style);
+
+    document.querySelectorAll('[data-nova-module]').forEach(el => {
+      // Add click overlay so links inside modules don't interfere
+      const overlay = document.createElement('div');
+      overlay.className = 'nova-overlay';
+      el.appendChild(overlay);
+
+      // Add label
+      const label = document.createElement('div');
+      label.className = 'nova-label';
+      label.textContent = el.dataset.novaTitle || el.dataset.novaComponent;
+      el.appendChild(label);
+
+      overlay.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const moduleId = parseInt(el.dataset.novaModule);
+        if (moduleId && window.parent !== window) {
+          window.parent.postMessage({ type: 'nova-select-module', moduleId }, '*');
+        }
+      });
+    });
+
+    // Disable GSAP animations in editor mode
+    document.querySelectorAll('[data-animate]').forEach(el => {
+      el.style.opacity = '1';
+      el.style.transform = 'none';
+    });
+
+    // Intercept navigation links → tell parent editor to switch page
+    document.querySelectorAll('nav a[href]').forEach(link => {
+      link.addEventListener('click', (e) => {
+        const href = link.getAttribute('href');
+        if (href && href.startsWith('/') && !href.startsWith('/admin') && window.parent !== window) {
+          e.preventDefault();
+          window.parent.postMessage({ type: 'nova-navigate', path: href }, '*');
+        }
+      });
+    });
+
+    // Listen for element-level style preview changes
+    window.addEventListener('message', (e) => {
+      if (e.data?.type === 'nova-preview-element') {
+        // Inject/update a preview style block
+        let previewStyle = document.getElementById('nova-preview-style');
+        if (!previewStyle) {
+          previewStyle = document.createElement('style');
+          previewStyle.id = 'nova-preview-style';
+          document.head.appendChild(previewStyle);
+        }
+        const { elementId, props } = e.data;
+        const rules = Object.entries(props)
+          .filter(([, v]) => v)
+          .map(([prop, value]) => `  ${prop}: ${value} !important;`)
+          .join('\n');
+        // Append to existing rules
+        previewStyle.textContent += `[data-nova-el="${elementId}"] {\n${rules}\n}\n`;
+      }
+
+      if (e.data?.type === 'nova-get-styles') {
+        const results = {};
+        for (const elId of e.data.elements || []) {
+          const el = document.querySelector(`[data-nova-el="${elId}"]`);
+          if (el) {
+            const cs = getComputedStyle(el);
+            results[elId] = {
+              'color': cs.color,
+              'background-color': cs.backgroundColor,
+              'background': cs.backgroundColor,
+              'border-color': cs.borderColor,
+              'font-size': cs.fontSize,
+              'padding-top': cs.paddingTop,
+              'padding-bottom': cs.paddingBottom,
+              'border-radius': cs.borderRadius,
+            };
+          }
+        }
+        window.parent.postMessage({ type: 'nova-styles-response', styles: results }, '*');
+      }
+
+      if (e.data?.type === 'nova-revert-preview') {
+        const previewStyle = document.getElementById('nova-preview-style');
+        if (previewStyle) previewStyle.textContent = '';
+      }
+    });
+  }
+</script>

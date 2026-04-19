@@ -1,0 +1,53 @@
+---
+import { t } from '@/lib/i18n';
+import type { Locale } from '@/lib/i18n';
+
+interface Props {
+  content: Record<string, unknown>;
+  style: Record<string, string>;
+  overrides?: Record<string, string>;
+  locale?: Locale;
+}
+
+const { content, style, overrides, locale = 'es' } = Astro.props;
+const theme = overrides?.theme || style?.theme || 'dark';
+
+const headline = t(content, 'headline', locale);
+const highlight = t(content, 'highlight', locale);
+const subtitle = t(content, 'subtitle', locale);
+const buttonText = t(content, 'cta_text', locale) || t(content, 'button_text', locale);
+const buttonUrl = (content.cta_url as string) || (content.button_url as string) || '/contacto';
+
+const isLight = theme === 'light';
+---
+
+<section data-nova-el="cta-section" class={isLight ? 'section-light py-20' : 'py-24'}>
+  <div class="max-w-7xl mx-auto px-6 text-center">
+    <h2 data-nova-el="cta-title" data-animate="fade-up" class={`text-3xl sm:text-4xl lg:text-5xl font-display font-bold mb-4 ${isLight ? 'text-navy-900' : 'text-white'}`}>
+      {headline}
+      {highlight && (
+        <>
+          <br />
+          <span data-nova-el="cta-highlight" class={isLight ? 'text-brand-700' : 'text-brand-400'}>{highlight}</span>
+        </>
+      )}
+    </h2>
+    {subtitle && (
+      <p data-nova-el="cta-subtitle" data-animate="fade-up" data-delay="0.1" class={`text-lg max-w-2xl mx-auto mb-8 ${isLight ? 'text-navy-600' : 'text-navy-400'}`}>
+        {subtitle}
+      </p>
+    )}
+    {buttonText && (
+      <a data-nova-el="cta-button" data-animate="fade-up" data-delay="0.2"
+         href={buttonUrl}
+         class={`inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl text-base font-medium transition-all hover:shadow-xl hover:-translate-y-0.5 ${
+           isLight
+             ? 'bg-navy-900 hover:bg-navy-800 text-white'
+             : 'bg-brand-500 hover:bg-brand-600 text-white hover:shadow-brand-500/25'
+         }`}>
+        {buttonText}
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+      </a>
+    )}
+  </div>
+</section>

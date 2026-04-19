@@ -1,0 +1,269 @@
+---
+import { t } from '@/lib/i18n';
+import type { Locale } from '@/lib/i18n';
+
+interface Props {
+  content: Record<string, unknown>;
+  style: Record<string, string>;
+  overrides?: Record<string, string>;
+  locale?: Locale;
+}
+
+const { content, style, overrides, locale = 'es' } = Astro.props;
+
+const badge = t(content, 'badge', locale);
+const headline = t(content, 'headline', locale);
+const subtitle = t(content, 'subtitle', locale);
+const ctaPrimaryText = t(content, 'cta_primary_text', locale);
+const ctaPrimaryUrl = (content.cta_primary_url as string) || '/contacto';
+const ctaSecondaryText = t(content, 'cta_secondary_text', locale);
+const ctaSecondaryUrl = (content.cta_secondary_url as string) || '/proyectos';
+// Legacy: if the content still has a separate highlight_word field,
+// we wrap it in a span during render — but ONLY when the headline
+// doesn't already contain a color-span (which is the new format).
+// This avoids double-highlighting ("visible visible" marked twice)
+// when both the legacy field and the new Tiptap span coexist during
+// the migration window.
+const legacyHighlightWord = (content.highlight_word as string) || '';
+
+/**
+ * Convert Tiptap color-spans into canonical hero-highlight spans.
+ * Tiptap stores <span style="color: rgb(…)">word</span>. We rewrite
+ * those to <span data-nova-el="hero-highlight" class="text-brand-400">.
+ *
+ * Handles nested spans by walking the string left-to-right and only
+ * rewriting the OUTERMOST color-span's wrapper — inner spans keep
+ * their own color attr (which the renderer class will override) so
+ * structure isn't broken.
+ */
+function normalizeHighlightSpans(html: string): string {
+  // Simpler approach: only match spans that have a style attr with
+  // color and no nested <span inside their immediate attrs. Use a
+  // conservative regex that greedy-matches up to </span> but caps
+  // content without another opening <span. For nested cases we
+  // accept the inner span's original attrs — the CSS class on the
+  // wrapper will cascade color to descendants anyway.
+  return html.replace(
+    /<span([^>]*)style="[^"]*color:[^"]*"([^>]*)>([\s\S]*?)<\/span>/gi,
+    (_m, before, after, inner) => {
+      // Drop any style attribute from the wrapper; keep other attrs
+      const attrs = (before + after).replace(/\sstyle="[^"]*"/gi, '').trim();
+      return `<span data-nova-el="hero-highlight" class="text-brand-400"${attrs ? ' ' + attrs : ''}>${inner}</span>`;
+    }
+  );
+}
+const backgroundImage = (content.background_image as string) || (content.image as string) || '';
+const layout = (content.layout as string) || 'default'; // default | 2col | 2col-reverse | minimal
+const sideImage = (content.image as string) || (content.side_image as string) || '';
+const sideImageAlt = (content.image_alt as string) || headline || '';
+const imagePosition = (content.image_position as string) || (style?.image_position as string) || 'center';
+
+const headlineLines = headline.split('\n');
+
+// Smart font size: reduce for long headlines OR many lines
+const charCount = headline.length;
+const lineCount = headlineLines.length;
+const heroSize = (charCount > 80 || lineCount > 3)
+  ? 'text-3xl sm:text-4xl lg:text-5xl xl:text-5xl'   // long/many lines: compact
+  : (charCount > 50 || lineCount > 2)
+    ? 'text-4xl sm:text-5xl lg:text-6xl xl:text-6xl'  // medium: balanced
+    : 'text-5xl sm:text-6xl lg:text-7xl xl:text-8xl'; // short 1-2 lines: large
+---
+
+<section data-nova-el="hero-section" class={`relative flex items-center pt-24 pb-16 overflow-hidden ${layout === 'minimal' ? 'min-h-[60vh]' : 'min-h-screen'} ${backgroundImage ? '' : 'mesh-gradient'}`}>
+  {backgroundImage ? (
+    <>
+      <img src={backgroundImage} alt="" class="absolute inset-0 w-full h-full object-cover" style={`object-position: ${imagePosition}`} loading="eager" fetchpriority="high" />
+      <div class="absolute inset-0 bg-gradient-to-r from-navy-950/90 via-navy-950/70 to-navy-950/40 md:to-navy-950/30"></div>
+      <div class="absolute inset-0 bg-gradient-to-t from-navy-950/80 via-transparent to-navy-950/30"></div>
+    </>
+  ) : (
+    <>
+      <div class="absolute inset-0 opacity-[0.03]"
+           style="background-image: radial-gradient(var(--color-navy-500) 1px, transparent 1px); background-size: 32px 32px;">
+      </div>
+      <div class="absolute top-1/4 right-1/4 w-[500px] h-[500px] rounded-full bg-brand-500/5 blur-[120px] pointer-events-none"></div>
+      <div class="absolute bottom-1/3 left-[15%] w-[300px] h-[300px] rounded-full bg-brand-400/5 blur-[80px] pointer-events-none"></div>
+    </>
+  )}
+
+  <div class="max-w-7xl mx-auto px-6 relative z-10">
+    <div class={`${layout.startsWith('2col') ? 'grid grid-cols-1 lg:grid-cols-2 gap-12 items-center' : ''}`}>
+    <div class={`${layout === '2col-reverse' ? 'lg:order-2' : ''} ${layout.startsWith('2col') ? '' : layout === 'minimal' ? 'max-w-2xl mx-auto text-center' : 'max-w-4xl'}`}>
+      {badge && (
+        <div data-nova-el="hero-badge" data-animate="fade-up" class="inline-flex items-center gap-2 border border-navy-700/50 rounded-full px-4 py-1.5 mb-8">
+          <span class="w-2 h-2 rounded-full bg-brand-400 animate-pulse"></span>
+          <span class="text-xs font-mono text-navy-400 tracking-wide">{badge}</span>
+        </div>
+      )}
+
+      <h1 data-nova-el="hero-title" data-animate="fade-up" data-delay="0.1"
+          class={`${heroSize} font-display font-bold leading-[0.95] mb-6`}>
+        {headlineLines.map((line) => {
+          // New format (preferred): the headline contains inline color-spans
+          // from Tiptap. Normalize and render as HTML.
+          const hasInlineHtml = /<span/i.test(line);
+          if (hasInlineHtml) {
+            return (
+              <>
+                <Fragment set:html={normalizeHighlightSpans(line)} />
+                <br />
+              </>
+            );
+          }
+          // Legacy format: plain text headline + separate highlight_word.
+          // Used only for pages that haven't been re-saved since the
+          // Tiptap-color-span migration.
+          if (legacyHighlightWord && line.includes(legacyHighlightWord)) {
+            return (
+              <>
+                <Fragment set:html={line.replace(legacyHighlightWord, `<span data-nova-el="hero-highlight" class="text-brand-400">${legacyHighlightWord}</span>`)} />
+                <br />
+              </>
+            );
+          }
+          return (
+            <>
+              {line}
+              <br />
+            </>
+          );
+        })}
+      </h1>
+
+      <p data-nova-el="hero-subtitle" data-animate="fade-up" data-delay="0.2"
+         class="text-lg sm:text-xl text-navy-400 max-w-2xl leading-relaxed mb-10">
+        {subtitle}
+      </p>
+
+      <div data-animate="fade-up" data-delay="0.3" class={`flex flex-col sm:flex-row gap-4 ${layout === 'minimal' ? 'justify-center' : ''}`}>
+        {ctaPrimaryText && (
+          <a data-nova-el="hero-cta-primary" href={ctaPrimaryUrl}
+             class="inline-flex items-center justify-center gap-2 bg-brand-500 hover:bg-brand-600 text-white px-8 py-4 rounded-xl text-base font-medium transition-all hover:shadow-xl hover:shadow-brand-500/25 hover:-translate-y-0.5">
+            {ctaPrimaryText}
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+          </a>
+        )}
+        {ctaSecondaryText && (
+          <a data-nova-el="hero-cta-secondary" href={ctaSecondaryUrl}
+             class="inline-flex items-center justify-center gap-2 border border-navy-600 hover:border-navy-400 text-navy-300 hover:text-white px-8 py-4 rounded-xl text-base font-medium transition-all">
+            {ctaSecondaryText}
+          </a>
+        )}
+      </div>
+    </div>
+
+    {/* 2-column: side image */}
+    {layout.startsWith('2col') && layout !== '2col-form' && (
+      <div class={`${layout === '2col-reverse' ? 'lg:order-1' : ''} hidden lg:block`} data-animate="fade-up" data-delay="0.3">
+        {sideImage ? (
+          <img src={sideImage} alt={sideImageAlt} class="w-full rounded-2xl object-cover aspect-[4/3] shadow-2xl" loading="eager" />
+        ) : (
+          <div class="w-full rounded-2xl bg-gradient-to-br from-brand-500/10 via-navy-800/50 to-navy-900 aspect-[4/3] flex items-center justify-center border border-navy-700/20">
+            <div class="text-center">
+              <span class="text-6xl text-brand-500/20 font-display font-bold block mb-2">{(headline || '?').charAt(0)}</span>
+              <span class="text-xs text-navy-400 font-mono">Image placeholder</span>
+            </div>
+          </div>
+        )}
+      </div>
+    )}
+
+    {/* 2-column: inline contact form */}
+    {layout === '2col-form' && (
+      <div data-animate="fade-up" data-delay="0.3">
+        <form class="hero-form bg-navy-800/40 backdrop-blur-sm border border-navy-700/50 rounded-2xl p-6 sm:p-8 shadow-2xl space-y-4">
+          <div class="mb-2">
+            <h2 class="text-xl font-display font-bold text-white mb-1">
+              {locale === 'de' ? 'Kostenlose Erstberatung' : locale === 'en' ? 'Free initial consultation' : 'Consultor\u00eda gratuita'}
+            </h2>
+            <p class="text-xs text-navy-300">
+              {locale === 'de' ? 'Wir melden uns innerhalb von 24h' : locale === 'en' ? 'We reply within 24h' : 'Respondemos en menos de 24h'}
+            </p>
+          </div>
+          <input type="hidden" name="source" value="hero-contacto" />
+          <div class="grid grid-cols-2 gap-3">
+            <label class="block">
+              <span class="sr-only">{locale === 'de' ? 'Name' : locale === 'en' ? 'Name' : 'Nombre'}</span>
+              <input name="name" type="text" required autocomplete="name"
+                     aria-label={locale === 'de' ? 'Name' : locale === 'en' ? 'Name' : 'Nombre'}
+                     placeholder={locale === 'de' ? 'Name' : locale === 'en' ? 'Name' : 'Nombre'}
+                     class="w-full bg-navy-900/60 border border-navy-700/50 rounded-lg px-3 py-2.5 text-white text-sm placeholder-navy-400 focus:outline-none focus:border-brand-500 transition-colors" />
+            </label>
+            <label class="block">
+              <span class="sr-only">Email</span>
+              <input name="email" type="email" required autocomplete="email" aria-label="Email"
+                     placeholder="Email"
+                     class="w-full bg-navy-900/60 border border-navy-700/50 rounded-lg px-3 py-2.5 text-white text-sm placeholder-navy-400 focus:outline-none focus:border-brand-500 transition-colors" />
+            </label>
+          </div>
+          <label class="block">
+            <span class="sr-only">{locale === 'de' ? 'Unternehmen' : locale === 'en' ? 'Company' : 'Empresa'}</span>
+            <input name="company" type="text" autocomplete="organization"
+                   aria-label={locale === 'de' ? 'Unternehmen' : locale === 'en' ? 'Company' : 'Empresa'}
+                   placeholder={locale === 'de' ? 'Unternehmen (optional)' : locale === 'en' ? 'Company (optional)' : 'Empresa (opcional)'}
+                   class="w-full bg-navy-900/60 border border-navy-700/50 rounded-lg px-3 py-2.5 text-white text-sm placeholder-navy-400 focus:outline-none focus:border-brand-500 transition-colors" />
+          </label>
+          <label class="block">
+            <span class="sr-only">{locale === 'de' ? 'Nachricht' : locale === 'en' ? 'Message' : 'Mensaje'}</span>
+            <textarea name="message" rows="3" required
+                      aria-label={locale === 'de' ? 'Nachricht' : locale === 'en' ? 'Message' : 'Mensaje'}
+                      placeholder={locale === 'de' ? 'Wie k\u00f6nnen wir helfen?' : locale === 'en' ? 'How can we help?' : '\u00bfEn qu\u00e9 podemos ayudarte?'}
+                      class="w-full bg-navy-900/60 border border-navy-700/50 rounded-lg px-3 py-2.5 text-white text-sm placeholder-navy-400 focus:outline-none focus:border-brand-500 transition-colors resize-none"></textarea>
+          </label>
+          <div class="hero-form-status hidden text-center py-2 rounded-lg text-xs font-medium"></div>
+          <button type="submit"
+                  class="w-full bg-brand-500 hover:bg-brand-600 text-white py-3 rounded-lg text-sm font-semibold transition-all hover:shadow-xl hover:shadow-brand-500/25">
+            {locale === 'de' ? 'Kostenlos anfragen' : locale === 'en' ? 'Get in touch' : 'Enviar solicitud'}
+          </button>
+          <p class="text-[10px] text-navy-400 text-center">
+            {locale === 'de' ? 'Mit dem Absenden akzeptierst du unsere' : locale === 'en' ? 'By submitting you accept our' : 'Al enviar aceptas nuestra'}
+            <a href="/privacidad" class="text-brand-400 hover:underline ml-1">
+              {locale === 'de' ? 'Datenschutzerkl\u00e4rung' : locale === 'en' ? 'Privacy Policy' : 'Pol\u00edtica de Privacidad'}
+            </a>
+          </p>
+        </form>
+      </div>
+    )}
+    </div>
+  </div>
+</section>
+
+<script>
+  document.querySelectorAll('.hero-form').forEach(form => {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = form.querySelector('button[type="submit"]') as HTMLButtonElement | null;
+      const status = form.querySelector('.hero-form-status') as HTMLElement | null;
+      if (!btn || !status) return;
+      const origLabel = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = '...';
+      status.className = 'hero-form-status hidden';
+      const data = Object.fromEntries(new FormData(form as HTMLFormElement));
+      (data as any).referrer = window.location.pathname;
+      try {
+        const res = await fetch('/api/contact', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+        if (res.ok) {
+          status.textContent = '\u2713 Mensaje enviado. Te contactamos pronto.';
+          status.className = 'hero-form-status text-center py-2 rounded-lg text-xs font-medium bg-green-500/20 text-green-300 border border-green-500/30';
+          (form as HTMLFormElement).reset();
+          btn.textContent = '\u2713';
+          // @ts-ignore
+          if (typeof gtag === 'function') gtag('event', 'generate_lead', { event_category: 'contact', event_label: 'hero-form' });
+        } else {
+          throw new Error('Failed');
+        }
+      } catch {
+        status.textContent = 'Error. Por favor int\u00e9ntalo de nuevo.';
+        status.className = 'hero-form-status text-center py-2 rounded-lg text-xs font-medium bg-red-500/20 text-red-300 border border-red-500/30';
+        btn.disabled = false;
+        btn.textContent = origLabel;
+      }
+    });
+  });
+</script>

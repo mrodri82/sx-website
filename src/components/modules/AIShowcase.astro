@@ -1,0 +1,95 @@
+---
+import { t } from '@/lib/i18n';
+import type { Locale } from '@/lib/i18n';
+
+interface DashStat {
+  label: string;
+  value: string;
+  change?: string;
+  note?: string;
+}
+
+interface Props {
+  content: Record<string, unknown>;
+  style: Record<string, string>;
+  overrides?: Record<string, string>;
+  locale?: Locale;
+}
+
+const { content, style, overrides, locale = 'es' } = Astro.props;
+
+const label = t(content, 'label', locale);
+const headline = t(content, 'headline', locale);
+const subtitle = t(content, 'subtitle', locale);
+const ctaText = t(content, 'cta_text', locale);
+const ctaUrl = (content.cta_url as string) || '';
+const dashboardStats = (content.dashboard_stats as DashStat[]) || [];
+
+const headlineLines = headline.split('\n');
+const chartBars = [35, 42, 38, 55, 48, 62, 58, 70, 65, 78, 72, 85, 80, 92, 88, 95];
+---
+
+<section data-nova-el="showcase-section" class="py-24 relative overflow-hidden">
+  <div class="absolute inset-0 bg-gradient-to-b from-navy-950 via-navy-900/50 to-navy-950"></div>
+  <div class="absolute inset-0 opacity-15"
+       style="background: radial-gradient(ellipse at 50% 50%, var(--color-brand-500), transparent 70%);">
+  </div>
+
+  <div class="max-w-7xl mx-auto px-6 relative z-10">
+    <div class="max-w-3xl mx-auto text-center">
+      <p data-nova-el="showcase-label" data-animate="fade-up" class="text-xs font-mono text-brand-400 uppercase tracking-widest mb-4">{label}</p>
+      <h2 data-nova-el="showcase-title" data-animate="fade-up" data-delay="0.1" class="text-3xl sm:text-4xl lg:text-5xl font-display font-bold mb-6">
+        {headlineLines.map((line, i) => (
+          <>{i > 0 && <br />}{line}</>
+        ))}
+      </h2>
+      <p data-nova-el="showcase-subtitle" data-animate="fade-up" data-delay="0.2" class="text-navy-400 text-lg leading-relaxed mb-10">
+        {subtitle}
+      </p>
+      {ctaText && (
+        <div data-animate="fade-up" data-delay="0.3">
+          <a data-nova-el="showcase-cta" href={ctaUrl}
+             class="inline-flex items-center justify-center gap-2 bg-brand-500 hover:bg-brand-600 text-white px-8 py-4 rounded-xl text-base font-medium transition-all hover:shadow-xl hover:shadow-brand-500/25">
+            {ctaText}
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+          </a>
+        </div>
+      )}
+    </div>
+
+    <!-- Dashboard mock -->
+    <div data-animate="scale-in" data-delay="0.4" class="mt-16 max-w-5xl mx-auto">
+      <div class="rounded-2xl p-px bg-gradient-to-b from-navy-700/50 to-navy-800/30 shadow-2xl shadow-brand-500/10">
+        <div class="bg-navy-950 rounded-2xl overflow-hidden">
+          <div class="flex items-center gap-2 px-4 py-3 border-b border-navy-800/50">
+            <div class="flex gap-1.5">
+              <div class="w-3 h-3 rounded-full bg-navy-700"></div>
+              <div class="w-3 h-3 rounded-full bg-navy-700"></div>
+              <div class="w-3 h-3 rounded-full bg-navy-700"></div>
+            </div>
+            <div class="flex-1 flex justify-center">
+              <div class="bg-navy-800/50 rounded-md px-4 py-1 text-xs text-navy-400 font-mono">ai.zds.es/dashboard</div>
+            </div>
+          </div>
+          <div class="p-8">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              {dashboardStats.map((stat) => (
+                <div class="bg-navy-800/30 rounded-lg p-4">
+                  <div class="text-xs text-navy-400 mb-1">{stat.label}</div>
+                  <div class={`text-2xl font-display font-bold ${stat.label === 'Sentiment' ? 'text-brand-400' : 'text-white'}`}>{stat.value}</div>
+                  {stat.change && <div class="text-xs text-green-400 mt-1">{stat.change}</div>}
+                  {stat.note && <div class="text-xs text-navy-400 mt-1">{stat.note}</div>}
+                </div>
+              ))}
+            </div>
+            <div class="bg-navy-800/20 rounded-lg p-6 flex items-end gap-1 h-40">
+              {chartBars.map((h) => (
+                <div class="flex-1 rounded-t bg-gradient-to-t from-brand-700 to-brand-400 opacity-80" style={`height: ${h}%`}></div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

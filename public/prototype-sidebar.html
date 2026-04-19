@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nova Sidebar Prototype v2 — 3 Optionen</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0f172a; color: #e2e8f0; font-family: 'Inter', -apple-system, sans-serif; }
+
+  .proto-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; padding: 20px; max-width: 1600px; margin: auto; }
+  .proto-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; overflow: hidden; }
+  .proto-header { padding: 12px 16px; background: rgba(59,130,246,0.1); border-bottom: 1px solid #334155; }
+  .proto-header h3 { font-size: 14px; color: #3b82f6; margin-bottom: 2px; }
+  .proto-header p { font-size: 11px; color: #64748b; }
+  .proto-body { padding: 14px; }
+
+  h1 { text-align: center; padding: 20px; font-size: 22px; }
+  h1 span { color: #3b82f6; }
+  .section-title { font-size: 12px; font-weight: 700; color: #94a3b8; margin: 20px 20px 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+  .panel { width: 100%; background: #0f172a; border: 1px solid #334155; border-radius: 8px; font-size: 13px; }
+  .panel-tab-bar { display: flex; border-bottom: 1px solid #334155; }
+  .panel-tab { flex: 1; padding: 8px; text-align: center; font-size: 12px; font-weight: 600; color: #64748b; cursor: pointer; border-bottom: 2px solid transparent; }
+  .panel-tab.active { color: #3b82f6; border-bottom-color: #3b82f6; }
+  .panel-content { padding: 12px; }
+
+  .field { margin-bottom: 10px; }
+  .field-label { font-size: 10px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+  .field input, .field textarea, .field select { width: 100%; background: #1e293b; border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; color: #e2e8f0; font-size: 13px; padding: 8px 10px; font-family: inherit; }
+  .field textarea { min-height: 36px; resize: vertical; }
+
+  .rt-toolbar { display: flex; gap: 1px; padding: 4px 6px; background: #1e293b; border: 1px solid rgba(255,255,255,0.08); border-radius: 6px 6px 0 0; flex-wrap: wrap; align-items: center; }
+  .rt-toolbar button { background: none; border: 1px solid transparent; color: #94a3b8; width: 26px; height: 26px; border-radius: 4px; cursor: pointer; font-size: 11px; display: flex; align-items: center; justify-content: center; }
+  .rt-toolbar button:hover { background: rgba(255,255,255,0.05); color: #e2e8f0; }
+  .rt-toolbar button.active { background: rgba(59,130,246,0.2); color: #3b82f6; border-color: rgba(59,130,246,0.3); }
+  .rt-toolbar .sep { width: 1px; height: 18px; background: #334155; margin: 0 3px; }
+  .rt-editor { background: #1e293b; border: 1px solid rgba(255,255,255,0.08); border-top: none; border-radius: 0 0 6px 6px; padding: 10px; min-height: 50px; color: #e2e8f0; font-size: 14px; line-height: 1.5; }
+  .rt-editor .highlight { color: #3b82f6; }
+
+  .color-row { display: flex; gap: 4px; align-items: center; }
+  .color-dot { width: 18px; height: 18px; border-radius: 50%; border: 2px solid #334155; cursor: pointer; flex-shrink: 0; }
+  .color-dot.active { border-color: #3b82f6; }
+  .color-dot.custom { background: conic-gradient(red, yellow, lime, cyan, blue, magenta, red); }
+
+  .section-header { font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; padding: 8px 0 4px; margin-top: 8px; border-top: 1px solid rgba(255,255,255,0.04); cursor: pointer; display: flex; justify-content: space-between; }
+
+  .tag { display: inline-block; font-size: 9px; padding: 1px 6px; border-radius: 3px; font-weight: 600; }
+  .tag-green { background: rgba(34,197,94,0.15); color: #22c55e; }
+  .tag-blue { background: rgba(59,130,246,0.15); color: #60a5fa; }
+  .tag-purple { background: rgba(168,85,247,0.15); color: #c084fc; }
+
+  .verdict { padding: 10px; margin-top: 8px; background: rgba(59,130,246,0.05); border: 1px solid rgba(59,130,246,0.2); border-radius: 6px; font-size: 11px; color: #94a3b8; line-height: 1.5; }
+  .verdict strong { color: #3b82f6; }
+
+  /* Option C: floating toolbar */
+  .page-sim { background: #020617; border-radius: 8px; padding: 20px; margin-bottom: 8px; position: relative; min-height: 120px; }
+  .page-sim h2 { font-size: 22px; font-weight: 700; color: #fff; margin-bottom: 6px; }
+  .page-sim h2 .hl { color: #3b82f6; }
+  .page-sim p { font-size: 13px; color: #94a3b8; }
+  .page-sim .selected { outline: 2px solid #3b82f6; outline-offset: 2px; border-radius: 4px; }
+  .floating-toolbar { position: absolute; top: -36px; left: 50%; transform: translateX(-50%); background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 4px 8px; display: flex; gap: 2px; align-items: center; box-shadow: 0 4px 16px rgba(0,0,0,0.4); }
+  .floating-toolbar button { background: none; border: none; color: #94a3b8; width: 26px; height: 26px; border-radius: 4px; cursor: pointer; font-size: 11px; display: flex; align-items: center; justify-content: center; }
+  .floating-toolbar button:hover { background: rgba(255,255,255,0.05); color: #e2e8f0; }
+  .floating-toolbar .sep { width: 1px; height: 18px; background: #334155; margin: 0 2px; }
+
+  .pro-con { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px; }
+  .pro-con div { font-size: 10px; padding: 4px 6px; border-radius: 4px; }
+  .pro { background: rgba(34,197,94,0.08); color: #4ade80; }
+  .con { background: rgba(239,68,68,0.08); color: #f87171; }
+</style>
+</head>
+<body>
+
+<h1>Nova Sidebar <span>Prototype v2</span></h1>
+
+<div class="section-title">Content Tab — 3 Optionen (Hero Modul als Beispiel)</div>
+
+<div class="proto-grid">
+
+  <!-- ═══ OPTION A: Rich Editor in Panel ═══ -->
+  <div class="proto-card">
+    <div class="proto-header">
+      <h3>A: Rich Editor im Panel <span class="tag tag-green">Empfohlen</span></h3>
+      <p>Alle Textfelder mit Tiptap + Farb-Toolbar. Editieren im Panel, live-Update auf der Seite.</p>
+    </div>
+    <div class="proto-body">
+      <div class="panel">
+        <div class="panel-tab-bar">
+          <div class="panel-tab active">Content</div>
+          <div class="panel-tab">Style</div>
+        </div>
+        <div class="panel-content">
+
+          <div class="field">
+            <div class="field-label">Badge</div>
+            <input type="text" value="AGENCIA DIGITAL CON IA · BARCELONA" />
+          </div>
+
+          <div class="field">
+            <div class="field-label">Headline</div>
+            <div class="rt-toolbar">
+              <button><b>B</b></button>
+              <button><i>I</i></button>
+              <div class="sep"></div>
+              <button class="active" style="position:relative">A<span style="position:absolute;bottom:2px;left:6px;right:6px;height:2px;background:#3b82f6;border-radius:1px"></span></button>
+              <button style="position:relative"><span style="background:rgba(59,130,246,0.3);padding:0 3px;border-radius:2px;font-size:10px">ab</span></button>
+              <div class="sep"></div>
+              <div class="color-row" style="gap:2px">
+                <div class="color-dot active" style="background:#3b82f6;width:16px;height:16px" title="Brand"></div>
+                <div class="color-dot" style="background:#22c55e;width:16px;height:16px" title="Green"></div>
+                <div class="color-dot" style="background:#f97316;width:16px;height:16px" title="Orange"></div>
+                <div class="color-dot" style="background:#fff;width:16px;height:16px" title="White"></div>
+                <div class="color-dot custom" style="width:16px;height:16px" title="Free Color Picker"></div>
+              </div>
+            </div>
+            <div class="rt-editor">Tu marca,<br><span class="highlight">visible</span> en la era de la IA</div>
+          </div>
+
+          <div class="field">
+            <div class="field-label">Untertitel</div>
+            <div class="rt-toolbar">
+              <button><b>B</b></button>
+              <button><i>I</i></button>
+              <div class="sep"></div>
+              <button>A<span style="position:absolute;bottom:2px;left:6px;right:6px;height:2px;background:#3b82f6;border-radius:1px"></span></button>
+              <button>🔗</button>
+            </div>
+            <div class="rt-editor" style="font-size:13px">Herramientas de IA, SEO empresarial y performance marketing — todo basado en datos, todo enfocado en resultados.</div>
+          </div>
+
+          <div class="field">
+            <div class="field-label">Button Primär</div>
+            <input type="text" value="Hablemos" />
+          </div>
+
+          <div class="field">
+            <div class="field-label">Button Sekundär</div>
+            <input type="text" value="Ver proyectos" />
+          </div>
+
+          <div class="section-header" style="color:#475569">Links ▶</div>
+        </div>
+      </div>
+
+      <div class="verdict">
+        <strong>Ansatz:</strong> Alle mehrzeiligen/formatierbaren Felder bekommen Tiptap mit
+        Textfarbe + Bold + Italic + Link. Einfache Felder (Badge, Button-Text) bleiben Input.
+        Free Color Picker (Regenbogen-Dot) öffnet nativen Color-Picker.
+        <div class="pro-con">
+          <div class="pro">+ Intuitiv, WYSIWYG</div>
+          <div class="pro">+ Alle Formatierung im Editor</div>
+          <div class="pro">+ Free Color Picker</div>
+          <div class="pro">+ Panel immer sichtbar</div>
+          <div class="con">- Editieren passiert im Panel, nicht auf der Seite direkt</div>
+          <div class="con">- Zwei "Orte" (Seite links, Panel rechts)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ OPTION B: Inline on Page ═══ -->
+  <div class="proto-card">
+    <div class="proto-header">
+      <h3>B: Inline auf der Seite <span class="tag tag-blue">Mutig</span></h3>
+      <p>Direkt auf der Seite klicken und editieren. Floating Toolbar über dem Text. Panel nur für Properties.</p>
+    </div>
+    <div class="proto-body">
+
+      <div class="page-sim" style="padding-top:44px">
+        <div style="position:relative;display:inline">
+          <div class="floating-toolbar">
+            <button><b>B</b></button>
+            <button><i>I</i></button>
+            <div class="sep"></div>
+            <button class="active">A<span style="position:absolute;bottom:3px;left:7px;right:7px;height:2px;background:#3b82f6;border-radius:1px"></span></button>
+            <div class="sep"></div>
+            <div class="color-dot active" style="background:#3b82f6;width:16px;height:16px;display:inline-block"></div>
+            <div class="color-dot" style="background:#22c55e;width:16px;height:16px;display:inline-block"></div>
+            <div class="color-dot custom" style="width:16px;height:16px;display:inline-block"></div>
+            <div class="sep"></div>
+            <button>🔗</button>
+          </div>
+        </div>
+        <h2 class="selected" contenteditable="true">Tu marca,<br><span class="hl">visible</span> en la era de la IA</h2>
+        <p style="margin-top:8px">Herramientas de IA, SEO empresarial y performance marketing...</p>
+      </div>
+
+      <div class="panel" style="margin-top:8px">
+        <div class="panel-tab-bar">
+          <div class="panel-tab active">Properties</div>
+          <div class="panel-tab">Style</div>
+        </div>
+        <div class="panel-content">
+          <div class="field">
+            <div class="field-label">Button Primär URL</div>
+            <select><option>/contacto</option></select>
+          </div>
+          <div class="field">
+            <div class="field-label">Hintergrundbild</div>
+            <input type="text" value="/images/hero-bg.jpeg" style="font-size:11px" />
+          </div>
+          <div class="field">
+            <div class="field-label">Layout</div>
+            <select><option>default</option><option>2col</option></select>
+          </div>
+          <div style="font-size:10px;color:#475569;margin-top:12px;text-align:center">
+            Panel zeigt nur Properties.<br>Text wird direkt auf der Seite editiert.
+          </div>
+        </div>
+      </div>
+
+      <div class="verdict">
+        <strong>Ansatz:</strong> Klick auf Text auf der Seite → contenteditable + Floating Toolbar.
+        Panel zeigt nur nicht-sichtbare Properties (URLs, Bilder, Layout).
+        <div class="pro-con">
+          <div class="pro">+ Echtes WYSIWYG — editieren WO du es siehst</div>
+          <div class="pro">+ Floating Toolbar ist kontextuell</div>
+          <div class="pro">+ Panel ist minimal</div>
+          <div class="con">- Technisch komplex (contenteditable Bugs)</div>
+          <div class="con">- Repeater-Items schwer zu managen</div>
+          <div class="con">- Toolbar kann Content verdecken</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ OPTION C: Hybrid ═══ -->
+  <div class="proto-card">
+    <div class="proto-header">
+      <h3>C: Hybrid — Inline + Panel <span class="tag tag-purple">Best of Both</span></h3>
+      <p>Klick auf Element auf der Seite → Focus springt zum passenden Feld im Panel. Oder: direkt auf der Seite editieren für schnelle Änderungen.</p>
+    </div>
+    <div class="proto-body">
+
+      <div class="page-sim">
+        <div style="font-size:10px;color:#475569;margin-bottom:6px">← Seite (klickbar)</div>
+        <h2 style="cursor:pointer;transition:outline 0.15s" title="Klick → Focus auf Headline im Panel">Tu marca,<br><span class="hl">visible</span> en la era de la IA</h2>
+        <p style="margin-top:6px;cursor:pointer;font-size:12px" title="Klick → Focus auf Untertitel im Panel">Herramientas de IA, SEO empresarial...</p>
+        <div style="margin-top:10px;display:flex;gap:6px">
+          <span style="background:#0B6FD8;color:#fff;padding:4px 12px;border-radius:6px;font-size:11px;cursor:pointer" title="Klick → Focus auf Button im Panel">Hablemos →</span>
+        </div>
+      </div>
+
+      <div style="font-size:10px;color:#3b82f6;text-align:center;margin:4px 0">↕ Synchronisiert</div>
+
+      <div class="panel">
+        <div class="panel-tab-bar">
+          <div class="panel-tab active">Content</div>
+          <div class="panel-tab">Style</div>
+        </div>
+        <div class="panel-content">
+
+          <div class="field" style="background:rgba(59,130,246,0.05);margin:-4px -8px;padding:8px;border-radius:6px;border:1px solid rgba(59,130,246,0.15)">
+            <div class="field-label" style="color:#3b82f6">Headline (aktiv)</div>
+            <div class="rt-toolbar">
+              <button><b>B</b></button>
+              <button><i>I</i></button>
+              <div class="sep"></div>
+              <button class="active">A<span style="position:absolute;bottom:2px;left:6px;right:6px;height:2px;background:#3b82f6;border-radius:1px"></span></button>
+              <button><span style="background:rgba(59,130,246,0.3);padding:0 3px;border-radius:2px;font-size:10px">ab</span></button>
+              <div class="sep"></div>
+              <div class="color-dot active" style="background:#3b82f6;width:16px;height:16px" title="Brand"></div>
+              <div class="color-dot" style="background:#22c55e;width:16px;height:16px"></div>
+              <div class="color-dot" style="background:#f97316;width:16px;height:16px"></div>
+              <div class="color-dot custom" style="width:16px;height:16px" title="Free"></div>
+            </div>
+            <div class="rt-editor">Tu marca,<br><span class="highlight">visible</span> en la era de la IA</div>
+          </div>
+
+          <div class="field" style="margin-top:12px">
+            <div class="field-label">Untertitel</div>
+            <div class="rt-toolbar" style="opacity:0.5">
+              <button><b>B</b></button><button><i>I</i></button><div class="sep"></div><button>A</button><button>🔗</button>
+            </div>
+            <div class="rt-editor" style="font-size:12px;opacity:0.7">Herramientas de IA, SEO empresarial y performance marketing...</div>
+          </div>
+
+          <div class="field">
+            <div class="field-label">Button Primär</div>
+            <input type="text" value="Hablemos" />
+          </div>
+
+          <div class="section-header" style="color:#475569">Properties ▶</div>
+
+          <div style="font-size:10px;color:#475569;margin-top:8px;padding:6px;background:rgba(255,255,255,0.02);border-radius:4px">
+            <strong style="color:#94a3b8">Doppelklick</strong> auf Text auf der Seite → editiere direkt dort (schnelle Fixes).<br>
+            <strong style="color:#94a3b8">Einfachklick</strong> → springt zum Feld im Panel (volle Toolbar).
+          </div>
+        </div>
+      </div>
+
+      <div class="verdict">
+        <strong>Ansatz:</strong> Klick auf Seite = Focus auf Panel-Feld. Doppelklick = Inline-Edit.
+        Beides synchronisiert. Panel hat immer alle Felder + volle Toolbar.
+        <div class="pro-con">
+          <div class="pro">+ Beides möglich (Panel ODER direkt)</div>
+          <div class="pro">+ Panel immer sichtbar für Overview</div>
+          <div class="pro">+ Klick auf Seite = Panel scrollt zum Feld</div>
+          <div class="pro">+ Doppelklick für schnelle Edits direkt</div>
+          <div class="con">- Komplexer zu bauen</div>
+          <div class="con">- Zwei Edit-Modi müssen synchron bleiben</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════ STYLE TAB ═══════════════════════════ -->
+<div class="section-title">Style Tab (einheitlich für alle Optionen)</div>
+
+<div class="proto-grid" style="grid-template-columns: 1fr 1fr">
+
+  <div class="proto-card">
+    <div class="proto-header">
+      <h3>Style: CSS Scanner (aktuell, bleibt)</h3>
+      <p>Automatisch erkannte Styles pro data-nova-el Element + Hintergrundbild</p>
+    </div>
+    <div class="proto-body">
+      <div class="panel">
+        <div class="panel-content" style="font-size:12px">
+          <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);border-radius:6px;padding:8px;margin-bottom:6px">
+            <div style="display:flex;justify-content:space-between;color:#94a3b8;font-size:11px;font-weight:600;margin-bottom:6px">hero-section <span style="color:#475569">section</span></div>
+            <img src="https://cms.zds.es/wp-content/uploads/2026/03/homepage-hero-bg.jpeg" style="width:100%;height:40px;object-fit:cover;border-radius:4px;margin-bottom:4px" />
+            <input type="text" value="homepage-hero-bg.jpeg" style="font-size:10px;width:100%;background:#0f172a;border:1px solid rgba(255,255,255,0.06);border-radius:4px;color:#94a3b8;padding:4px 6px" />
+            <div style="display:flex;gap:4px;align-items:center;margin-top:4px">
+              <span style="font-size:10px;color:#475569;width:50px">Position</span>
+              <input type="text" value="center" style="font-size:10px;flex:1;background:#0f172a;border:1px solid rgba(255,255,255,0.06);border-radius:4px;color:#94a3b8;padding:4px 6px" />
+            </div>
+            <div style="display:flex;gap:4px;align-items:center;margin-top:4px">
+              <span style="font-size:10px;color:#475569;width:50px">BG Farbe</span>
+              <input type="color" value="#020617" style="width:20px;height:20px;border:none;border-radius:3px" />
+              <input type="text" value="#020617" style="font-size:10px;flex:1;background:#0f172a;border:1px solid rgba(255,255,255,0.06);border-radius:4px;color:#94a3b8;padding:4px 6px" />
+            </div>
+          </div>
+          <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);border-radius:6px;padding:8px;margin-bottom:6px">
+            <div style="display:flex;justify-content:space-between;color:#94a3b8;font-size:11px;font-weight:600;margin-bottom:4px">hero-title <span style="color:#475569">h1</span></div>
+            <div style="display:flex;gap:4px;align-items:center">
+              <span style="font-size:10px;color:#475569;width:50px">Farbe</span>
+              <input type="color" value="#ffffff" style="width:20px;height:20px;border:none;border-radius:3px" />
+              <input type="text" value="#ffffff" style="font-size:10px;flex:1;background:#0f172a;border:1px solid rgba(255,255,255,0.06);border-radius:4px;color:#94a3b8;padding:4px 6px" />
+            </div>
+            <div style="display:flex;gap:4px;align-items:center;margin-top:4px">
+              <span style="font-size:10px;color:#475569;width:50px">Größe</span>
+              <input type="text" value="72px" style="font-size:10px;flex:1;background:#0f172a;border:1px solid rgba(255,255,255,0.06);border-radius:4px;color:#94a3b8;padding:4px 6px" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="proto-card">
+    <div class="proto-header">
+      <h3>Style + KI: Zukunft</h3>
+      <p>"Mach einen glasigen Effekt" → KI fügt neue Properties hinzu</p>
+    </div>
+    <div class="proto-body">
+      <div class="panel">
+        <div class="panel-content" style="font-size:12px">
+          <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);border-radius:6px;padding:8px;margin-bottom:6px">
+            <div style="color:#94a3b8;font-size:11px;font-weight:600;margin-bottom:4px">hero-section</div>
+            <div style="display:flex;gap:4px;align-items:center">
+              <span style="font-size:10px;color:#475569;width:50px">BG</span>
+              <input type="color" value="#020617" style="width:20px;height:20px;border:none;border-radius:3px" />
+              <span style="font-size:10px;color:#94a3b8">#020617</span>
+            </div>
+            <div style="display:flex;gap:4px;align-items:center;margin-top:4px">
+              <span style="font-size:10px;color:#fbbf24;width:50px">Border</span>
+              <input type="text" value="1px solid rgba(255,255,255,0.1)" style="font-size:10px;flex:1;background:#0f172a;border:1px solid rgba(255,255,255,0.06);border-radius:4px;color:#94a3b8;padding:4px 6px" />
+              <span style="font-size:8px;color:#fbbf24">KI</span>
+            </div>
+            <div style="display:flex;gap:4px;align-items:center;margin-top:4px">
+              <span style="font-size:10px;color:#fbbf24;width:50px">Blur</span>
+              <input type="text" value="backdrop-filter: blur(12px)" style="font-size:10px;flex:1;background:#0f172a;border:1px solid rgba(255,255,255,0.06);border-radius:4px;color:#94a3b8;padding:4px 6px" />
+              <span style="font-size:8px;color:#fbbf24">KI</span>
+            </div>
+          </div>
+          <div style="margin-top:8px;padding:6px;background:rgba(59,130,246,0.05);border:1px dashed rgba(59,130,246,0.3);border-radius:6px">
+            <input type="text" placeholder="z.B. 'Glaseffekt auf diese Section'" style="width:100%;background:transparent;border:none;color:#94a3b8;font-size:11px;padding:2px" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div style="max-width:900px;margin:30px auto;padding:20px;background:#1e293b;border-radius:12px;border:1px solid #334155">
+  <h3 style="color:#3b82f6;margin-bottom:12px;font-size:16px">Entscheidungsmatrix</h3>
+  <table style="width:100%;font-size:12px;border-collapse:collapse">
+    <thead>
+      <tr style="border-bottom:1px solid #334155;text-align:left">
+        <th style="padding:6px;color:#94a3b8">Kriterium</th>
+        <th style="padding:6px;color:#94a3b8">A: Rich Panel</th>
+        <th style="padding:6px;color:#94a3b8">B: Inline Edit</th>
+        <th style="padding:6px;color:#94a3b8">C: Hybrid</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border-bottom:1px solid rgba(255,255,255,0.04)">
+        <td style="padding:6px;color:#64748b">Textformatierung (Farbe, Bold)</td>
+        <td style="padding:6px;color:#22c55e">Tiptap im Panel</td>
+        <td style="padding:6px;color:#22c55e">Floating Toolbar</td>
+        <td style="padding:6px;color:#22c55e">Beides</td>
+      </tr>
+      <tr style="border-bottom:1px solid rgba(255,255,255,0.04)">
+        <td style="padding:6px;color:#64748b">Repeater (FAQ, Cards)</td>
+        <td style="padding:6px;color:#22c55e">Voll im Panel</td>
+        <td style="padding:6px;color:#f87171">Schwierig inline</td>
+        <td style="padding:6px;color:#22c55e">Panel für Repeater</td>
+      </tr>
+      <tr style="border-bottom:1px solid rgba(255,255,255,0.04)">
+        <td style="padding:6px;color:#64748b">Nicht-Text-Felder (URLs, Bilder)</td>
+        <td style="padding:6px;color:#22c55e">Im Panel</td>
+        <td style="padding:6px;color:#22c55e">Im Panel</td>
+        <td style="padding:6px;color:#22c55e">Im Panel</td>
+      </tr>
+      <tr style="border-bottom:1px solid rgba(255,255,255,0.04)">
+        <td style="padding:6px;color:#64748b">Live-Preview</td>
+        <td style="padding:6px;color:#fbbf24">Panel → Seite</td>
+        <td style="padding:6px;color:#22c55e">Direkt</td>
+        <td style="padding:6px;color:#22c55e">Beides sync</td>
+      </tr>
+      <tr style="border-bottom:1px solid rgba(255,255,255,0.04)">
+        <td style="padding:6px;color:#64748b">Entwicklungsaufwand</td>
+        <td style="padding:6px;color:#22c55e">Mittel</td>
+        <td style="padding:6px;color:#f87171">Hoch</td>
+        <td style="padding:6px;color:#fbbf24">Mittel-Hoch</td>
+      </tr>
+      <tr>
+        <td style="padding:6px;color:#64748b">Übersicht aller Felder</td>
+        <td style="padding:6px;color:#22c55e">Immer sichtbar</td>
+        <td style="padding:6px;color:#f87171">Nur aktives Feld</td>
+        <td style="padding:6px;color:#22c55e">Immer sichtbar</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p style="font-size:12px;color:#94a3b8;margin-top:12px;line-height:1.6">
+    <strong style="color:#e2e8f0">Meine Empfehlung:</strong> <strong style="color:#3b82f6">Option A</strong> als Basis bauen (Rich Editor im Panel, alle Textfelder mit Tiptap + Farbpalette + Free Color Picker).
+    Dann <strong style="color:#c084fc">Option C</strong> als Erweiterung (Klick auf Seite → Focus auf Panel-Feld).
+    Option B (Inline-only) ist riskant wegen contenteditable Bugs und schwierigem Repeater-Handling.
+  </p>
+</div>
+
+</body>
+</html>

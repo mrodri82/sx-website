@@ -1,0 +1,111 @@
+@import "tailwindcss";
+
+/* ═══════════════════════════════════════════
+   SX Festival — Theme
+   Dark editorial: black background, white text,
+   bright yellow (#eeee22) accent, bold uppercase.
+   Matches sxtech.eu visual language.
+   ═══════════════════════════════════════════ */
+
+@theme {
+  /* Brand = yellow */
+  --color-brand-50:  #fdfde6;
+  --color-brand-100: #fcfccc;
+  --color-brand-200: #f9f999;
+  --color-brand-300: #f5f566;
+  --color-brand-400: #f2f244;
+  --color-brand-500: #eeee22;    /* SX yellow — primary accent */
+  --color-brand-600: #d4d41c;
+  --color-brand-700: #a8a818;
+  --color-brand-800: #7a7a11;
+  --color-brand-900: #4d4d0a;
+
+  /* Navy = black / greys (kept name for shared-module compatibility) */
+  --color-navy-50:   #fafafa;
+  --color-navy-100:  #e5e5e5;
+  --color-navy-200:  #cccccc;
+  --color-navy-300:  #999999;
+  --color-navy-400:  #666666;
+  --color-navy-500:  #4d4d4d;
+  --color-navy-600:  #333333;
+  --color-navy-700:  #262626;
+  --color-navy-800:  #1a1a1a;
+  --color-navy-900:  #0d0d0d;
+  --color-navy-950:  #050505;
+
+  --color-bg-base: #000000;
+
+  /* Typography — system stack, bold condensed feel via utility classes */
+  --font-display: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-body:    'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono:    ui-monospace, 'Menlo', monospace;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--color-bg-base);
+  color: #ffffff;
+  overflow-x: hidden;
+}
+
+/* SX branded headings: bold, tight, uppercase where asked via utility */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+.sx-heading {
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  line-height: 0.9;
+}
+
+::selection {
+  background: var(--color-brand-500);
+  color: #000;
+}
+
+/* Focus states */
+:focus-visible {
+  outline: 2px solid var(--color-brand-500);
+  outline-offset: 3px;
+}
+
+/* Screenshot mode — disable animations for headless capture */
+html[data-ss="1"] * {
+  animation-duration: 0.001ms !important;
+  animation-delay: 0ms !important;
+  transition-duration: 0.001ms !important;
+}
+html[data-ss="1"] [data-animate] {
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+/* SX Button primitive */
+.sx-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.5rem;
+  font-weight: 700;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: var(--color-brand-500);
+  color: #000;
+  transition: opacity 0.15s;
+}
+.sx-btn:hover { opacity: 0.85; }
+.sx-btn--ghost {
+  background: transparent;
+  color: var(--color-brand-500);
+  border: 2px solid var(--color-brand-500);
+}

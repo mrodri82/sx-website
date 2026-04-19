@@ -1,0 +1,235 @@
+---
+export const prerender = false;
+
+import { getTokenFromCookies, getSession } from '@/lib/auth';
+import { site } from '@/config/site';
+
+const token = getTokenFromCookies(Astro.request.headers.get('cookie'));
+const session = token ? getSession(token) : null;
+if (!session) return Astro.redirect('/admin/login');
+
+const WP_URL = site.cmsUrl;
+const WP_USER = site.cmsUser;
+const WP_PASS = site.cmsPassword;
+const wpAuth = WP_USER ? `Basic ${btoa(`${WP_USER}:${WP_PASS}`)}` : '';
+const wpH: Record<string, string> = { Host: site.cmsHost };
+if (wpAuth) wpH.Authorization = wpAuth;
+
+// Fetch all WP pages
+let allPages: any[] = [];
+for (let page = 1; page <= 10; page++) {
+  try {
+    const res = await fetch(`${WP_URL}/index.php/?rest_route=/wp/v2/pages&per_page=100&page=${page}&status=publish&_fields=id,slug,title,meta,parent`, { headers: wpH });
+    if (!res.ok) break;
+    const pages = await res.json();
+    if (!pages.length || (pages as any).code) break;
+    allPages.push(...pages);
+  } catch { break; }
+}
+
+// Fetch all posts
+let allPosts: any[] = [];
+try {
+  const res = await fetch(`${WP_URL}/index.php/?rest_route=/wp/v2/posts&per_page=100&_fields=id,slug,title,featured_media`, { headers: wpH });
+  allPosts = await res.json();
+} catch {}
+
+// Navigation links
+const MENU_LINKS = new Set([
+  'servicios', 'nosotros', 'contacto', 'proyectos', 'insights',
+  'b2-performance', 'sectores', 'glosario', 'recursos', 'ki-assistent',
+  'servicios-seo', 'servicios-geo', 'servicios-seo-tecnico', 'servicios-seo-internacional',
+  'servicios-seo-local', 'servicios-seo-ecommerce', 'servicios-amazon-seo',
+  'servicios-relaunch-seo', 'servicios-core-web-vitals', 'servicios-linkbuilding',
+  'servicios-google-ads', 'servicios-amazon-ads', 'servicios-content-strategy',
+  'servicios-email-marketing', 'servicios-marketing-automation', 'servicios-cro', 'servicios-digital-pr',
+  'servicios-web-design', 'servicios-ux', 'servicios-branding', 'servicios-consultoria',
+  'servicios-accesibilidad', 'servicios-audits', 'servicios-training',
+  'sectores-shk', 'sectores-electro', 'sectores-turismo', 'sectores-retail',
+  'sectores-pharma', 'sectores-industrial', 'sectores-dating', 'sectores-fashion',
+  'sectores-food', 'sectores-tech',
+  'seo-barcelona', 'seo-madrid', 'seo-deutschland',
+  'cookies', 'privacidad', 'aviso-legal',
+]);
+
+// Hierarchical URL pages
+const HIER_SLUGS = new Set(['ai-visibility', 'herramientas', 'analytics', 'seo', 'ppc', 'social']);
+const SKIP_SLUGS = new Set(['homepage', 'sample-page', 'about-us', 'sectores-adult']);
+
+// Build linked-from-content set
+const linkedFromContent = new Set<string>();
+for (const p of allPages) {
+  const sj = (p.meta?.sections_json as string) || '';
+  if (!sj) continue;
+  const matches = sj.match(/href[^"]*"\/([a-z][a-z0-9-]*)/g) || [];
+  for (const m of matches) linkedFromContent.add(m.replace(/.*\//, ''));
+  // Also match CardGrid items
+  const itemMatches = sj.match(/"href"\s*:\s*"\/([a-z][a-z0-9-]+)"/g) || [];
+  for (const m of itemMatches) linkedFromContent.add(m.replace(/.*\//, '').replace(/"$/, ''));
+}
+
+// Analyze pages
+interface PageIssue {
+  slug: string;
+  title: string;
+  issues: string[];
+  type: 'page' | 'post';
+}
+
+const results: PageIssue[] = [];
+
+for (const p of allPages) {
+  if (SKIP_SLUGS.has(p.slug)) continue;
+  const issues: string[] = [];
+  const title = (p.title?.rendered || '').replace(/<[^>]+>/g, '');
+  const sj = (p.meta?.sections_json as string) || '';
+
+  // Check sections
+  if (!sj || sj === '[]') {
+    issues.push('NO CONTENT — sections_json empty');
+  } else {
+    try {
+      const sections = JSON.parse(sj);
+
+      // Module count
+      if (sections.length < 3 && !p.slug.startsWith('que-es-')) {
+        issues.push(`LOW MODULES — only ${sections.length}`);
+      }
+
+      // Empty sections
+      for (let i = 0; i < sections.length; i++) {
+        const s = sections[i];
+        if (s.mode === 'detached' && (!s.data || Object.keys(s.data).length === 0)) {
+          issues.push(`EMPTY SECTION — [${i}] ${s.type}`);
+        }
+      }
+
+      // Hero image
+      const hero = sections.find((s: any) => s.type === 'Hero');
+      if (hero && !hero.data?.background_image && !hero.data?.image) {
+        if (!p.slug.startsWith('que-es-') && !['cookies', 'privacidad', 'aviso-legal'].includes(p.slug)) {
+          issues.push('NO HERO IMAGE');
+        }
+      }
+      if (!hero && !p.slug.startsWith('que-es-') && !['cookies', 'privacidad', 'aviso-legal'].includes(p.slug)) {
+        issues.push('NO HERO MODULE');
+      }
+
+      // FAQ check for service/sector pages
+      if ((p.slug.startsWith('servicios-') || p.slug.startsWith('sectores-')) && p.slug !== 'servicios-analytics') {
+        const hasFaq = sections.some((s: any) => s.type === 'FAQ');
+        if (!hasFaq) issues.push('NO FAQ MODULE');
+      }
+    } catch { issues.push('INVALID JSON in sections_json'); }
+  }
+
+  // Orphan check
+  const isInMenu = MENU_LINKS.has(p.slug);
+  const isHierarchical = HIER_SLUGS.has(p.slug);
+  const isLinked = linkedFromContent.has(p.slug);
+  const isGlossary = p.slug.startsWith('que-es-') || p.slug.startsWith('que-son-');
+
+  if (!isInMenu && !isHierarchical && !isLinked && !isGlossary) {
+    issues.push('ORPHAN — not linked from menu or content');
+  }
+
+  if (issues.length) results.push({ slug: p.slug, title, issues, type: 'page' });
+}
+
+// Check posts
+for (const p of allPosts) {
+  const issues: string[] = [];
+  const title = (p.title?.rendered || '').replace(/<[^>]+>/g, '');
+  if (!p.featured_media) issues.push('NO FEATURED IMAGE');
+  if (issues.length) results.push({ slug: `insights/${p.slug}`, title, issues, type: 'post' });
+}
+
+const totalIssues = results.reduce((sum, r) => sum + r.issues.length, 0);
+const healthyPages = allPages.length - results.filter(r => r.type === 'page').length;
+const healthyPosts = allPosts.length - results.filter(r => r.type === 'post').length;
+---
+
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Site Validator — Nova</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0f172a; color: #e2e8f0; font-family: 'Inter', -apple-system, sans-serif; padding: 24px; }
+    h1 { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+    .subtitle { color: #64748b; font-size: 14px; margin-bottom: 24px; }
+    .stats { display: flex; gap: 16px; margin-bottom: 24px; }
+    .stat { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 16px 20px; flex: 1; }
+    .stat-value { font-size: 28px; font-weight: 700; }
+    .stat-label { font-size: 12px; color: #64748b; margin-top: 2px; }
+    .green { color: #4ade80; }
+    .red { color: #f87171; }
+    .yellow { color: #fbbf24; }
+    .blue { color: #60a5fa; }
+    .section { margin-bottom: 24px; }
+    .section-title { font-size: 14px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+    .issue-card { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 12px 16px; margin-bottom: 6px; display: flex; align-items: flex-start; gap: 12px; }
+    .issue-card:hover { border-color: #475569; }
+    .issue-slug { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #60a5fa; text-decoration: none; min-width: 200px; }
+    .issue-slug:hover { text-decoration: underline; }
+    .issue-title { font-size: 12px; color: #64748b; min-width: 200px; }
+    .issue-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+    .tag { font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 500; }
+    .tag-red { background: #7f1d1d; color: #fca5a5; }
+    .tag-yellow { background: #713f12; color: #fde047; }
+    .tag-blue { background: #1e3a5f; color: #93c5fd; }
+    .healthy { text-align: center; padding: 32px; color: #4ade80; font-size: 16px; }
+    a.back { color: #3b82f6; text-decoration: none; font-size: 13px; }
+    a.back:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px">
+    <a href="/admin/live/homepage" class="back">← Editor</a>
+    <h1>Site Validator</h1>
+  </div>
+  <p class="subtitle">Automatische Qualitätsprüfung aller {allPages.length} Seiten und {allPosts.length} Blog-Artikel</p>
+
+  <div class="stats">
+    <div class="stat">
+      <div class={`stat-value ${totalIssues === 0 ? 'green' : 'red'}`}>{totalIssues}</div>
+      <div class="stat-label">Issues</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value green">{healthyPages}</div>
+      <div class="stat-label">Healthy Pages</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value green">{healthyPosts}</div>
+      <div class="stat-label">Healthy Posts</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value blue">{allPages.length + allPosts.length}</div>
+      <div class="stat-label">Total Content</div>
+    </div>
+  </div>
+
+  {results.length === 0 ? (
+    <div class="healthy">✓ Alle Seiten sind gesund — keine Issues gefunden!</div>
+  ) : (
+    <div class="section">
+      <div class="section-title">Issues ({results.length} Seiten betroffen)</div>
+      {results.map(r => (
+        <div class="issue-card">
+          <a href={`/${r.slug}`} target="_blank" class="issue-slug">/{r.slug}</a>
+          <span class="issue-title">{r.title}</span>
+          <div class="issue-tags">
+            {r.issues.map(issue => (
+              <span class={`tag ${issue.includes('ORPHAN') ? 'tag-blue' : issue.includes('NO HERO') || issue.includes('NO FEATURED') ? 'tag-yellow' : 'tag-red'}`}>
+                {issue}
+              </span>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  )}
+</body>
+</html>

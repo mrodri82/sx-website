@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nova Live Editor — Merged Prototype</title>
+<style>
+  :root {
+    --bg: #0d1117; --surface: #161b22; --surface2: #1c2128; --surface3: #21262d;
+    --border: #30363d; --text: #e6edf3; --text-muted: #8b949e; --text-dim: #484f58;
+    --accent: #2f81f7; --accent-hover: #388bfd; --accent-dim: rgba(47,129,247,0.15);
+    --green: #3fb950; --green-dim: rgba(63,185,80,0.15);
+    --orange: #d29922; --orange-dim: rgba(210,153,34,0.15);
+    --red: #f85149; --teal: #39d2c0;
+    --sidebar-w: 380px; --toolbar-h: 40px; --breadcrumb-h: 28px; --radius: 6px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', -apple-system, sans-serif; font-size: 13px; overflow: hidden; height: 100vh; }
+
+  /* ═══ TOOLBAR ═══ */
+  .toolbar { position: fixed; top: 0; left: 0; right: 0; height: var(--toolbar-h); background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 12px; gap: 8px; z-index: 100; }
+  .toolbar-logo { color: var(--accent); font-weight: 700; font-size: 15px; }
+  .toolbar-sep { width: 1px; height: 20px; background: var(--border); }
+  .toolbar-btn { background: none; border: 1px solid var(--border); color: var(--text-muted); padding: 4px 10px; border-radius: var(--radius); font-size: 12px; cursor: pointer; text-decoration: none; display: flex; align-items: center; gap: 4px; }
+  .toolbar-btn:hover { border-color: var(--accent); color: var(--text); }
+  .toolbar-spacer { flex: 1; }
+  .toolbar-user { font-size: 12px; color: var(--text-muted); }
+  .toolbar-user strong { color: var(--text); }
+  .toolbar-role { font-size: 9px; background: var(--accent-dim); color: var(--accent); padding: 1px 6px; border-radius: 3px; margin-left: 4px; }
+
+  /* ═══ BREADCRUMB ═══ */
+  .breadcrumb { position: fixed; top: var(--toolbar-h); left: 0; right: var(--sidebar-w); height: var(--breadcrumb-h); background: var(--surface2); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 16px; font-size: 11px; color: var(--text-dim); z-index: 99; }
+  .breadcrumb span { margin: 0 6px; }
+  .breadcrumb .bc-active { color: var(--teal); font-weight: 600; }
+  .breadcrumb .bc-page { color: var(--text-muted); cursor: pointer; }
+  .breadcrumb .bc-page:hover { color: var(--text); }
+
+  /* ═══ MAIN LAYOUT ═══ */
+  .main { position: fixed; top: calc(var(--toolbar-h) + var(--breadcrumb-h)); left: 0; right: var(--sidebar-w); bottom: 0; overflow-y: auto; background: var(--bg); }
+
+  /* ═══ PAGE PREVIEW ═══ */
+  .preview { padding: 60px 40px 120px; max-width: 900px; margin: 0 auto; }
+  .preview-badge { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--border); border-radius: 20px; padding: 6px 14px; margin-bottom: 24px; font-size: 11px; font-family: monospace; color: var(--text-muted); letter-spacing: 0.05em; cursor: pointer; transition: all 0.15s; }
+  .preview-badge:hover, .preview-badge.slot-hover { outline: 2px dashed var(--accent); outline-offset: 2px; }
+  .preview-badge.slot-active { outline: 2px solid var(--teal); outline-offset: 2px; }
+  .preview-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+  .preview h1 { font-size: 52px; font-weight: 700; line-height: 1.05; margin-bottom: 20px; cursor: pointer; transition: all 0.15s; font-family: 'DM Sans', sans-serif; }
+  .preview h1:hover, .preview h1.slot-hover { outline: 2px dashed var(--accent); outline-offset: 4px; }
+  .preview h1.slot-active { outline: 2px solid var(--teal); outline-offset: 4px; }
+  .preview h1 .hl { color: var(--accent); }
+  .preview .subtitle { font-size: 18px; color: var(--text-muted); line-height: 1.6; max-width: 600px; margin-bottom: 32px; cursor: pointer; transition: all 0.15s; }
+  .preview .subtitle:hover, .preview .subtitle.slot-hover { outline: 2px dashed var(--accent); outline-offset: 4px; }
+  .preview .subtitle.slot-active { outline: 2px solid var(--teal); outline-offset: 4px; }
+  .preview .cta-row { display: flex; gap: 12px; }
+  .preview .cta-btn { padding: 12px 28px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+  .preview .cta-btn:hover, .preview .cta-btn.slot-hover { outline: 2px dashed var(--accent); outline-offset: 2px; }
+  .preview .cta-btn.slot-active { outline: 2px solid var(--teal); outline-offset: 2px; }
+  .preview .cta-primary { background: var(--accent); color: #fff; border: none; }
+  .preview .cta-secondary { background: none; color: var(--text-muted); border: 1px solid var(--border); }
+
+  /* ═══ SIDEBAR ═══ */
+  .sidebar { position: fixed; top: var(--toolbar-h); right: 0; bottom: 0; width: var(--sidebar-w); background: var(--surface); border-left: 1px solid var(--border); display: flex; flex-direction: column; z-index: 98; }
+
+  /* Lang bar */
+  .lang-bar { display: flex; padding: 8px 12px; gap: 4px; border-bottom: 1px solid var(--border); }
+  .lang-btn { flex: 1; padding: 5px; text-align: center; font-size: 11px; font-weight: 600; background: none; border: 1px solid var(--border); color: var(--text-muted); border-radius: var(--radius); cursor: pointer; }
+  .lang-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  /* Slot Map */
+  .slot-map { padding: 8px 12px; border-bottom: 1px solid var(--border); }
+  .slot-map-title { font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+  .slot-item { display: flex; align-items: center; gap: 8px; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; color: var(--text-muted); border: 1px dashed transparent; margin-bottom: 2px; }
+  .slot-item:hover { background: var(--accent-dim); color: var(--text); border-color: var(--accent); }
+  .slot-item.active { background: rgba(57,210,192,0.1); color: var(--teal); border-color: var(--teal); font-weight: 600; }
+  .slot-item .slot-tag { font-size: 9px; color: var(--text-dim); font-family: monospace; }
+  .slot-item .slot-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .slot-dot.ok { background: var(--green); }
+  .slot-dot.warn { background: var(--orange); }
+  .slot-dot.empty { background: var(--text-dim); }
+
+  /* Tabs */
+  .tabs { display: flex; border-bottom: 1px solid var(--border); }
+  .tab { flex: 1; padding: 8px; text-align: center; font-size: 12px; font-weight: 600; color: var(--text-dim); cursor: pointer; border-bottom: 2px solid transparent; background: none; border-top: none; border-left: none; border-right: none; }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab:hover { color: var(--text-muted); }
+
+  /* Tab panels */
+  .tab-panel { flex: 1; overflow-y: auto; }
+  .tab-panel.hidden { display: none; }
+
+  /* ═══ CONTENT FIELDS ═══ */
+  .fld { padding: 10px 14px; border-bottom: 1px solid rgba(48,54,61,0.5); transition: background 0.15s; }
+  .fld:hover { background: rgba(255,255,255,0.02); }
+  .fld.active { background: rgba(57,210,192,0.05); border-left: 2px solid var(--teal); }
+  .fld-label { font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 5px; }
+  .fld input, .fld textarea, .fld select { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); padding: 7px 10px; font-size: 13px; font-family: inherit; }
+  .fld input:focus, .fld textarea:focus { border-color: var(--accent); outline: none; }
+  .fld textarea { resize: vertical; min-height: 50px; }
+
+  /* Rich text toolbar */
+  .rt-bar { display: flex; gap: 1px; padding: 4px 6px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius) var(--radius) 0 0; flex-wrap: wrap; align-items: center; }
+  .rt-bar button { background: none; border: 1px solid transparent; color: var(--text-muted); width: 26px; height: 26px; border-radius: 4px; cursor: pointer; font-size: 11px; display: flex; align-items: center; justify-content: center; }
+  .rt-bar button:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+  .rt-bar button.active { background: var(--accent-dim); color: var(--accent); border-color: rgba(47,129,247,0.3); }
+  .rt-sep { width: 1px; height: 18px; background: var(--border); margin: 0 3px; }
+  .rt-colors { display: flex; gap: 3px; align-items: center; margin-left: 4px; }
+  .rt-color { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--border); cursor: pointer; }
+  .rt-color.active { border-color: var(--accent); }
+  .rt-color.custom { background: conic-gradient(red,yellow,lime,cyan,blue,magenta,red); }
+  .rt-edit { background: var(--bg); border: 1px solid var(--border); border-top: none; border-radius: 0 0 var(--radius) var(--radius); padding: 10px; min-height: 50px; color: var(--text); font-size: 14px; line-height: 1.5; }
+  .rt-edit[contenteditable]:focus { outline: none; border-color: var(--accent); }
+  .rt-edit .hl { color: var(--accent); }
+
+  /* Inline link icon + route display */
+  .link-icon { cursor: pointer; font-size: 12px; margin-left: 4px; opacity: 0.5; transition: opacity 0.15s; }
+  .link-icon:hover { opacity: 1; }
+  .fld-link-display { font-size: 10px; color: var(--accent); font-family: monospace; margin-top: 3px; opacity: 0.7; }
+  .fld-link-picker select { background: var(--bg); border: 1px solid var(--accent); border-radius: var(--radius); color: var(--text); padding: 5px 8px; font-size: 12px; }
+
+  /* ═══ STYLE TAB ═══ */
+  .style-group { margin: 8px 12px; border: 1px solid rgba(48,54,61,0.5); border-radius: var(--radius); }
+  .style-group-head { padding: 8px 10px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-size: 11px; font-weight: 600; color: var(--text-muted); }
+  .style-group-head:hover { background: rgba(255,255,255,0.02); }
+  .style-group-head .el-tag { font-size: 10px; color: var(--text-dim); font-family: monospace; }
+  .style-group-body { padding: 8px 10px; border-top: 1px solid rgba(48,54,61,0.5); }
+  .style-row { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
+  .style-row label { font-size: 10px; color: var(--text-dim); width: 70px; flex-shrink: 0; }
+  .style-row input[type="color"] { width: 24px; height: 24px; border: none; border-radius: 4px; cursor: pointer; padding: 0; }
+  .style-row input[type="text"] { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; color: var(--text-muted); padding: 4px 8px; font-size: 11px; }
+  .style-row input[type="range"] { flex: 1; accent-color: var(--accent); }
+
+  /* Spacing box model */
+  .spacing-box { position: relative; margin: 8px auto; width: 200px; }
+  .spacing-margin { border: 2px dashed var(--orange); border-radius: 8px; padding: 16px; position: relative; }
+  .spacing-margin::before { content: 'margin'; position: absolute; top: -9px; left: 10px; font-size: 9px; color: var(--orange); background: var(--surface); padding: 0 4px; }
+  .spacing-padding { border: 2px dashed var(--green); border-radius: 6px; padding: 12px; position: relative; }
+  .spacing-padding::before { content: 'padding'; position: absolute; top: -9px; left: 10px; font-size: 9px; color: var(--green); background: var(--surface); padding: 0 4px; }
+  .spacing-content { background: var(--accent-dim); border-radius: 4px; padding: 8px; text-align: center; font-size: 10px; color: var(--accent); font-weight: 600; }
+  .spacing-val { position: absolute; font-size: 10px; font-family: monospace; }
+  .spacing-val.top { top: 2px; left: 50%; transform: translateX(-50%); }
+  .spacing-val.bottom { bottom: 2px; left: 50%; transform: translateX(-50%); }
+  .spacing-val.left { left: 4px; top: 50%; transform: translateY(-50%); }
+  .spacing-val.right { right: 4px; top: 50%; transform: translateY(-50%); }
+  .sp-m { color: var(--orange); }
+  .sp-p { color: var(--green); }
+
+  /* Design tokens */
+  .tokens { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 8px 10px; }
+  .token { display: flex; align-items: center; gap: 6px; font-size: 11px; }
+  .token-swatch { width: 20px; height: 20px; border-radius: 4px; border: 1px solid var(--border); }
+
+  /* ═══ AI TAB ═══ */
+  .ai-quick { display: flex; flex-wrap: wrap; gap: 4px; padding: 10px 14px; border-bottom: 1px solid var(--border); }
+  .ai-quick-btn { background: var(--surface2); border: 1px solid var(--border); color: var(--text-muted); padding: 4px 10px; border-radius: 20px; font-size: 11px; cursor: pointer; }
+  .ai-quick-btn:hover { border-color: var(--accent); color: var(--text); background: var(--accent-dim); }
+  .ai-msgs { flex: 1; overflow-y: auto; padding: 12px 14px; }
+  .ai-msg { margin-bottom: 12px; }
+  .ai-msg-who { font-size: 10px; font-weight: 600; color: var(--text-dim); margin-bottom: 4px; }
+  .ai-msg-body { padding: 10px; border-radius: var(--radius); font-size: 13px; line-height: 1.5; }
+  .ai-msg.user .ai-msg-body { background: var(--surface2); border: 1px solid var(--border); color: var(--text); }
+  .ai-msg.ai .ai-msg-body { background: var(--accent-dim); border: 1px solid rgba(47,129,247,0.2); }
+  .ai-diff { margin: 8px 0; font-size: 12px; }
+  .ai-diff-old { color: var(--red); text-decoration: line-through; opacity: 0.6; }
+  .ai-diff-new { color: var(--green); font-weight: 600; }
+  .ai-actions { display: flex; gap: 4px; margin-top: 8px; }
+  .ai-action { padding: 4px 10px; border-radius: var(--radius); font-size: 11px; cursor: pointer; border: 1px solid; font-weight: 500; }
+  .ai-action.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .ai-action.secondary { background: none; color: var(--text-muted); border-color: var(--border); }
+  .ai-input-bar { padding: 10px 14px; border-top: 1px solid var(--border); display: flex; gap: 6px; }
+  .ai-input-bar input { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 8px 12px; font-size: 13px; }
+  .ai-input-bar input:focus { border-color: var(--accent); outline: none; }
+  .ai-input-bar button { background: var(--accent); border: none; color: #fff; border-radius: 8px; padding: 8px 14px; cursor: pointer; font-size: 14px; }
+
+  /* Save bar */
+  .save-bar { padding: 8px 14px; border-top: 1px solid var(--border); display: flex; gap: 8px; }
+  .save-bar .btn-save { flex: 1; padding: 8px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius); font-size: 13px; font-weight: 600; cursor: pointer; }
+  .save-bar .btn-save:hover { background: var(--accent-hover); }
+  .save-bar .btn-ghost { padding: 8px 14px; background: none; border: 1px solid var(--border); color: var(--text-muted); border-radius: var(--radius); font-size: 12px; cursor: pointer; }
+
+  /* Img preview */
+  .img-preview { width: 100%; height: 48px; object-fit: cover; border-radius: 4px; margin-bottom: 4px; border: 1px solid var(--border); }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- ═══ TOOLBAR ═══ -->
+<div class="toolbar">
+  <div class="toolbar-logo">Nova</div>
+  <div class="toolbar-sep"></div>
+  <button class="toolbar-btn" onclick="alert('Page selector')">GEO Landing <span style="opacity:0.4;margin-left:4px">&#9662;</span></button>
+  <button class="toolbar-btn" title="In neuem Tab offnen">&#128279;</button>
+  <div class="toolbar-sep"></div>
+  <button class="toolbar-btn">WP Admin</button>
+  <button class="toolbar-btn">&#10003; Validator</button>
+  <button class="toolbar-btn">&#8634; Versionen</button>
+  <div class="toolbar-spacer"></div>
+  <div class="toolbar-user"><strong>Manuel Riveiro</strong><span class="toolbar-role">admin</span></div>
+  <button class="toolbar-btn">Logout</button>
+</div>
+
+<!-- ═══ BREADCRUMB ═══ -->
+<div class="breadcrumb">
+  <span class="bc-page">Pagina</span> <span>&#8250;</span>
+  <span class="bc-page">GEO Landing</span> <span>&#8250;</span>
+  <span class="bc-page">Hero</span> <span>&#8250;</span>
+  <span class="bc-active" id="bc-field">headline</span>
+</div>
+
+<!-- ═══ PAGE PREVIEW ═══ -->
+<div class="main">
+  <div class="preview">
+    <div class="preview-badge" data-slot="badge" onclick="selectSlot('badge')">GEO — GENERATIVE ENGINE OPTIMIZATION</div>
+    <h1 data-slot="headline" onclick="selectSlot('headline')">Posicionate donde<br>la <span class="hl">IA</span> busca respuestas</h1>
+    <p class="subtitle" data-slot="subtitle" onclick="selectSlot('subtitle')">ChatGPT, Gemini, Perplexity y Claude estan reemplazando a Google para millones de consultas. GEO es la disciplina que asegura que tu marca aparezca en esas respuestas generadas por IA.</p>
+    <div class="cta-row">
+      <button class="cta-btn cta-primary" data-slot="cta_primary" onclick="selectSlot('cta_primary')">Analisis gratuito de AI Visibility &#8594;</button>
+      <button class="cta-btn cta-secondary" data-slot="cta_secondary" onclick="selectSlot('cta_secondary')">Ver como funciona</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SIDEBAR ═══ -->
+<div class="sidebar">
+
+  <!-- Language bar (global, NOT per field) -->
+  <div class="lang-bar">
+    <button class="lang-btn active">&#127466;&#127480; ES</button>
+    <button class="lang-btn">&#127468;&#127463; EN</button>
+    <button class="lang-btn">&#127465;&#127466; DE</button>
+  </div>
+
+  <!-- Slot Map -->
+  <div class="slot-map">
+    <div class="slot-map-title">Slot Map — Hero</div>
+    <div class="slot-item" data-map="badge" onclick="selectSlot('badge')">
+      <span class="slot-dot ok"></span> badge <span class="slot-tag">text</span>
+    </div>
+    <div class="slot-item active" data-map="headline" onclick="selectSlot('headline')">
+      <span class="slot-dot ok"></span> headline <span class="slot-tag">h1</span>
+    </div>
+    <div class="slot-item" data-map="subtitle" onclick="selectSlot('subtitle')">
+      <span class="slot-dot ok"></span> subtitle <span class="slot-tag">p</span>
+    </div>
+    <div class="slot-item" data-map="cta_primary" onclick="selectSlot('cta_primary')">
+      <span class="slot-dot ok"></span> button primar <span class="slot-tag">a</span>
+    </div>
+    <div class="slot-item" data-map="cta_secondary" onclick="selectSlot('cta_secondary')">
+      <span class="slot-dot warn"></span> button sekundar <span class="slot-tag">a</span>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('content')">Content</button>
+    <button class="tab" onclick="switchTab('style')">Style</button>
+    <button class="tab" onclick="switchTab('ai')">AI</button>
+  </div>
+
+  <!-- ═══ CONTENT TAB ═══ -->
+  <div class="tab-panel" id="tab-content">
+
+    <div class="fld" data-field="badge">
+      <div class="fld-label">Badge</div>
+      <input type="text" value="GEO — GENERATIVE ENGINE OPTIMIZATION" />
+    </div>
+
+    <div class="fld active" data-field="headline">
+      <div class="fld-label">Headline</div>
+      <div class="rt-bar">
+        <button><b>B</b></button>
+        <button><i>I</i></button>
+        <button title="Unterstrichen" style="text-decoration:underline">U</button>
+        <div class="rt-sep"></div>
+        <button class="active" style="position:relative">A<span style="position:absolute;bottom:3px;left:6px;right:6px;height:2px;background:var(--accent);border-radius:1px"></span></button>
+        <button title="Hintergrundfarbe"><span style="background:rgba(47,129,247,0.3);padding:0 3px;border-radius:2px;font-size:10px">ab</span></button>
+        <div class="rt-sep"></div>
+        <button title="Zeilenumbruch">&#8629;</button>
+        <button title="Link">&#128279;</button>
+        <div class="rt-sep"></div>
+        <div class="rt-colors">
+          <div class="rt-color active" style="background:var(--accent)" title="Brand Blue"></div>
+          <div class="rt-color" style="background:var(--green)" title="Green"></div>
+          <div class="rt-color" style="background:var(--orange)" title="Orange"></div>
+          <div class="rt-color" style="background:#fff" title="White"></div>
+          <div class="rt-color custom" title="Free Color Picker"></div>
+        </div>
+      </div>
+      <div class="rt-edit" contenteditable="true">Posicionate donde<br>la <span class="hl">IA</span> busca respuestas</div>
+    </div>
+
+    <div class="fld" data-field="subtitle">
+      <div class="fld-label">Untertitel</div>
+      <div class="rt-bar">
+        <button><b>B</b></button>
+        <button><i>I</i></button>
+        <div class="rt-sep"></div>
+        <button>A</button>
+        <button>&#128279;</button>
+      </div>
+      <div class="rt-edit" contenteditable="true" style="font-size:13px">ChatGPT, Gemini, Perplexity y Claude estan reemplazando a Google para millones de consultas. GEO es la disciplina que asegura que tu marca aparezca en esas respuestas generadas por IA.</div>
+    </div>
+
+    <div class="fld" data-field="cta_primary">
+      <div class="fld-label">Button Primar <span class="link-icon" onclick="this.parentElement.nextElementSibling.nextElementSibling.style.display=this.parentElement.nextElementSibling.nextElementSibling.style.display==='none'?'':'none'" title="Link bearbeiten">&#128279;</span></div>
+      <input type="text" value="Analisis gratuito de AI Visibility" />
+      <div class="fld-link-display">/contacto</div>
+      <div class="fld-link-picker" style="display:none">
+        <select style="width:100%;margin-top:4px"><option>/contacto</option><option>/servicios-geo</option><option>/servicios-seo</option><option value="">Custom URL...</option></select>
+      </div>
+    </div>
+
+    <div class="fld" data-field="cta_secondary">
+      <div class="fld-label">Button Sekundar <span class="link-icon" onclick="this.parentElement.nextElementSibling.nextElementSibling.style.display=this.parentElement.nextElementSibling.nextElementSibling.style.display==='none'?'':'none'" title="Link bearbeiten">&#128279;</span></div>
+      <input type="text" value="Ver como funciona" />
+      <div class="fld-link-display">#como-funciona</div>
+      <div class="fld-link-picker" style="display:none">
+        <select style="width:100%;margin-top:4px"><option>#como-funciona</option><option>/servicios-geo</option><option value="">Custom URL...</option></select>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══ STYLE TAB ═══ -->
+  <div class="tab-panel hidden" id="tab-style">
+
+    <div class="style-group">
+      <div class="style-group-head" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'':'none'">
+        hero-section <span class="el-tag">section</span>
+      </div>
+      <div class="style-group-body">
+        <div style="margin-bottom:8px">
+          <div style="font-size:10px;color:var(--text-dim);margin-bottom:4px">Hintergrundbild</div>
+          <img src="https://cms.zds.es/wp-content/uploads/2026/03/homepage-hero-bg.jpeg" class="img-preview" />
+          <div class="style-row"><input type="text" value="homepage-hero-bg.jpeg" /></div>
+          <div class="style-row" style="margin-top:4px"><label>Position</label><input type="text" value="center" /></div>
+        </div>
+        <div class="style-row"><label>BG Farbe</label><input type="color" value="#0d1117" /><input type="text" value="#0d1117" /></div>
+        <div class="style-row"><label>Transparenz</label><input type="range" min="0" max="100" value="100" /><span style="font-size:10px;color:var(--text-dim);width:30px">100%</span></div>
+
+        <!-- Design Tokens -->
+        <div style="margin-top:12px;font-size:10px;color:var(--text-dim);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">Design Tokens</div>
+        <div class="tokens">
+          <div class="token"><div class="token-swatch" style="background:var(--accent)"></div>Accent</div>
+          <div class="token"><div class="token-swatch" style="background:var(--bg)"></div>Background</div>
+          <div class="token"><div class="token-swatch" style="background:var(--text)"></div>Text</div>
+          <div class="token"><div class="token-swatch" style="background:var(--text-muted)"></div>Muted</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="style-group">
+      <div class="style-group-head" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'':'none'">
+        hero-title <span class="el-tag">h1</span>
+      </div>
+      <div class="style-group-body" style="display:none">
+        <div class="style-row"><label>Textfarbe</label><input type="color" value="#e6edf3" /><input type="text" value="#e6edf3" /></div>
+        <div class="style-row"><label>Grosse</label><input type="text" value="52px" /></div>
+        <div class="style-row"><label>Starke</label><select><option>400</option><option>500</option><option>600</option><option selected>700</option><option>800</option></select></div>
+      </div>
+    </div>
+
+    <div class="style-group">
+      <div class="style-group-head" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'':'none'">
+        hero-cta-primary <span class="el-tag">a</span>
+      </div>
+      <div class="style-group-body" style="display:none">
+        <div class="style-row"><label>Hintergrund</label><input type="color" value="#2f81f7" /><input type="text" value="#2f81f7" /></div>
+        <div class="style-row"><label>Textfarbe</label><input type="color" value="#ffffff" /><input type="text" value="#ffffff" /></div>
+        <div class="style-row"><label>Rundung</label><input type="text" value="10px" /></div>
+      </div>
+    </div>
+
+    <!-- Erweitert (Spacing) — collapsed by default -->
+    <div class="style-group">
+      <div class="style-group-head" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'':'none'" style="color:var(--text-dim)">
+        Erweitert <span class="el-tag">spacing &amp; overrides</span>
+      </div>
+      <div class="style-group-body" style="display:none">
+        <div style="font-size:10px;color:var(--text-dim);margin-bottom:8px">Nur anpassen wenn das Modul-Template nicht passt. Standardwerte kommen aus dem Design-System.</div>
+        <div class="spacing-box">
+          <div class="spacing-margin">
+            <span class="spacing-val top sp-m">0</span>
+            <span class="spacing-val left sp-m">0</span>
+            <span class="spacing-val right sp-m">0</span>
+            <span class="spacing-val bottom sp-m">0</span>
+            <div class="spacing-padding">
+              <span class="spacing-val top sp-p">120</span>
+              <span class="spacing-val left sp-p">24</span>
+              <span class="spacing-val right sp-p">24</span>
+              <span class="spacing-val bottom sp-p">64</span>
+              <div class="spacing-content">content</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ AI TAB ═══ -->
+  <div class="tab-panel hidden" id="tab-ai" style="display:none;flex-direction:column">
+
+    <div class="ai-quick">
+      <button class="ai-quick-btn">Kurzer</button>
+      <button class="ai-quick-btn">Formaler</button>
+      <button class="ai-quick-btn">&#8594; EN</button>
+      <button class="ai-quick-btn">&#8594; DE</button>
+      <button class="ai-quick-btn">SEO optimieren</button>
+      <button class="ai-quick-btn">Alle Module ubersetzen</button>
+    </div>
+
+    <div class="ai-msgs">
+      <div class="ai-msg user">
+        <div class="ai-msg-who">Du</div>
+        <div class="ai-msg-body">Headline kurzer und punchiger</div>
+      </div>
+      <div class="ai-msg ai">
+        <div class="ai-msg-who">AI</div>
+        <div class="ai-msg-body">
+          <div class="ai-diff">
+            <div class="ai-diff-old">Posicionate donde la IA busca respuestas</div>
+            <div class="ai-diff-new">Donde la IA busca, tu marca aparece</div>
+          </div>
+          <div class="ai-actions">
+            <button class="ai-action primary">Ubernehmen</button>
+            <button class="ai-action secondary">Nochmal</button>
+            <button class="ai-action secondary">Variante</button>
+          </div>
+        </div>
+      </div>
+      <div class="ai-msg user">
+        <div class="ai-msg-who">Du</div>
+        <div class="ai-msg-body">Jetzt ubersetze alle Felder auf Englisch</div>
+      </div>
+      <div class="ai-msg ai">
+        <div class="ai-msg-who">AI</div>
+        <div class="ai-msg-body">
+          <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:6px">5 Felder ubersetzt:</div>
+          <div style="font-size:12px;line-height:1.8">
+            <div><span style="color:var(--text-dim)">badge:</span> <span style="color:var(--green)">GEO — Generative Engine Optimization</span></div>
+            <div><span style="color:var(--text-dim)">headline:</span> <span style="color:var(--green)">Position yourself where AI looks for answers</span></div>
+            <div><span style="color:var(--text-dim)">subtitle:</span> <span style="color:var(--green)">ChatGPT, Gemini, Perplexity and Claude are replacing...</span></div>
+            <div><span style="color:var(--text-dim)">cta:</span> <span style="color:var(--green)">Free AI Visibility Analysis</span></div>
+          </div>
+          <div class="ai-actions">
+            <button class="ai-action primary">Alle ubernehmen</button>
+            <button class="ai-action secondary">Einzeln prufen</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ai-input-bar">
+      <input type="text" placeholder="Was soll ich andern?" />
+      <button>&#8594;</button>
+    </div>
+  </div>
+
+  <!-- Save bar -->
+  <div class="save-bar">
+    <button class="btn-ghost">&#8634; Versionen</button>
+    <button class="btn-save">Speichern</button>
+  </div>
+
+</div>
+
+<script>
+  function selectSlot(name) {
+    // Update preview
+    document.querySelectorAll('[data-slot]').forEach(el => { el.classList.remove('slot-active','slot-hover'); });
+    const previewEl = document.querySelector('[data-slot="'+name+'"]');
+    if (previewEl) { previewEl.classList.add('slot-active'); previewEl.scrollIntoView({behavior:'smooth',block:'center'}); }
+
+    // Update slot map
+    document.querySelectorAll('.slot-item').forEach(s => s.classList.remove('active'));
+    const mapItem = document.querySelector('[data-map="'+name+'"]');
+    if (mapItem) mapItem.classList.add('active');
+
+    // Update content fields
+    document.querySelectorAll('.fld').forEach(f => f.classList.remove('active'));
+    const field = document.querySelector('[data-field="'+name+'"]');
+    if (field) { field.classList.add('active'); field.scrollIntoView({behavior:'smooth',block:'center'}); }
+
+    // Update breadcrumb
+    document.getElementById('bc-field').textContent = name;
+  }
+
+  function switchTab(id) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => { p.classList.add('hidden'); p.style.display = 'none'; });
+    event.target.classList.add('active');
+    const panel = document.getElementById('tab-'+id);
+    panel.classList.remove('hidden');
+    panel.style.display = id === 'ai' ? 'flex' : '';
+  }
+
+  // Hover sync: preview ↔ slot map
+  document.querySelectorAll('[data-slot]').forEach(el => {
+    el.addEventListener('mouseenter', () => {
+      const name = el.dataset.slot;
+      const mapItem = document.querySelector('[data-map="'+name+'"]');
+      if (mapItem) mapItem.style.background = 'var(--accent-dim)';
+    });
+    el.addEventListener('mouseleave', () => {
+      document.querySelectorAll('.slot-item').forEach(s => { if (!s.classList.contains('active')) s.style.background = ''; });
+    });
+  });
+</script>
+
+</body>
+</html>

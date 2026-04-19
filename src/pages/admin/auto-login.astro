@@ -1,0 +1,51 @@
+---
+export const prerender = false;
+
+import { createSession, sessionCookie } from '@/lib/auth';
+import { site } from '@/config/site';
+
+const WP_CMS_URL = site.cmsUrl;
+
+const token = Astro.url.searchParams.get('token');
+
+if (!token) {
+  return Astro.redirect('/admin/login');
+}
+
+// Validate token against WordPress
+let user = null;
+try {
+  const res = await fetch(
+    `${WP_CMS_URL}/index.php/?rest_route=/nova/v1/validate-token`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Host: new URL(WP_CMS_URL).host,
+      },
+      body: JSON.stringify({ token }),
+    }
+  );
+
+  if (res.ok) {
+    const data = await res.json();
+    if (data.ok) user = data.user;
+  }
+} catch {}
+
+if (!user) {
+  return Astro.redirect('/admin/login');
+}
+
+// Create Nova session
+const sessionToken = createSession(user);
+const cookie = sessionCookie(sessionToken);
+
+return new Response(null, {
+  status: 302,
+  headers: {
+    Location: '/admin/live/homepage',
+    'Set-Cookie': cookie,
+  },
+});
+---

@@ -1,0 +1,355 @@
+---
+export const prerender = false;
+
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import ModuleRenderer from '@/components/modules/ModuleRenderer.astro';
+import { getTokenFromCookies, getSession } from '@/lib/auth';
+import { normalizeContent } from '@/lib/normalize-content';
+
+// Auth check — only logged-in users
+const token = getTokenFromCookies(Astro.request.headers.get('cookie'));
+const session = token ? getSession(token) : null;
+if (!session) return Astro.redirect('/admin/login');
+
+// Define sample data for each module type
+const modules = [
+  // ========== HERO ==========
+  {
+    component: 'Hero',
+    title: 'Hero — Default',
+    content: {
+      label_es: 'SHOWCASE', headline_es: 'Headline principal\ncon salto de línea',
+      subtitle_es: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.',
+      cta_text_es: 'Call to Action', cta_url: '/contacto',
+      cta2_text_es: 'Secundario', cta2_url: '/servicios',
+      highlight_word: 'principal',
+    },
+  },
+
+  // ========== HERO 2-COLUMN ==========
+  {
+    component: 'Hero',
+    title: 'Hero — 2 Columns (Image Right)',
+    content: {
+      label_es: 'NUEVO LAYOUT', headline_es: 'Hero con imagen\na la derecha',
+      subtitle_es: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Perfecto para landing pages con producto o mockup.',
+      cta_text_es: 'Call to Action', cta_url: '/contacto',
+      layout: '2col', image: '', highlight_word: 'imagen',
+    },
+  },
+  {
+    component: 'Hero',
+    title: 'Hero — 2 Columns Reverse (Image Left)',
+    content: {
+      label_es: 'VARIANTE', headline_es: 'Imagen a la izquierda\ntexto a la derecha',
+      subtitle_es: 'Layout invertido. Ideal para variar entre secciones.',
+      cta_text_es: 'Ver más', cta_url: '/proyectos',
+      layout: '2col-reverse', image: '', highlight_word: 'izquierda',
+    },
+  },
+
+  // ========== TEXT BLOCK ==========
+  {
+    component: 'TextBlock',
+    title: 'TextBlock',
+    content: {
+      label_es: 'SECCIÓN', headline_es: 'Headline del TextBlock',
+      subtitle_es: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+    },
+  },
+
+  // ========== THREE COLUMNS ==========
+  {
+    component: 'ThreeColumns',
+    title: 'ThreeColumns — 3 Cards',
+    content: {
+      section_label_es: 'SERVICIOS', headline_es: 'Tres columnas\ncon iconos',
+      subtitle_es: 'Lorem ipsum dolor sit amet consectetur.',
+      items: [
+        { icon: 'fa-magnifying-glass', title_es: 'Servicio 1', description_es: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit sed do eiusmod.' },
+        { icon: 'fa-chart-line', title_es: 'Servicio 2', description_es: 'Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi.' },
+        { icon: 'fa-bolt', title_es: 'Servicio 3', description_es: 'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum.' },
+      ],
+    },
+  },
+
+  // ========== CARD GRID ==========
+  {
+    component: 'CardGrid',
+    title: 'CardGrid — 4 Cards',
+    content: {
+      headline_es: 'Grid de Cards', section_label_es: 'PROYECTOS',
+      items: [
+        { icon: 'fa-robot', title_es: 'Card 1', description_es: 'Lorem ipsum dolor sit amet consectetur.', tags: ['Tag1', 'Tag2'] },
+        { icon: 'fa-code', title_es: 'Card 2', description_es: 'Ut enim ad minim veniam quis nostrud.', tags: ['Tag3'] },
+        { icon: 'fa-globe', title_es: 'Card 3', description_es: 'Duis aute irure dolor in reprehenderit.', tags: ['Tag4', 'Tag5'] },
+        { icon: 'fa-shield', title_es: 'Card 4', description_es: 'Excepteur sint occaecat cupidatat non proident.', tags: ['Tag6'] },
+      ],
+    },
+  },
+
+  // ========== FEATURE LIST ==========
+  {
+    component: 'FeatureList',
+    title: 'FeatureList — Vertical',
+    content: {
+      label_es: 'FEATURES', headline_es: 'Lista de features',
+      subtitle_es: 'Lorem ipsum dolor sit amet.',
+      items: [
+        { icon: 'fa-check', title_es: 'Feature 1', description_es: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.' },
+        { icon: 'fa-check', title_es: 'Feature 2', description_es: 'Ut enim ad minim veniam, quis nostrud exercitation.' },
+        { icon: 'fa-check', title_es: 'Feature 3', description_es: 'Duis aute irure dolor in reprehenderit in voluptate.' },
+      ],
+    },
+  },
+
+  // ========== CTA BAND ==========
+  {
+    component: 'CTABand',
+    title: 'CTABand — Dark',
+    content: {
+      headline_es: 'Call to Action Band', highlight_es: 'Destacado',
+      subtitle_es: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+      button_text_es: 'Contactar', button_url: '/contacto',
+    },
+  },
+
+  // ========== CTA FORM ==========
+  {
+    component: 'CTAForm',
+    title: 'CTAForm — Con formulario + persona',
+    content: {
+      headline_es: 'Formulario inline', subtitle_es: 'Lorem ipsum dolor sit amet.',
+      person_name: 'Manuel Riveiro', person_role_es: 'Director', person_image: '/images/team/avatars/manuel-riveiro.webp',
+    },
+  },
+
+  // ========== NUMBERS BAR ==========
+  {
+    component: 'NumbersBar',
+    title: 'NumbersBar — 4 Stats',
+    content: {
+      items: [
+        { value: '20+', label_es: 'Años' }, { value: '300+', label_es: 'Proyectos' },
+        { value: '14', label_es: 'Idiomas' }, { value: '97%', label_es: 'Retención' },
+      ],
+    },
+  },
+
+  // ========== PROCESS STEPS ==========
+  {
+    component: 'ProcessSteps',
+    title: 'ProcessSteps — 4 pasos',
+    content: {
+      label_es: 'PROCESO', headline_es: 'Pasos del proceso',
+      steps: [
+        { number: '01', title_es: 'Paso 1', description_es: 'Lorem ipsum dolor sit amet.' },
+        { number: '02', title_es: 'Paso 2', description_es: 'Ut enim ad minim veniam.' },
+        { number: '03', title_es: 'Paso 3', description_es: 'Duis aute irure dolor.' },
+        { number: '04', title_es: 'Paso 4', description_es: 'Excepteur sint occaecat.' },
+      ],
+    },
+  },
+
+  // ========== TESTIMONIALS ==========
+  {
+    component: 'Testimonials',
+    title: 'Testimonials — 2 quotes',
+    content: {
+      section_label_es: 'TESTIMONIOS', headline_es: 'Lo que dicen',
+      items: [
+        { quote_es: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt.', author: 'Director Marketing', company: 'Empresa Internacional' },
+        { quote_es: 'Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip.', author: 'CEO', company: 'Startup Tech' },
+      ],
+    },
+  },
+
+  // ========== COMPARISON ==========
+  {
+    component: 'Comparison',
+    title: 'Comparison — Left vs Right',
+    content: {
+      headline_es: 'Comparativa', left_title_es: 'Antes', right_title_es: 'Después',
+      items: [
+        { left_es: 'Lorem ipsum dolor sit amet', right_es: 'Consectetur adipiscing elit' },
+        { left_es: 'Sed do eiusmod tempor', right_es: 'Ut enim ad minim veniam' },
+        { left_es: 'Quis nostrud exercitation', right_es: 'Duis aute irure dolor' },
+      ],
+    },
+  },
+
+  // ========== FAQ ==========
+  {
+    component: 'FAQ',
+    title: 'FAQ — 3 Fragen',
+    content: {
+      headline_es: 'Preguntas frecuentes',
+      items: [
+        { question_es: '¿Lorem ipsum dolor sit amet?', answer_es: 'Consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.' },
+        { question_es: '¿Ut enim ad minim veniam?', answer_es: 'Quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.' },
+        { question_es: '¿Duis aute irure dolor?', answer_es: 'Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit.' },
+      ],
+    },
+  },
+
+  // ========== LOGO TICKER ==========
+  {
+    component: 'LogoTicker',
+    title: 'LogoTicker',
+    content: {
+      label_es: 'CLIENTES',
+      clients: [
+        { name: 'Siemens', logo: '' }, { name: 'Grohe', logo: '' },
+        { name: 'Lidl', logo: '' }, { name: 'Pfizer', logo: '' },
+      ],
+    },
+  },
+
+  // ========== CASE STUDY ==========
+  {
+    component: 'CaseStudy',
+    title: 'CaseStudy',
+    content: {
+      headline_es: 'Caso de éxito: Cliente',
+      description_es: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore.',
+      results: [
+        { metric: '+50.4%', label_es: 'Tráfico' },
+        { metric: '+46.4%', label_es: 'Orgánico' },
+        { metric: '+47%', label_es: 'Directo' },
+      ],
+    },
+  },
+
+  // ========== CONTACT FORM ==========
+  {
+    component: 'ContactForm',
+    title: 'ContactForm',
+    content: {
+      label_es: 'CONTACTO', headline_es: 'Formulario de contacto',
+      subtitle_es: 'Lorem ipsum dolor sit amet.', button_text_es: 'Enviar',
+    },
+  },
+
+  // ========== NEW: TABBED CONTENT ==========
+  {
+    component: 'TabbedContent',
+    title: 'TabbedContent — CSS-only Tabs (NEW)',
+    content: {
+      label_es: 'SERVICIOS', headline_es: 'Contenido por pestañas',
+      items: [
+        { title_es: 'SEO', description_es: '<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p><p>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.</p>' },
+        { title_es: 'PPC', description_es: '<p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p>' },
+        { title_es: 'Social', description_es: '<p>Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>' },
+        { title_es: 'Analytics', description_es: '<p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium.</p>' },
+      ],
+    },
+  },
+
+  // ========== NEW: MAGAZINE CARD ==========
+  {
+    component: 'MagazineCard',
+    title: 'MagazineCard — Image Right (NEW)',
+    content: {
+      label_es: 'CASE STUDY', headline_es: 'Imagen a la derecha\ncon texto a la izquierda',
+      subtitle_es: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt.',
+      image: '', image_pos: 'right',
+      cta_text_es: 'Ver caso completo', cta_url: '/proyectos',
+    },
+  },
+  {
+    component: 'MagazineCard',
+    title: 'MagazineCard — Image Left (NEW)',
+    content: {
+      label_es: 'FEATURE', headline_es: 'Imagen a la izquierda\ncon texto a la derecha',
+      subtitle_es: 'Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo.',
+      image: '', image_pos: 'left',
+    },
+  },
+
+  // ========== NEW: PROGRESSIVE REVEAL ==========
+  {
+    component: 'ProgressiveReveal',
+    title: 'ProgressiveReveal — Expandable text (NEW)',
+    content: {
+      label_es: 'DEEP DIVE', headline_es: 'Texto expandible con teaser',
+      teaser_es: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
+      body_html_es: '<h3>Sección 1: Detalle profundo</h3><p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p><h3>Sección 2: Más información</h3><p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.</p><ul><li>Punto importante 1</li><li>Punto importante 2</li><li>Punto importante 3</li></ul>',
+    },
+  },
+  // ========== NEW: STICKY TOC ==========
+  {
+    component: 'StickyTOC',
+    title: 'StickyTOC — Sidebar navigation (NEW)',
+    content: {
+      label_es: 'GUÍA', headline_es: 'Tabla de contenidos sticky',
+      items: [
+        { title_es: 'Introducción', description_es: '<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>' },
+        { title_es: 'Metodología', description_es: '<p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident.</p>' },
+        { title_es: 'Resultados', description_es: '<p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam.</p>' },
+        { title_es: 'Conclusiones', description_es: '<p>Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit.</p>' },
+      ],
+    },
+  },
+
+  // ========== NEW: SCROLL CAROUSEL ==========
+  {
+    component: 'ScrollCarousel',
+    title: 'ScrollCarousel — CSS scroll-snap (NEW)',
+    content: {
+      label_es: 'PROYECTOS', headline_es: 'Carrusel horizontal',
+      subtitle_es: 'Desliza para ver más proyectos.',
+      items: [
+        { title_es: 'Proyecto 1', description_es: 'Lorem ipsum dolor sit amet consectetur.', tags: ['SEO', 'React'] },
+        { title_es: 'Proyecto 2', description_es: 'Ut enim ad minim veniam quis nostrud.', tags: ['Branding'] },
+        { title_es: 'Proyecto 3', description_es: 'Duis aute irure dolor in reprehenderit.', tags: ['PPC', 'Analytics'] },
+        { title_es: 'Proyecto 4', description_es: 'Excepteur sint occaecat cupidatat non.', tags: ['GEO'] },
+        { title_es: 'Proyecto 5', description_es: 'Sed ut perspiciatis unde omnis iste.', tags: ['E-Commerce'] },
+      ],
+    },
+  },
+
+  // ========== NEW: BEFORE/AFTER ==========
+  {
+    component: 'BeforeAfter',
+    title: 'BeforeAfter — Image comparison slider (NEW)',
+    content: {
+      label_es: 'REDESIGN', headline_es: 'Comparación antes/después',
+      subtitle_es: 'Mueve el slider para comparar.',
+      before_image: '', after_image: '',
+      before_label_es: 'Antes', after_label_es: 'Después',
+    },
+  },
+];
+
+const sectionData = modules.map((m, i) => ({
+  id: 90000 + i,
+  title: m.title,
+  component: m.component,
+  content: m.content,
+  style: {},
+  overrides: {},
+}));
+---
+
+<BaseLayout title="Module Showcase — Admin Only">
+  <meta name="robots" content="noindex, nofollow" slot="head" />
+
+  <div class="min-h-screen pt-24 pb-24">
+    <div class="max-w-7xl mx-auto px-6 mb-12">
+      <h1 class="text-4xl font-display font-bold text-white mb-4">Module Showcase</h1>
+      <p class="text-navy-400">Alle Modul-Typen mit Lorem-Ipsum-Daten. Nur für Admins sichtbar.</p>
+      <p class="text-navy-600 text-sm mt-2">{modules.length} Module | {new Date().toLocaleDateString('de-DE')}</p>
+    </div>
+
+    {sectionData.map((section) => (
+      <div class="mb-4">
+        <div class="max-w-7xl mx-auto px-6 mb-2">
+          <span class="text-xs font-mono text-brand-400 bg-navy-800/50 px-3 py-1 rounded-lg border border-navy-700/30">
+            {section.component} — {section.title}
+          </span>
+        </div>
+        <ModuleRenderer sections={[section]} locale="es" />
+      </div>
+    ))}
+  </div>
+</BaseLayout>

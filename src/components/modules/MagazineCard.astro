@@ -1,0 +1,59 @@
+---
+/**
+ * MagazineCard — 50:50 Image/Text split layout
+ * Great for case studies, feature highlights, about sections.
+ * Supports: image left/right, dark/light theme.
+ */
+import { t } from '@/lib/i18n';
+import type { Locale } from '@/lib/i18n';
+
+interface Props {
+  content: Record<string, unknown>;
+  style: Record<string, string>;
+  overrides?: Record<string, string>;
+  locale?: Locale;
+}
+
+const { content, style, overrides, locale = 'es' } = Astro.props;
+const label = t(content, 'label', locale);
+const headline = t(content, 'headline', locale);
+const subtitle = t(content, 'subtitle', locale);
+const bodyHtml = t(content, 'body_html', locale) || '';
+const image = (content.image as string) || '';
+const imageAlt = (content.image_alt as string) || headline || '';
+const imagePos = (content.image_pos as string) || 'right'; // left | right
+const ctaText = t(content, 'cta_text', locale);
+const ctaUrl = (content.cta_url as string) || '';
+---
+
+<section class="py-20 relative">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class={`grid grid-cols-1 lg:grid-cols-2 gap-12 items-center ${imagePos === 'left' ? 'lg:grid-flow-dense' : ''}`}>
+
+      {/* Text side */}
+      <div class={imagePos === 'left' ? 'lg:col-start-2' : ''}>
+        {label && <p class="text-xs font-mono text-brand-400 uppercase tracking-widest mb-4">{label}</p>}
+        {headline && <h2 class="text-3xl sm:text-4xl font-display font-bold text-white mb-4 leading-tight">{headline}</h2>}
+        {subtitle && <p class="text-lg text-navy-400 leading-relaxed mb-6">{subtitle}</p>}
+        {bodyHtml && <div class="prose prose-invert max-w-none mb-6" set:html={bodyHtml} />}
+        {ctaText && ctaUrl && (
+          <a href={ctaUrl} class="inline-flex items-center gap-2 bg-brand-500 hover:bg-brand-600 text-white px-6 py-3 rounded-xl text-sm font-medium transition-all">
+            {ctaText}
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+          </a>
+        )}
+      </div>
+
+      {/* Image side */}
+      <div class={imagePos === 'left' ? 'lg:col-start-1' : ''}>
+        {image ? (
+          <img src={image} alt={imageAlt} class="w-full rounded-2xl object-cover aspect-[4/3]" loading="lazy" />
+        ) : (
+          <div class="w-full rounded-2xl bg-gradient-to-br from-brand-500/10 to-navy-800 aspect-[4/3] flex items-center justify-center">
+            <span class="text-6xl text-brand-500/20 font-display font-bold">{(headline || 'M').charAt(0)}</span>
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+</section>

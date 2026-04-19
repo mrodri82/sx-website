@@ -1,0 +1,257 @@
+---
+export const prerender = false;
+
+import { getTokenFromCookies, getSession } from '@/lib/auth';
+
+// Redirect if already logged in (preserve return URL)
+const token = getTokenFromCookies(Astro.request.headers.get('cookie'));
+const session = token ? getSession(token) : null;
+const returnTo = Astro.url.searchParams.get('return') || '/admin/live/';
+if (session) {
+  return Astro.redirect(returnTo);
+}
+---
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nova — Login</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: #0a101f;
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .login-card {
+      width: 100%;
+      max-width: 400px;
+      padding: 40px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 16px;
+      backdrop-filter: blur(20px);
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: -0.5px;
+    }
+
+    .logo span { color: #3b82f6; }
+
+    .subtitle {
+      font-size: 14px;
+      color: #64748b;
+      margin-bottom: 32px;
+    }
+
+    .field {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: #94a3b8;
+      margin-bottom: 6px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 14px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      color: #fff;
+      font-family: inherit;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input:focus {
+      border-color: #3b82f6;
+    }
+
+    .error {
+      font-size: 13px;
+      color: #ef4444;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    .error.visible { display: block; }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #3b82f6;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    button:hover { background: #2563eb; }
+    button:active { transform: scale(0.98); }
+    button:disabled { opacity: 0.6; cursor: wait; }
+
+    .hint {
+      text-align: center;
+      margin-top: 24px;
+      font-size: 12px;
+      color: #475569;
+    }
+
+    .hint code {
+      font-family: 'JetBrains Mono', monospace;
+      background: rgba(255,255,255,0.05);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #64748b;
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 24px 0;
+      color: #334155;
+      font-size: 12px;
+    }
+
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: rgba(255,255,255,0.06);
+    }
+
+    .btn-wp {
+      width: 100%;
+      padding: 12px;
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      color: #94a3b8;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+      display: block;
+      text-align: center;
+    }
+
+    .btn-wp:hover {
+      background: rgba(255,255,255,0.04);
+      border-color: rgba(255,255,255,0.15);
+      color: #e2e8f0;
+    }
+
+    .toggle-form {
+      background: none;
+      border: none;
+      color: #475569;
+      font-size: 12px;
+      cursor: pointer;
+      text-align: center;
+      display: block;
+      width: 100%;
+      margin-top: 12px;
+    }
+
+    .toggle-form:hover { color: #94a3b8; }
+
+    .direct-login { display: none; }
+    .direct-login.visible { display: block; }
+  </style>
+</head>
+<body>
+  <div class="login-card">
+    <div class="logo"><span>Nova</span></div>
+    <p class="subtitle">Inline Frontend Editor</p>
+
+    <div class="direct-login visible" id="direct-login">
+      <form id="login-form">
+        <div class="field">
+          <label for="username">Benutzer</label>
+          <input type="text" id="username" name="username" autocomplete="username" required />
+        </div>
+        <div class="field">
+          <label for="password">Passwort</label>
+          <input type="password" id="password" name="password" autocomplete="current-password" required />
+        </div>
+        <div class="error" id="error-msg"></div>
+        <button type="submit" id="submit-btn">Direkt anmelden</button>
+      </form>
+    </div>
+
+  </div>
+
+  <script>
+    const form = document.getElementById('login-form')!;
+    const btn = document.getElementById('submit-btn') as HTMLButtonElement;
+    const errorEl = document.getElementById('error-msg')!;
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      btn.disabled = true;
+      errorEl.classList.remove('visible');
+
+      const username = (document.getElementById('username') as HTMLInputElement).value;
+      const password = (document.getElementById('password') as HTMLInputElement).value;
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password }),
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          const params = new URLSearchParams(window.location.search);
+          window.location.href = params.get('return') || '/admin/live/';
+        } else {
+          errorEl.textContent = data.error || 'Login fehlgeschlagen';
+          errorEl.classList.add('visible');
+        }
+      } catch {
+        errorEl.textContent = 'Verbindungsfehler';
+        errorEl.classList.add('visible');
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    // Toggle direct login form
+    document.getElementById('toggle-form')?.addEventListener('click', () => {
+      const dl = document.getElementById('direct-login');
+      const btn = document.getElementById('toggle-form');
+      dl.classList.toggle('visible');
+      btn.textContent = dl.classList.contains('visible') ? 'Ausblenden' : 'Direkt mit WP-Passwort anmelden';
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,82 @@
+---
+import { t, tItems } from '@/lib/i18n';
+import type { Locale } from '@/lib/i18n';
+
+interface Props {
+  content: Record<string, unknown>;
+  style: Record<string, string>;
+  overrides?: Record<string, string>;
+  locale?: Locale;
+}
+
+const { content, style, overrides, locale = 'es' } = Astro.props;
+
+const label = t(content, 'label', locale);
+const headline = t(content, 'headline', locale);
+const leftTitle = t(content, 'left_title', locale);
+const rightTitle = t(content, 'right_title', locale);
+const items = tItems((content.items as Record<string, unknown>[]) || [], locale);
+---
+
+<section data-nova-el="comparison-section" class="py-24 relative">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="max-w-2xl mb-16">
+      {label && (
+        <p data-animate="fade-up" class="text-xs font-mono text-brand-400 uppercase tracking-widest mb-4">{label}</p>
+      )}
+      {headline && (
+        <h2 data-nova-el="comparison-title" data-animate="fade-up" data-delay="0.1" class="text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-white mb-6">
+          {headline}
+        </h2>
+      )}
+    </div>
+
+    <div class="max-w-4xl mx-auto">
+      <div data-animate="fade-up" data-delay="0.2" class="rounded-2xl border border-navy-700/50 overflow-hidden">
+        {/* Header row */}
+        <div class="grid grid-cols-3 bg-navy-800/50">
+          <div class="px-6 py-4 text-sm font-mono text-navy-400 uppercase tracking-wider">{t(content, 'feature_label', locale) || ''}</div>
+          <div class="px-6 py-4 text-sm font-mono text-navy-400 uppercase tracking-wider text-center border-x border-navy-700/30">
+            {leftTitle}
+          </div>
+          <div class="px-6 py-4 text-sm font-mono text-brand-400 uppercase tracking-wider text-center">
+            {rightTitle}
+          </div>
+        </div>
+
+        {/* Rows */}
+        {items.map((item, i) => (
+          <div class={`grid grid-cols-3 ${i % 2 === 0 ? 'bg-navy-800/20' : ''} border-t border-navy-700/30`}>
+            <div class="px-6 py-4 text-sm text-white font-medium flex items-center">{item.feature}</div>
+            <div class="px-6 py-4 text-center border-x border-navy-700/30 flex items-center justify-center">
+              {item.left === true || item.left === 'true' ? (
+                <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+              ) : item.left === false || item.left === 'false' ? (
+                <svg class="w-5 h-5 text-navy-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              ) : (
+                <span class="text-sm text-navy-400">{item.left}</span>
+              )}
+            </div>
+            <div class="px-6 py-4 text-center flex items-center justify-center">
+              {item.right === true || item.right === 'true' ? (
+                <svg class="w-5 h-5 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+              ) : item.right === false || item.right === 'false' ? (
+                <svg class="w-5 h-5 text-navy-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              ) : (
+                <span class="text-sm text-navy-400">{item.right}</span>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>

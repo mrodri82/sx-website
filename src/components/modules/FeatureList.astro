@@ -1,0 +1,63 @@
+---
+import { t, tItems } from '@/lib/i18n';
+import type { Locale } from '@/lib/i18n';
+
+interface Props {
+  content: Record<string, unknown>;
+  style: Record<string, string>;
+  overrides?: Record<string, string>;
+  locale?: Locale;
+}
+
+const { content, style, overrides, locale = 'es' } = Astro.props;
+const theme = overrides?.theme || style?.theme || 'dark';
+
+const label = t(content, 'label', locale);
+const headline = t(content, 'headline', locale);
+const subtitle = t(content, 'subtitle', locale);
+const layout = (content.layout as string) || 'list'; // 'list' or 'grid'
+const items = tItems((content.items as Record<string, unknown>[]) || [], locale);
+
+const isLight = theme === 'light';
+const headlineLines = headline.split('\n');
+---
+
+<section data-nova-el="featurelist-section" class={isLight ? 'section-light py-24' : 'py-24'}>
+  <div class="max-w-7xl mx-auto px-6">
+    <div class={layout === 'grid' ? 'text-center mb-16' : 'max-w-2xl mb-16'}>
+      {label && <p data-nova-el="featurelist-label" data-animate="fade-up" class={`text-xs font-mono uppercase tracking-widest mb-4 ${isLight ? 'text-brand-700' : 'text-brand-400'}`}>{label}</p>}
+      <h2 data-nova-el="featurelist-title" data-animate="fade-up" data-delay="0.1" class={`text-3xl sm:text-4xl lg:text-5xl font-display font-bold mb-6 ${isLight ? 'text-navy-900' : 'text-white'}`}>
+        {headlineLines.map((line, i) => (<>{i > 0 && <br />}{line}</>))}
+      </h2>
+      {subtitle && <p data-animate="fade-up" data-delay="0.2" class={`text-lg leading-relaxed ${isLight ? 'text-navy-600' : 'text-navy-400'}`}>{subtitle}</p>}
+    </div>
+
+    {layout === 'grid' ? (
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mobile-slider" data-stagger="0.08">
+        {items.map((item) => (
+          <div data-nova-el="featurelist-item" data-animate="fade-up" class={`text-center p-6 rounded-xl border ${isLight ? 'border-gray-200' : 'border-navy-700/30 bg-navy-800/20'}`}>
+            {item.icon && (
+              <div class="flex justify-center mb-4">
+                <div class={`w-11 h-11 rounded-lg flex items-center justify-center text-lg ${isLight ? 'bg-brand-50 text-brand-600' : 'bg-brand-500/10 text-brand-400'}`} set:html={`<i class="${item.icon}"></i>`} />
+              </div>
+            )}
+            <h3 data-nova-el="featurelist-item-title" class={`font-display font-bold text-lg mb-2 ${isLight ? 'text-navy-900' : 'text-white'}`}>{item.title}</h3>
+            <p class={`text-sm leading-relaxed ${isLight ? 'text-navy-600' : 'text-navy-400'}`}>{item.desc}</p>
+          </div>
+        ))}
+      </div>
+    ) : (
+      <div class="space-y-6" data-stagger="0.08">
+        {items.map((item) => (
+          <div data-nova-el="featurelist-item" data-animate="fade-up" class={`flex items-start gap-5 p-6 rounded-xl transition-all ${isLight ? 'hover:bg-gray-50' : 'hover:bg-navy-800/30'}`}>
+            {item.icon && <div class={`text-lg flex-shrink-0 w-11 h-11 rounded-lg flex items-center justify-center ${isLight ? 'bg-brand-50 text-brand-600' : 'bg-brand-500/10 text-brand-400'}`} set:html={`<i class="${item.icon}"></i>`} />}
+            <div>
+              <h3 data-nova-el="featurelist-item-title" class={`font-display font-bold text-lg mb-1 ${isLight ? 'text-navy-900' : 'text-white'}`}>{item.title}</h3>
+              <p class={`text-sm leading-relaxed ${isLight ? 'text-navy-600' : 'text-navy-400'}`}>{item.desc}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+</section>

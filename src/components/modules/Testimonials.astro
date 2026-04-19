@@ -1,0 +1,55 @@
+---
+import { t, tItems } from '@/lib/i18n';
+import type { Locale } from '@/lib/i18n';
+
+interface Props {
+  content: Record<string, unknown>;
+  style: Record<string, string>;
+  overrides?: Record<string, string>;
+  locale?: Locale;
+}
+
+const { content, style, overrides, locale = 'es' } = Astro.props;
+
+const label = t(content, 'label', locale);
+const headline = t(content, 'headline', locale);
+const items = tItems((content.items as Record<string, unknown>[]) || [], locale);
+---
+
+<section data-nova-el="testimonials-section" class="py-24 relative">
+  <div class="absolute inset-0 bg-gradient-to-b from-transparent via-brand-500/[0.02] to-transparent"></div>
+  <div class="max-w-7xl mx-auto px-6 relative z-10">
+    <div class="max-w-2xl mb-16">
+      {label && (
+        <p data-animate="fade-up" class="text-xs font-mono text-brand-400 uppercase tracking-widest mb-4">{label}</p>
+      )}
+      {headline && (
+        <h2 data-nova-el="testimonials-title" data-animate="fade-up" data-delay="0.1" class="text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-white mb-6">
+          {headline}
+        </h2>
+      )}
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" data-stagger="0.08">
+      {items.map((item) => (
+        <div data-animate="fade-up" class="glass-card rounded-2xl p-8 relative">
+          <div class="text-brand-500/20 text-6xl font-serif leading-none mb-4 select-none">&ldquo;</div>
+          <p data-nova-el="testimonial-quote" class="text-navy-300 leading-relaxed mb-6">
+            {item.quote}
+          </p>
+          <div class="flex items-center gap-3 mt-auto">
+            <div class="w-10 h-10 rounded-full bg-navy-700 flex items-center justify-center text-brand-400 font-display font-bold text-sm">
+              {(item.author || '?').charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <p data-nova-el="testimonial-author" class="font-display font-semibold text-white text-sm">{item.author}</p>
+              <p class="text-xs text-navy-400">
+                {item.role}{item.role && item.company ? ', ' : ''}{item.company}
+              </p>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

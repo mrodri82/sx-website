@@ -1,0 +1,58 @@
+---
+import { t, tItems } from '@/lib/i18n';
+import type { Locale } from '@/lib/i18n';
+
+interface Props {
+  content: Record<string, unknown>;
+  style: Record<string, string>;
+  overrides?: Record<string, string>;
+  locale?: Locale;
+}
+
+const { content, style, overrides, locale = 'es' } = Astro.props;
+
+const label = t(content, 'label', locale);
+const headline = t(content, 'headline', locale);
+const columns = (content.columns as number) || 3;
+const items = tItems((content.items as Record<string, unknown>[]) || [], locale);
+
+const colClass = columns === 2 ? 'md:grid-cols-2' : columns === 4 ? 'sm:grid-cols-2 lg:grid-cols-4' : 'sm:grid-cols-2 lg:grid-cols-3';
+---
+
+<section data-nova-el="gallery-section" class="py-24 relative">
+  <div class="max-w-7xl mx-auto px-6">
+    {(label || headline) && (
+      <div class="max-w-2xl mb-16">
+        {label && (
+          <p data-animate="fade-up" class="text-xs font-mono text-brand-400 uppercase tracking-widest mb-4">{label}</p>
+        )}
+        {headline && (
+          <h2 data-nova-el="gallery-title" data-animate="fade-up" data-delay="0.1" class="text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-white mb-6">
+            {headline}
+          </h2>
+        )}
+      </div>
+    )}
+
+    <div class={`grid grid-cols-1 ${colClass} gap-4`} data-stagger="0.05">
+      {items.map((item) => (
+        <div data-animate="fade-up" class="group relative overflow-hidden rounded-xl">
+          <div class="aspect-[4/3] overflow-hidden">
+            <img
+              data-nova-el="gallery-image"
+              src={item.image}
+              alt={item.caption || ''}
+              class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+              loading="lazy"
+            />
+          </div>
+          {item.caption && (
+            <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-navy-900/80 to-transparent px-4 py-3 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+              <p class="text-sm text-white/90">{item.caption}</p>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

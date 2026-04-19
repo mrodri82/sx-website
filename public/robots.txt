@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /nova-preview/
+Disallow: /wp-admin/
+Disallow: /wp-login.php
+Disallow: /kaufmich-demo/
+Disallow: /review/
+
+Sitemap: https://zds.es/sitemap-index.xml

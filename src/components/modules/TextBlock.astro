@@ -1,0 +1,40 @@
+---
+import { t } from '@/lib/i18n';
+import type { Locale } from '@/lib/i18n';
+
+interface Props {
+  content: Record<string, unknown>;
+  style: Record<string, string>;
+  overrides?: Record<string, string>;
+  locale?: Locale;
+}
+
+const { content, style, overrides, locale = 'es' } = Astro.props;
+
+const label = t(content, 'label', locale);
+const headline = t(content, 'headline', locale);
+const body = t(content, 'body', locale);
+---
+
+<section data-nova-el="text-section" class="py-24 relative">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="max-w-3xl mx-auto">
+      {label && (
+        <p data-animate="fade-up" class="text-xs font-mono text-brand-400 uppercase tracking-widest mb-4">{label}</p>
+      )}
+      {headline && (
+        <h2 data-nova-el="text-title" data-animate="fade-up" data-delay="0.1" class="text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-white mb-8">
+          {headline}
+        </h2>
+      )}
+      {body && (
+        <div data-nova-el="text-body" data-animate="fade-up" data-delay="0.2"
+             class="prose prose-invert prose-lg max-w-none text-navy-300 leading-relaxed
+                    prose-headings:font-display prose-headings:text-white
+                    prose-a:text-brand-400 prose-a:no-underline hover:prose-a:underline
+                    prose-strong:text-white prose-blockquote:border-brand-500/30 prose-blockquote:text-navy-400"
+             set:html={body} />
+      )}
+    </div>
+  </div>
+</section>

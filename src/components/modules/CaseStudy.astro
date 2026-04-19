@@ -1,0 +1,116 @@
+---
+import { t, tItems } from '@/lib/i18n';
+import type { Locale } from '@/lib/i18n';
+
+interface Props {
+  content: Record<string, unknown>;
+  style: Record<string, string>;
+  overrides?: Record<string, string>;
+  locale?: Locale;
+}
+
+const { content, style, overrides, locale = 'es' } = Astro.props;
+
+const label = t(content, 'label', locale);
+const headline = t(content, 'headline', locale);
+const description = t(content, 'description', locale);
+const subtitle = t(content, 'subtitle', locale);
+const client = t(content, 'client', locale);
+const image = (content.image as string) || '';
+const linkText = t(content, 'link_text', locale);
+const linkUrl = (content.link_url as string) || '';
+const results = tItems((content.results as Record<string, unknown>[]) || (content.stats as Record<string, unknown>[]) || [], locale);
+// Quote / testimonial
+const quote = t(content, 'quote', locale);
+const quoteAuthor = (content.quote_author as string) || '';
+const quoteRole = (content.quote_role as string) || '';
+const quoteCompany = (content.quote_company as string) || '';
+const quoteAvatar = (content.quote_avatar as string) || '';
+const quoteUrl = (content.quote_url as string) || '';
+---
+
+<section data-nova-el="case-section" class="py-24 relative">
+  <div class="absolute inset-0 bg-gradient-to-b from-transparent via-brand-500/[0.02] to-transparent"></div>
+  <div class="max-w-7xl mx-auto px-6 relative z-10">
+    <div class="max-w-4xl mb-16">
+      {label && (
+        <p data-animate="fade-up" class="text-xs font-mono text-brand-400 uppercase tracking-widest mb-4">{label}</p>
+      )}
+      {headline && (
+        <h2 data-nova-el="case-title" data-animate="fade-up" data-delay="0.1" class="text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-white mb-6">
+          {headline}
+        </h2>
+      )}
+      {(subtitle || description) && (
+        <p data-animate="fade-up" data-delay="0.2" class="text-lg text-navy-400 leading-relaxed">
+          {description || subtitle}
+        </p>
+      )}
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+      <!-- Image side -->
+      <div data-animate="fade-up" data-delay="0.2" class="order-2 lg:order-1">
+        {image && (
+          <div class="rounded-2xl overflow-hidden border border-navy-700/30">
+            <img data-nova-el="case-image" src={image} alt={client || headline} class="w-full h-auto object-cover" loading="lazy" />
+          </div>
+        )}
+      </div>
+
+      <!-- Content side -->
+      <div class="order-1 lg:order-2">
+        {client && (
+          <p data-nova-el="case-client" data-animate="fade-up" data-delay="0.15" class="text-sm font-mono text-navy-400 uppercase tracking-wider mb-6">{client}</p>
+        )}
+
+        {results.length > 0 && (
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8" data-stagger="0.08">
+            {results.map((result) => (
+              <div data-animate="fade-up" class="glass-card rounded-xl p-6">
+                <div data-nova-el="case-metric" class="font-display text-3xl sm:text-4xl font-bold text-brand-400 mb-1">
+                  {result.value}
+                </div>
+                <p class="text-sm font-semibold text-white mb-1">{result.metric || result.label}</p>
+                {result.desc && (
+                  <p class="text-xs text-navy-400">{result.desc}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {linkText && linkUrl && (
+          <a data-animate="fade-up" data-delay="0.3" href={linkUrl}
+             class="inline-flex items-center gap-2 text-brand-400 hover:text-brand-300 font-medium transition-colors">
+            {linkText}
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+          </a>
+        )}
+
+        {/* Testimonial quote */}
+        {quote && (
+          <div data-animate="fade-up" data-delay="0.35" class="mt-8 border-t border-navy-700/30 pt-6">
+            <blockquote class="text-navy-300 italic text-sm leading-relaxed mb-4">
+              &ldquo;{quote}&rdquo;
+            </blockquote>
+            <div class="flex items-center gap-3">
+              {quoteAvatar && (
+                <img src={quoteAvatar} alt={quoteAuthor} class="w-12 h-12 rounded-full object-cover border-2 border-brand-500/20" />
+              )}
+              <div>
+                {quoteAuthor && (
+                  <p class="font-display font-bold text-white text-sm">
+                    {quoteUrl ? <a href={quoteUrl} class="hover:text-brand-400 transition-colors" target="_blank" rel="noopener">{quoteAuthor}</a> : quoteAuthor}
+                  </p>
+                )}
+                {quoteRole && <p class="text-xs text-navy-400">{quoteRole}</p>}
+                {quoteCompany && <p class="text-xs text-navy-400">{quoteCompany}</p>}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+</section>

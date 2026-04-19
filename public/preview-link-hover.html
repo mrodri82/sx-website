@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Preview: Internal Link Hover/Modal</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'DM Sans', -apple-system, sans-serif;
+    background: #0a101f;
+    color: #cbd5e1;
+    min-height: 100vh;
+    padding: 60px 20px;
+  }
+
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  .label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #3b82f6;
+    margin-bottom: 8px;
+  }
+
+  h1 {
+    font-size: 32px;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 32px;
+    line-height: 1.2;
+  }
+
+  p {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    margin-bottom: 1.5rem;
+    color: #94a3b8;
+  }
+
+  /* ═══ Internal Link with Hover Preview ═══ */
+  .smart-link {
+    color: #3b82f6;
+    text-decoration: none;
+    position: relative;
+    border-bottom: 1px dotted rgba(59,130,246,0.4);
+    transition: color 0.2s;
+  }
+  .smart-link:hover {
+    color: #60a5fa;
+  }
+
+  /* Desktop: Hover tooltip with thumbnail */
+  .link-preview {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 12px);
+    left: 50%;
+    transform: translateX(-50%);
+    width: 320px;
+    background: #1e293b;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    z-index: 100;
+    animation: previewIn 0.2s ease;
+  }
+
+  .smart-link:hover .link-preview {
+    display: block;
+  }
+
+  @keyframes previewIn {
+    from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+    to { opacity: 1; transform: translateX(-50%) translateY(0); }
+  }
+
+  .link-preview .preview-img {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+    display: block;
+  }
+
+  .link-preview .preview-body {
+    padding: 12px 14px;
+  }
+
+  .link-preview .preview-cat {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #3b82f6;
+    margin-bottom: 4px;
+  }
+
+  .link-preview .preview-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: white;
+    line-height: 1.3;
+    margin-bottom: 4px;
+  }
+
+  .link-preview .preview-desc {
+    font-size: 11px;
+    color: #64748b;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .link-preview .preview-arrow {
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%) rotate(45deg);
+    width: 12px;
+    height: 12px;
+    background: #1e293b;
+    border-right: 1px solid rgba(255,255,255,0.1);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+
+  /* ═══ Mobile: Tap → Modal ═══ */
+  .link-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 9999;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 16px;
+  }
+  .link-modal-overlay.open {
+    display: flex;
+  }
+
+  .link-modal {
+    background: #1e293b;
+    border-radius: 16px 16px 0 0;
+    overflow: hidden;
+    width: 100%;
+    max-width: 400px;
+    animation: modalSlide 0.3s ease;
+  }
+
+  @keyframes modalSlide {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+
+  .link-modal .modal-img {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+  }
+
+  .link-modal .modal-body {
+    padding: 20px;
+  }
+
+  .link-modal .modal-cat {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #3b82f6;
+    margin-bottom: 6px;
+  }
+
+  .link-modal .modal-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: white;
+    line-height: 1.3;
+    margin-bottom: 8px;
+  }
+
+  .link-modal .modal-desc {
+    font-size: 13px;
+    color: #94a3b8;
+    line-height: 1.5;
+    margin-bottom: 16px;
+  }
+
+  .link-modal .modal-btn {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+  }
+
+  .link-modal .modal-close {
+    padding: 12px;
+    text-align: center;
+    color: #64748b;
+    font-size: 13px;
+    cursor: pointer;
+    border: none;
+    background: none;
+    width: 100%;
+  }
+
+  /* Demo labels */
+  .demo-label {
+    background: #3b82f6;
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 20px;
+    display: inline-block;
+    margin: 40px 0 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .demo-note {
+    font-size: 12px;
+    color: #475569;
+    margin-bottom: 20px;
+    font-style: italic;
+  }
+
+  @media (max-width: 768px) {
+    .smart-link:hover .link-preview { display: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="label">Design Preview</div>
+    <h1>Internal Link Hover & Mobile Modal</h1>
+
+    <!-- DEMO 1: Desktop Hover -->
+    <div class="demo-label">Desktop: Hover Preview</div>
+    <p class="demo-note">Fahre mit der Maus über den blauen Link</p>
+
+    <p>El GEO (Generative Engine Optimization) es el proceso de optimizar tu presencia digital para que los motores de búsqueda basados en inteligencia artificial citen tu marca. A diferencia del
+    <a href="#" class="smart-link">
+      SEO técnico tradicional
+      <span class="link-preview">
+        <img class="preview-img" src="https://cms.zds.es/wp-content/uploads/2026/03/hero-servicios-seo-tecnico.jpg" alt="">
+        <span class="preview-body">
+          <span class="preview-cat">Servicio</span>
+          <span class="preview-title">SEO Técnico: Core Web Vitals, rastreo y datos estructurados</span>
+          <span class="preview-desc">Auditoría y optimización técnica SEO. Core Web Vitals, indexación, Schema.org, arquitectura web. +200 checkpoints.</span>
+        </span>
+        <span class="preview-arrow"></span>
+      </span>
+    </a>,
+    que se centra en rankings y clics, el GEO busca que tu contenido sea citado dentro de las respuestas generadas por IA.</p>
+
+    <p>Según Gartner, las búsquedas tradicionales caerán un 25% en 2026. Herramientas como
+    <a href="#" class="smart-link">
+      ChatGPT y otros modelos de IA
+      <span class="link-preview">
+        <img class="preview-img" src="https://cms.zds.es/wp-content/uploads/2026/03/blog-chatgpt-seo-como-aparecer-1.jpg" alt="">
+        <span class="preview-body">
+          <span class="preview-cat">Insights</span>
+          <span class="preview-title">Cómo aparecer en las respuestas de ChatGPT</span>
+          <span class="preview-desc">Guía práctica para optimizar tu marca y contenido para ser citado por ChatGPT, Gemini y otros LLMs.</span>
+        </span>
+        <span class="preview-arrow"></span>
+      </span>
+    </a>
+    están reemplazando las búsquedas convencionales.</p>
+
+    <p>Para implementar una estrategia GEO efectiva, necesitas combinar
+    <a href="#" class="smart-link">
+      AI Visibility Tracker
+      <span class="link-preview">
+        <img class="preview-img" src="https://cms.zds.es/wp-content/uploads/2026/03/hero-ai-visibility.jpeg" alt="">
+        <span class="preview-body">
+          <span class="preview-cat">Herramienta</span>
+          <span class="preview-title">AI Visibility Tracker — Monitoriza tu marca en IA</span>
+          <span class="preview-desc">El primer tracker que monitoriza en tiempo real cómo ChatGPT, Gemini, Claude y Perplexity mencionan tu marca.</span>
+        </span>
+        <span class="preview-arrow"></span>
+      </span>
+    </a>
+    con optimización de contenido y autoridad temática.</p>
+
+    <!-- DEMO 2: Mobile Modal -->
+    <div class="demo-label">Mobile: Tap → Modal</div>
+    <p class="demo-note">Klicke den Button um das Mobile-Modal zu sehen</p>
+
+    <button onclick="document.getElementById('mobile-modal').classList.add('open')" style="background:#1e293b;border:1px solid rgba(255,255,255,0.1);color:#3b82f6;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:14px;font-family:inherit">
+      Simuliere Mobile-Tap auf "SEO técnico"
+    </button>
+
+    <!-- Mobile Modal -->
+    <div class="link-modal-overlay" id="mobile-modal" onclick="if(event.target===this)this.classList.remove('open')">
+      <div class="link-modal">
+        <img class="modal-img" src="https://cms.zds.es/wp-content/uploads/2026/03/hero-servicios-seo-tecnico.jpg" alt="">
+        <div class="modal-body">
+          <div class="modal-cat">Servicio</div>
+          <div class="modal-title">SEO Técnico: Core Web Vitals, rastreo y datos estructurados</div>
+          <div class="modal-desc">Auditoría y optimización técnica SEO. Core Web Vitals, indexación, Schema.org, arquitectura web. +200 checkpoints. Auditoría gratuita.</div>
+          <a href="/servicios-seo-tecnico" class="modal-btn">Ver servicio →</a>
+          <button class="modal-close" onclick="this.closest('.link-modal-overlay').classList.remove('open')">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

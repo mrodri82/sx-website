@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Glass Card Vergleich — Alt vs Neu</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #020617; color: #cbd5e1; font-family: "Inter", system-ui, sans-serif; padding: 40px; }
+h1 { color: white; font-size: 28px; margin-bottom: 8px; font-family: "DM Sans", sans-serif; }
+.subtitle { color: #64748b; margin-bottom: 40px; font-size: 14px; }
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 60px; }
+.col h2 { color: #94a3b8; font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 16px; font-family: monospace; }
+
+/* ORIGINAL (vor 28. Maerz) */
+.card-old {
+  background: color-mix(in srgb, #1e293b 40%, transparent);
+  border: 1px solid color-mix(in srgb, #334155 40%, transparent);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 16px;
+  transition: all 0.3s ease;
+}
+.card-old:hover {
+  border-color: color-mix(in srgb, #5599ED 50%, transparent);
+  box-shadow: 0 0 40px color-mix(in srgb, #0B6FD8 8%, transparent);
+}
+
+/* NEU (nach 28. Maerz) */
+.card-new {
+  background: linear-gradient(145deg, color-mix(in srgb, #1e293b 50%, transparent), color-mix(in srgb, #0f172a 40%, transparent));
+  border: 1px solid color-mix(in srgb, #334155 30%, transparent);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 16px;
+  transition: all 0.3s ease;
+}
+.card-new:hover {
+  border-color: color-mix(in srgb, #5599ED 40%, transparent);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2), 0 0 48px color-mix(in srgb, #0B6FD8 6%, transparent);
+  transform: translateY(-2px);
+}
+
+.card-title { color: white; font-size: 18px; font-weight: 700; margin-bottom: 8px; font-family: "DM Sans", sans-serif; }
+.card-desc { color: #94a3b8; font-size: 14px; line-height: 1.6; }
+.icon { color: #5599ED; font-size: 24px; margin-bottom: 12px; }
+
+/* Grain Vergleich */
+.grain-section { position: relative; padding: 40px; border-radius: 16px; min-height: 200px; display: flex; align-items: center; justify-content: center; }
+.grain-section h3 { color: white; font-size: 18px; position: relative; z-index: 1; text-align: center; }
+.mesh {
+  background: radial-gradient(ellipse at 20% 50%, color-mix(in srgb, #0B6FD8 12%, transparent) 0%, transparent 50%),
+  radial-gradient(ellipse at 80% 20%, color-mix(in srgb, #004A95 8%, transparent) 0%, transparent 50%),
+  radial-gradient(ellipse at 50% 80%, color-mix(in srgb, #1e293b 30%, transparent) 0%, transparent 50%),
+  #020617;
+}
+.grain-single::after {
+  content: ""; position: absolute; inset: 0; border-radius: 16px; z-index: 0; pointer-events: none;
+  opacity: 0.02;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+}
+.grain-double::before {
+  content: ""; position: absolute; inset: 0; border-radius: 16px; z-index: 0; pointer-events: none;
+  opacity: 0.015;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n2'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n2)'/%3E%3C/svg%3E");
+}
+.grain-double::after {
+  content: ""; position: absolute; inset: 0; border-radius: 16px; z-index: 0; pointer-events: none;
+  opacity: 0.02;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise2'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise2)'/%3E%3C/svg%3E");
+}
+.three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; margin-top: 20px; }
+</style>
+</head>
+<body>
+
+<h1>Glass Card Vergleich</h1>
+<p class="subtitle">Links: Original (vor 28. Maerz) — Rechts: Aktuell (nach 28. Maerz). Hover ueber die Cards.</p>
+
+<div class="row">
+  <div class="col">
+    <h2>ORIGINAL — Flat, staerkerer Border</h2>
+    <div class="card-old">
+      <div class="icon">&#128065;</div>
+      <div class="card-title">AI Visibility</div>
+      <div class="card-desc">Monitoriza como los modelos de IA mencionan tu marca. ChatGPT, Gemini, Claude, Perplexity — en tiempo real.</div>
+    </div>
+    <div class="card-old">
+      <div class="icon">&#128295;</div>
+      <div class="card-title">Custom Tools</div>
+      <div class="card-desc">Clasificadores ETIM, pipelines de datos y herramientas automatizadas a medida para tu negocio.</div>
+    </div>
+    <div class="card-old">
+      <div class="icon">&#128202;</div>
+      <div class="card-title">Data & Analytics</div>
+      <div class="card-desc">Snowflake, Amplitude, GSC — inteligencia de datos unificada con consultas en lenguaje natural.</div>
+    </div>
+  </div>
+  <div class="col">
+    <h2>NEU — Gradient, Lift-Hover, schwacher Border</h2>
+    <div class="card-new">
+      <div class="icon">&#128065;</div>
+      <div class="card-title">AI Visibility</div>
+      <div class="card-desc">Monitoriza como los modelos de IA mencionan tu marca. ChatGPT, Gemini, Claude, Perplexity — en tiempo real.</div>
+    </div>
+    <div class="card-new">
+      <div class="icon">&#128295;</div>
+      <div class="card-title">Custom Tools</div>
+      <div class="card-desc">Clasificadores ETIM, pipelines de datos y herramientas automatizadas a medida para tu negocio.</div>
+    </div>
+    <div class="card-new">
+      <div class="icon">&#128202;</div>
+      <div class="card-title">Data & Analytics</div>
+      <div class="card-desc">Snowflake, Amplitude, GSC — inteligencia de datos unificada con consultas en lenguaje natural.</div>
+    </div>
+  </div>
+</div>
+
+<h1 style="margin-top:20px">Grain Vergleich</h1>
+<p class="subtitle">Der Noise-Overlay auf dem Mesh-Gradient Hintergrund. Auf Desktop-Monitoren deutlicher sichtbar.</p>
+
+<div class="three-col">
+  <div>
+    <h2 style="color:#94a3b8;font-size:12px;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:12px;font-family:monospace">Kein Grain</h2>
+    <div class="grain-section mesh">
+      <h3>Clean<br><span style="font-size:12px;color:#64748b">Kein Overlay</span></h3>
+    </div>
+  </div>
+  <div>
+    <h2 style="color:#94a3b8;font-size:12px;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:12px;font-family:monospace">1x Grain (Original, 0.02)</h2>
+    <div class="grain-section mesh grain-single">
+      <h3>Subtil<br><span style="font-size:12px;color:#64748b">1 Layer — so war es vorher</span></h3>
+    </div>
+  </div>
+  <div>
+    <h2 style="color:#94a3b8;font-size:12px;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:12px;font-family:monospace">2x Grain (nach 28., 0.035)</h2>
+    <div class="grain-section mesh grain-double">
+      <h3>Zu viel<br><span style="font-size:12px;color:#64748b">2 Layer — das war das Problem</span></h3>
+    </div>
+  </div>
+</div>
+
+<p style="color:#475569; margin-top: 40px; font-size: 13px; max-width: 600px;">
+  <strong style="color:#94a3b8">Zusammenfassung:</strong> Die Cards links hatten staerkere Borders und flachen Hintergrund.
+  Die neuen rechts haben einen subtilen Gradient und Lift-on-Hover. Der Grain war immer da (1 Layer),
+  wurde aber durch ein zweites Layer verdoppelt. Aktuell: 1 Layer nur auf Retina-Screens.
+</p>
+
+</body>
+</html>

@@ -1,0 +1,92 @@
+---
+import { t, tItems } from '@/lib/i18n';
+import type { Locale } from '@/lib/i18n';
+
+interface Props {
+  content: Record<string, unknown>;
+  style: Record<string, string>;
+  overrides?: Record<string, string>;
+  locale?: Locale;
+}
+
+const { content, style, overrides, locale = 'es' } = Astro.props;
+
+const label = t(content, 'label', locale);
+const headline = t(content, 'headline', locale);
+const items = tItems((content.items as Record<string, unknown>[]) || [], locale);
+---
+
+<section data-nova-el="faq-section" class="py-24 relative">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="max-w-2xl mb-16">
+      {label && (
+        <p data-animate="fade-up" class="text-xs font-mono text-brand-400 uppercase tracking-widest mb-4">{label}</p>
+      )}
+      {headline && (
+        <h2 data-nova-el="faq-title" data-animate="fade-up" data-delay="0.1" class="text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-white mb-6">
+          {headline}
+        </h2>
+      )}
+    </div>
+
+    <div class="max-w-3xl mx-auto space-y-2">
+      {items.map((item, i) => (
+        <div data-animate="fade-up" data-delay={String(i * 0.05)} class="faq-item border border-navy-700/50 rounded-xl overflow-hidden">
+          <button
+            data-nova-el="faq-question"
+            class="faq-toggle w-full flex items-center justify-between gap-4 px-6 py-5 text-left text-white font-display font-semibold text-base sm:text-lg hover:bg-navy-800/30 transition-colors"
+            aria-expanded="false"
+            aria-controls={`faq-answer-${i}`}
+            id={`faq-question-${i}`}
+          >
+            <span>{item.question}</span>
+            <svg class="faq-icon w-5 h-5 text-navy-400 shrink-0 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          <div class="faq-answer hidden px-6 pb-5" id={`faq-answer-${i}`} role="region" aria-labelledby={`faq-question-${i}`}>
+            <p data-nova-el="faq-answer" class="text-navy-400 leading-relaxed">{item.answer}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+
+  {/* FAQPage Schema.org Structured Data */}
+  {items.length > 0 && (
+    <script type="application/ld+json" set:html={JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": items.map(item => ({
+        "@type": "Question",
+        "name": item.question || item.title || '',
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": item.answer || item.description || '',
+        }
+      }))
+    })} />
+  )}
+</section>
+
+<script>
+  document.querySelectorAll('.faq-toggle').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const item = btn.closest('.faq-item');
+      if (!item) return;
+      const answer = item.querySelector('.faq-answer') as HTMLElement;
+      const icon = item.querySelector('.faq-icon') as HTMLElement;
+      const isOpen = btn.getAttribute('aria-expanded') === 'true';
+
+      if (isOpen) {
+        answer.classList.add('hidden');
+        icon.style.transform = 'rotate(0deg)';
+        btn.setAttribute('aria-expanded', 'false');
+      } else {
+        answer.classList.remove('hidden');
+        icon.style.transform = 'rotate(180deg)';
+        btn.setAttribute('aria-expanded', 'true');
+      }
+    });
+  });
+</script>

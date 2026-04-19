@@ -1,0 +1,235 @@
+---
+import { t } from '@/lib/i18n';
+import type { Locale } from '@/lib/i18n';
+import { readdirSync, existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
+
+interface Props {
+  content: Record<string, unknown>;
+  style: Record<string, string>;
+  overrides?: Record<string, string>;
+  locale?: Locale;
+}
+
+const { content, style, overrides, locale = 'es' } = Astro.props;
+
+const label = t(content, 'label', locale);
+// Support both legacy string array ["Nike","Lidl"] and new object array [{name,logo}]
+const rawClients = (content.clients as any[]) || [];
+type ClientEntry = { name: string; logo?: string };
+const clients: ClientEntry[] = rawClients.map((c: any) =>
+  typeof c === 'string' ? { name: c } : { name: c.name || '', logo: c.logo || undefined }
+);
+const repeated = [...clients, ...clients, ...clients, ...clients];
+
+// Build a set of available logo slugs at module load time so we can
+// render an <img> when a matching SVG exists and fall back to text
+// otherwise. Keeps content editing (just type a client name) unchanged
+// while automatically picking up any logo dropped into the folder.
+// Try both public/ (dev) and dist/client/ (production SSR) paths
+const cwd = process.cwd();
+const candidates = [
+  join(cwd, 'public/images/logos/clients'),
+  join(cwd, 'dist/client/images/logos/clients'),
+];
+const availableLogos = new Set<string>();
+for (const dir of candidates) {
+  try {
+    if (existsSync(dir)) {
+      for (const f of readdirSync(dir)) {
+        if (f.endsWith('.svg') || f.endsWith('.png') || f.endsWith('.webp')) {
+          availableLogos.add(f.replace(/\.(svg|png|webp)$/, ''));
+        }
+      }
+      break;
+    }
+  } catch { /* continue to next candidate */ }
+}
+
+function slugify(name: string): string {
+  return name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/&/g, 'and')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+}
+
+function logoFile(name: string): string | null {
+  const slug = slugify(name);
+  if (availableLogos.has(slug)) return `/images/logos/clients/${slug}.svg`;
+  return null;
+}
+
+// Per-logo calibrated width so every logo renders at approximately
+// equal visual weight (~5000 px² area) regardless of aspect ratio.
+// Calculated: target_area ≈ w × (w / aspect) → w = √(area × aspect)
+// Per-logo calibrated width. Real vector logos (SimpleIcons) get
+// smaller widths since they're dense; text wordmarks get wider.
+const LOGO_W: Record<string, number> = {
+  // Real vector SVGs (SimpleIcons)
+  'nike':          80,
+  'red-bull':      95,
+  'siemens':      170,
+  'lidl':          85,
+  'otto':          95,
+  'media-markt':   85,
+  'tui':           80,
+  'unilever':      80,
+  // Text wordmark SVGs
+  'henkel':       140,
+  'douglas':      170,
+  'pfizer':       130,
+  'aida':         110,
+  'beiersdorf':   150,
+  'vaillant':     140,
+  'emerson':      150,
+  'grohe':        120,
+  'hansgrohe':    155,
+  'geberit':      145,
+  'cewe':         110,
+  'jysk':         100,
+  'galeria':      145,
+  'iberostar':    155,
+  'bnp-paribas':  165,
+  'abus':         100,
+  'holzland':     140,
+  'master-regale':170,
+  'auto-europe':  155,
+  'balluff':      140,
+  'zgonc':        130,
+  'villeroy-and-boch': 180,
+  'msc':           90,
+  'barcelo':      140,
+  'bypillow':     140,
+};
+
+function logoWidth(name: string): number {
+  return LOGO_W[slugify(name)] || 120;
+}
+---
+
+<section data-nova-el="ticker-section" class="py-14 border-y border-navy-800/50 overflow-hidden">
+  <div class="max-w-7xl mx-auto px-6 mb-8">
+    <p data-nova-el="ticker-label" data-animate="fade-up" class="text-xs font-mono text-navy-400 uppercase tracking-widest text-center">
+      {label}
+    </p>
+  </div>
+  <div class="relative overflow-hidden" style="mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);" aria-hidden="true">
+    <div class="logo-ticker flex items-center whitespace-nowrap">
+      {repeated.map((client) => {
+        // Use explicit logo URL if set in editor, otherwise auto-detect from filesystem
+        const src = client.logo || logoFile(client.name);
+        const name = client.name;
+        return (
+          <div class="logo-ticker-slot flex items-center justify-center mx-6 md:mx-14 shrink-0" style={`width:${logoWidth(name)}px;height:48px`}>
+            {src ? (
+              <img
+                src={src}
+                alt={name}
+                loading="lazy"
+                decoding="async"
+                style={`width:${logoWidth(name)}px;height:48px`}
+                class="logo-ticker-img object-contain brightness-0 invert opacity-50 hover:opacity-90 transition-opacity"
+              />
+            ) : (
+              <span class="text-navy-300 font-display font-bold text-base tracking-tight uppercase opacity-50 hover:opacity-90 transition-opacity whitespace-nowrap">
+                {name}
+              </span>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  </div>
+  {/* Accessible list of clients for screen readers */}
+  <ul class="sr-only">
+    {clients.map((c) => <li>{c.name}</li>)}
+  </ul>
+</section>
+
+<script is:inline>
+(function() {
+  var ticker = document.querySelector('.logo-ticker');
+  if (!ticker) return;
+  var wrap = ticker.parentElement;
+  ticker.style.animation = 'none';
+
+  var pos = 0;
+  var halfW = 1;
+  var speed = 0.5;
+  var autoScroll = true;
+  var resumeTimer = null;
+
+  // Recalculate after images load (scrollWidth changes)
+  function recalc() {
+    halfW = ticker.scrollWidth / 2;
+    speed = 0.5; // Fixed: ~30px/sec at 60fps — doesn't scale with content width
+  }
+  recalc();
+  window.addEventListener('load', recalc);
+
+  function loop() {
+    if (autoScroll) {
+      pos -= speed;
+      // Seamless wrap only during auto-scroll (slow = invisible jump)
+      if (pos < -halfW) pos += halfW;
+    }
+    ticker.style.transform = 'translateX(' + pos + 'px)';
+    requestAnimationFrame(loop);
+  }
+
+  // Stop auto-scroll on interaction, resume 2s after release
+  function stopAuto() {
+    autoScroll = false;
+    if (resumeTimer) clearTimeout(resumeTimer);
+  }
+  function scheduleResume() {
+    if (resumeTimer) clearTimeout(resumeTimer);
+    resumeTimer = setTimeout(function() { autoScroll = true; }, 2000);
+  }
+
+  // Touch
+  var touchStartX = 0, touchDragPos = 0;
+  wrap.addEventListener('touchstart', function(e) {
+    stopAuto();
+    touchStartX = e.touches[0].clientX;
+    touchDragPos = pos;
+  }, {passive:true});
+  wrap.addEventListener('touchmove', function(e) {
+    pos = touchDragPos + (e.touches[0].clientX - touchStartX);
+  }, {passive:true});
+  wrap.addEventListener('touchend', scheduleResume, {passive:true});
+  wrap.addEventListener('touchcancel', scheduleResume, {passive:true});
+
+  // Mouse drag
+  var mousing = false, mStartX = 0, mDragPos = 0;
+  wrap.style.cursor = 'grab';
+  wrap.addEventListener('mousedown', function(e) {
+    e.preventDefault();
+    mousing = true;
+    stopAuto();
+    mStartX = e.clientX;
+    mDragPos = pos;
+    wrap.style.cursor = 'grabbing';
+  });
+  document.addEventListener('mousemove', function(e) {
+    if (!mousing) return;
+    pos = mDragPos + (e.clientX - mStartX);
+  });
+  document.addEventListener('mouseup', function() {
+    if (!mousing) return;
+    mousing = false;
+    wrap.style.cursor = 'grab';
+    scheduleResume();
+  });
+
+  // Hover pause (desktop)
+  wrap.addEventListener('mouseenter', function() { if (!mousing) stopAuto(); });
+  wrap.addEventListener('mouseleave', function() { if (!mousing) scheduleResume(); });
+
+  requestAnimationFrame(loop);
+})();
+</script>

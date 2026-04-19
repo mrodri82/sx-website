@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "fang-channel": {
+      "command": "C:\\Users\\ManuelRiveiroRodrigu\\.bun\\bin\\bun.exe",
+      "args": [
+        "S:\\Projects\\claude-channels\\channel-server.ts",
+        "8793"
+      ]
+    }
+  }
+}

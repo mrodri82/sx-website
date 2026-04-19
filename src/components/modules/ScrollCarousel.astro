@@ -1,0 +1,70 @@
+---
+/**
+ * ScrollCarousel — CSS scroll-snap horizontal carousel
+ * No JavaScript. Touch-friendly. Great for testimonials, case studies, screenshots.
+ */
+import { t, tItems } from '@/lib/i18n';
+import type { Locale } from '@/lib/i18n';
+
+interface Props {
+  content: Record<string, unknown>;
+  style: Record<string, string>;
+  overrides?: Record<string, string>;
+  locale?: Locale;
+}
+
+const { content, style, overrides, locale = 'es' } = Astro.props;
+const label = t(content, 'label', locale);
+const headline = t(content, 'headline', locale);
+const subtitle = t(content, 'subtitle', locale);
+const items = tItems((content.items as Record<string, unknown>[]) || [], locale);
+---
+
+<section class="py-20 relative overflow-hidden">
+  <div class="max-w-7xl mx-auto px-6 mb-8">
+    {label && <p class="text-xs font-mono text-brand-400 uppercase tracking-widest mb-4">{label}</p>}
+    {headline && <h2 class="text-3xl sm:text-4xl font-display font-bold text-white mb-4">{headline}</h2>}
+    {subtitle && <p class="text-lg text-navy-400">{subtitle}</p>}
+  </div>
+
+  <div class="scroll-container flex gap-6 overflow-x-auto snap-x snap-mandatory px-6 pb-4 -mx-6 lg:mx-0 lg:px-0 lg:max-w-7xl lg:mx-auto">
+    {items.map((item: any) => (
+      <div class="snap-start shrink-0 w-[85vw] sm:w-[400px] lg:w-[440px]">
+        <div class="bg-navy-800/30 border border-navy-700/30 rounded-2xl p-6 h-full flex flex-col">
+          {item.image && (
+            <img src={item.image} alt={item.title || ''} class="w-full rounded-xl mb-4 aspect-video object-cover" loading="lazy" />
+          )}
+          {item.title && <h3 class="text-lg font-display font-bold text-white mb-2">{item.title}</h3>}
+          {item.description && <p class="text-navy-400 text-sm leading-relaxed flex-1">{item.description}</p>}
+          {item.author && (
+            <div class="mt-4 pt-4 border-t border-navy-700/20 flex items-center gap-3">
+              {item.avatar && <img src={item.avatar} alt={item.author} class="w-8 h-8 rounded-full" />}
+              <div>
+                <p class="text-sm text-white font-medium">{item.author}</p>
+                {item.company && <p class="text-xs text-navy-500">{item.company}</p>}
+              </div>
+            </div>
+          )}
+          {item.tags && Array.isArray(item.tags) && (
+            <div class="mt-3 flex flex-wrap gap-1.5">
+              {(item.tags as string[]).map((tag: string) => (
+                <span class="text-[10px] font-mono bg-brand-500/10 text-brand-400 px-2 py-0.5 rounded">{tag}</span>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    ))}
+  </div>
+
+  <p class="text-center text-navy-600 text-xs mt-4 lg:hidden">
+    {locale === 'de' ? 'Wische zum Scrollen' : locale === 'en' ? 'Swipe to scroll' : 'Desliza para ver m\u00e1s'}
+  </p>
+</section>
+
+<style>
+  .scroll-container { scrollbar-width: thin; scrollbar-color: rgba(59,130,246,0.3) transparent; }
+  .scroll-container::-webkit-scrollbar { height: 4px; }
+  .scroll-container::-webkit-scrollbar-track { background: transparent; }
+  .scroll-container::-webkit-scrollbar-thumb { background: rgba(59,130,246,0.3); border-radius: 2px; }
+</style>

@@ -1,0 +1,63 @@
+---
+/**
+ * StickyTOC — Sticky Table of Contents with anchor links
+ * Auto-generates TOC from items. Great for long-form content pages.
+ * Pure CSS sticky positioning, no JavaScript.
+ */
+import { t, tItems } from '@/lib/i18n';
+import type { Locale } from '@/lib/i18n';
+
+interface Props {
+  content: Record<string, unknown>;
+  style: Record<string, string>;
+  overrides?: Record<string, string>;
+  locale?: Locale;
+}
+
+const { content, style, overrides, locale = 'es' } = Astro.props;
+const label = t(content, 'label', locale);
+const headline = t(content, 'headline', locale);
+const items = tItems((content.items as Record<string, unknown>[]) || [], locale);
+---
+
+<section class="py-20 relative">
+  <div class="max-w-7xl mx-auto px-6">
+    {label && <p class="text-xs font-mono text-brand-400 uppercase tracking-widest mb-4">{label}</p>}
+    {headline && <h2 class="text-3xl sm:text-4xl font-display font-bold text-white mb-12">{headline}</h2>}
+
+    <div class="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-12">
+      {/* Sticky sidebar TOC */}
+      <nav class="hidden lg:block">
+        <div class="sticky top-24">
+          <p class="text-xs font-mono text-navy-500 uppercase tracking-widest mb-4">
+            {locale === 'de' ? 'Inhalt' : locale === 'en' ? 'Contents' : 'Contenido'}
+          </p>
+          <ul class="space-y-2 border-l border-navy-700/30 pl-4">
+            {items.map((item: any, i: number) => (
+              <li>
+                <a href={`#toc-${i}`} class="text-sm text-navy-400 hover:text-brand-400 transition-colors block py-1">
+                  {item.title}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </nav>
+
+      {/* Content sections */}
+      <div class="space-y-16">
+        {items.map((item: any, i: number) => (
+          <div id={`toc-${i}`} class="scroll-mt-24">
+            <h3 class="text-2xl font-display font-bold text-white mb-4">{item.title}</h3>
+            {item.description && (
+              <div class="text-navy-300 leading-relaxed text-lg" set:html={item.description} />
+            )}
+            {item.body_html && (
+              <div class="prose prose-invert max-w-none mt-4" set:html={item.body_html} />
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>

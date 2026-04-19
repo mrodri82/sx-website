@@ -1,0 +1,73 @@
+---
+import { t, tItems } from '@/lib/i18n';
+import type { Locale } from '@/lib/i18n';
+
+interface Props {
+  content: Record<string, unknown>;
+  style: Record<string, string>;
+  overrides?: Record<string, string>;
+  locale?: Locale;
+}
+
+const { content, style, overrides, locale = 'es' } = Astro.props;
+
+const label = t(content, 'label', locale);
+const headline = t(content, 'headline', locale);
+const subtitle = t(content, 'subtitle', locale);
+const features = tItems(((content.features || content.items) as Record<string, unknown>[]) || [], locale);
+---
+
+<section data-nova-el="feature-section" class="py-24 relative">
+  <div class="absolute inset-0 bg-gradient-to-b from-transparent via-brand-500/[0.02] to-transparent"></div>
+  <div class="max-w-7xl mx-auto px-6 relative z-10">
+    <div class="max-w-2xl mb-16">
+      {label && (
+        <p data-nova-el="feature-label" data-animate="fade-up" class="text-xs font-mono text-brand-400 uppercase tracking-widest mb-4">{label}</p>
+      )}
+      {headline && (
+        <h2 data-nova-el="feature-title" data-animate="fade-up" data-delay="0.1" class="text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-white mb-6">
+          {headline}
+        </h2>
+      )}
+      {subtitle && (
+        <p data-nova-el="feature-subtitle" data-animate="fade-up" data-delay="0.2" class="text-lg text-navy-400 leading-relaxed">
+          {subtitle}
+        </p>
+      )}
+    </div>
+
+    <div class="space-y-16">
+      {features.map((feature, i) => {
+        const imgPos = feature.image_position || (i % 2 === 0 ? 'left' : 'right');
+        const isLeft = imgPos === 'left';
+        return (
+          <div data-animate="fade-up" data-delay={String(i * 0.1)} class={`glass-card rounded-2xl p-8 sm:p-10 grid grid-cols-1 lg:grid-cols-2 gap-10 items-center ${isLeft ? '' : 'lg:direction-rtl'}`}>
+            <div class={isLeft ? 'order-1 lg:order-1' : 'order-1 lg:order-2'}>
+              {feature.image ? (
+                <div class="rounded-xl overflow-hidden">
+                  <img data-nova-el="feature-item-image" src={feature.image} alt={feature.title || ''} class="w-full h-auto object-cover" loading="lazy" />
+                </div>
+              ) : feature.icon ? (
+                <div class="flex items-center justify-center w-full h-48 rounded-xl bg-navy-800/50 border border-navy-700/30">
+                  <i data-nova-el="feature-item-icon" class={`${feature.icon} text-5xl text-brand-400`}></i>
+                </div>
+              ) : null}
+            </div>
+            <div class={isLeft ? 'order-2 lg:order-2' : 'order-2 lg:order-1'}>
+              {feature.title && (
+                <h3 data-nova-el="feature-item-title" class="font-display font-bold text-white text-xl sm:text-2xl mb-4">
+                  {feature.title}
+                </h3>
+              )}
+              {feature.desc && (
+                <p data-nova-el="feature-item-text" class="text-navy-400 leading-relaxed">
+                  {feature.desc}
+                </p>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  </div>
+</section>

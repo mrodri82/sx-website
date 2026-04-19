@@ -1,0 +1,25 @@
+{
+  "name": "sx-website",
+  "type": "module",
+  "version": "0.1.0",
+  "description": "SX Festival & Expo 2026 Berlin — built on Nova CMS (Astro + WP headless)",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/node": "^9.5.5",
+    "@astrojs/sitemap": "^3.3.0",
+    "@astrojs/svelte": "^7.2.5",
+    "astro": "^5.7.0",
+    "gsap": "^3.14.2",
+    "svelte": "^5.53.12"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.0",
+    "tailwindcss": "^4.1.0",
+    "typescript": "^5.8.0"
+  }
+}

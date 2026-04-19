@@ -1,0 +1,38 @@
+---
+import { t } from '@/lib/i18n';
+import type { Locale } from '@/lib/i18n';
+
+interface Props {
+  content: Record<string, unknown>;
+  style: Record<string, string>;
+  overrides?: Record<string, string>;
+  locale?: Locale;
+}
+
+const { content, style, overrides, locale = 'es' } = Astro.props;
+const quote = t(content, 'quote', locale);
+const author = t(content, 'author', locale);
+const role = t(content, 'role', locale);
+const company = t(content, 'company', locale);
+---
+
+<section data-nova-el="quote-section" class="py-24 relative">
+  <div class="max-w-4xl mx-auto px-6 text-center">
+    <svg class="w-12 h-12 mx-auto mb-8 text-brand-400/30" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/>
+    </svg>
+    {quote && (
+      <blockquote data-nova-el="quote-text" data-animate="fade-up" class="text-2xl sm:text-3xl lg:text-4xl font-display font-bold text-white leading-snug mb-8">
+        {quote}
+      </blockquote>
+    )}
+    <div data-animate="fade-up" data-delay="0.2">
+      {author && <p data-nova-el="quote-author" class="text-lg font-semibold text-white">{author}</p>}
+      {(role || company) && (
+        <p class="text-sm text-navy-400 mt-1">
+          {role}{role && company ? ' · ' : ''}{company}
+        </p>
+      )}
+    </div>
+  </div>
+</section>

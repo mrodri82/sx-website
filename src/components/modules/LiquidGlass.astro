@@ -1,0 +1,274 @@
+---
+/**
+ * LiquidGlass — frosted-glass card grid with a scoped aurora background.
+ *
+ * Design nachgebaut aus Manuels glass-prototype.html: gedeckte Navy-Töne,
+ * zwei huge blurred radial-gradient rings drift hinter dem Content
+ * (mix-blend-mode: screen), feines SVG-Grain als Dithering gegen Banding,
+ * die eigentlichen Cards sind backdrop-filter: blur(20px) saturate(180%)
+ * mit subtilem gradient tint und einem hover-reflection.
+ *
+ * WICHTIG: Aurora + Noise sind innerhalb der Section gescoped (nicht
+ * fixed zum Viewport), also läuft der Effekt nur dort wo dieses Modul
+ * gerendert wird — nicht auf der ganzen Seite.
+ */
+import { t, tItems } from '@/lib/i18n';
+import type { Locale } from '@/lib/i18n';
+
+interface Props {
+  content: Record<string, unknown>;
+  style: Record<string, string>;
+  overrides?: Record<string, string>;
+  locale?: Locale;
+}
+
+const { content, locale = 'es' } = Astro.props;
+
+const sectionLabel = t(content, 'section_label', locale);
+const headline = t(content, 'headline', locale);
+const subtitle = t(content, 'subtitle', locale);
+const items = tItems((content.items as Record<string, unknown>[]) || [], locale);
+
+const headlineLines = headline.split('\n');
+---
+
+<section data-nova-el="liquid-glass-section" class="lg-section relative py-24 overflow-hidden">
+  <!-- Scoped aurora background — two blurred rings drifting behind the cards. -->
+  <div class="lg-aurora" aria-hidden="true"></div>
+  <!-- Fine SVG noise overlay for dithering against gradient banding. -->
+  <div class="lg-noise" aria-hidden="true"></div>
+
+  <div class="max-w-7xl mx-auto px-6 relative z-10">
+    {(sectionLabel || headline || subtitle) && (
+      <div class="max-w-2xl mb-16">
+        {sectionLabel && (
+          <p data-nova-el="liquid-glass-label" data-animate="fade-up"
+             class="text-xs font-mono text-brand-400 uppercase tracking-widest mb-4">
+            {sectionLabel}
+          </p>
+        )}
+        {headline && (
+          <h2 data-nova-el="liquid-glass-title" data-animate="fade-up" data-delay="0.1"
+              class="text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-white mb-6 leading-[1.1]">
+            {headlineLines.map((line, i) => (
+              <>{i > 0 && <br />}{line}</>
+            ))}
+          </h2>
+        )}
+        {subtitle && (
+          <p data-nova-el="liquid-glass-subtitle" data-animate="fade-up" data-delay="0.2"
+             class="text-navy-400 text-lg leading-relaxed">
+            {subtitle}
+          </p>
+        )}
+      </div>
+    )}
+
+    <div class="lg-grid" data-stagger="0.08">
+      {items.map((card) => (
+        <article data-nova-el="liquid-glass-card" data-animate="fade-up" class="lg-card">
+          {card.badge && (
+            <span data-nova-el="liquid-glass-card-badge" class="lg-badge">{card.badge}</span>
+          )}
+          {card.title && (
+            <h3 data-nova-el="liquid-glass-card-title" class="lg-title">{card.title}</h3>
+          )}
+          {card.desc && (
+            <p data-nova-el="liquid-glass-card-desc" class="lg-desc">{card.desc}</p>
+          )}
+          {card.value && (
+            <div data-nova-el="liquid-glass-card-value" class="lg-value">{card.value}</div>
+          )}
+          {card.trend && (
+            <div data-nova-el="liquid-glass-card-trend" class="lg-trend">{card.trend}</div>
+          )}
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .lg-section {
+    /* Deeper base behind the section so the aurora has something to paint on. */
+    background: #07101f;
+  }
+
+  /* ─────── Scoped Aurora ─────── */
+  .lg-aurora {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    z-index: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse 120% 85% at 50% 50%,
+        rgba(0, 0, 0, 0) 0%,
+        rgba(0, 0, 0, 0.08) 30%,
+        rgba(0, 0, 0, 0.22) 60%,
+        rgba(0, 0, 0, 0.45) 85%,
+        rgba(0, 0, 0, 0.70) 100%);
+  }
+  .lg-aurora::before,
+  .lg-aurora::after {
+    content: '';
+    position: absolute;
+    width: 140vmax;
+    height: 140vmax;
+    top: 50%;
+    left: 50%;
+    border-radius: 50%;
+    filter: blur(90px);
+    opacity: 0.28;
+    mix-blend-mode: screen;
+    pointer-events: none;
+    will-change: transform;
+  }
+  .lg-aurora::before {
+    background:
+      radial-gradient(circle at 30% 40%, #14264a 0%, transparent 45%),
+      radial-gradient(circle at 70% 60%, #111f38 0%, transparent 50%),
+      radial-gradient(circle at 50% 80%, #0d1a2b 0%, transparent 45%);
+    animation: lg-drift1 32s ease-in-out infinite alternate;
+  }
+  .lg-aurora::after {
+    background:
+      radial-gradient(circle at 20% 70%, #132139 0%, transparent 50%),
+      radial-gradient(circle at 80% 30%, #0f1b2c 0%, transparent 45%),
+      radial-gradient(circle at 60% 60%, #14253d 0%, transparent 40%);
+    animation: lg-drift2 38s ease-in-out infinite alternate;
+  }
+  @keyframes lg-drift1 {
+    0%   { transform: translate(-50%, -50%) rotate(0deg)   scale(1); }
+    50%  { transform: translate(-40%, -55%) rotate(90deg)  scale(1.12); }
+    100% { transform: translate(-55%, -45%) rotate(180deg) scale(0.95); }
+  }
+  @keyframes lg-drift2 {
+    0%   { transform: translate(-50%, -50%) rotate(0deg)    scale(1.05); }
+    50%  { transform: translate(-60%, -45%) rotate(-90deg)  scale(0.90); }
+    100% { transform: translate(-45%, -55%) rotate(-180deg) scale(1.15); }
+  }
+
+  /* SVG grain overlay — breaks up 8-bit gradient banding. */
+  .lg-noise {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0.08;
+    mix-blend-mode: screen;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='2.5' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.6  0 0 0 0 0.7  0 0 0 0 0.9  0 0 0 0.4 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    background-size: 300px 300px;
+  }
+
+  /* ─────── Grid ─────── */
+  .lg-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 24px;
+  }
+
+  /* ─────── Glass Card ─────── */
+  .lg-card {
+    position: relative;
+    padding: 32px;
+    border-radius: 24px;
+
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+
+    background:
+      linear-gradient(145deg,
+        rgba(255, 255, 255, 0.08),
+        rgba(255, 255, 255, 0.02));
+
+    border: 1px solid rgba(255, 255, 255, 0.12);
+
+    box-shadow:
+      0 8px 32px 0 rgba(0, 0, 0, 0.35),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.15),
+      inset 0 -1px 0 0 rgba(255, 255, 255, 0.04);
+
+    transition:
+      transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 0.35s;
+    overflow: hidden;
+  }
+
+  /* Subtle highlight gradient that shows up on hover */
+  .lg-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.18) 0%, transparent 40%);
+    opacity: 0;
+    transition: opacity 0.4s;
+    pointer-events: none;
+  }
+
+  .lg-card:hover {
+    transform: translateY(-4px) scale(1.01);
+    border-color: rgba(160, 190, 230, 0.28);
+    box-shadow:
+      0 20px 60px 0 rgba(0, 0, 0, 0.55),
+      0 0 80px 0 rgba(70, 110, 170, 0.18),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.18),
+      inset 0 -1px 0 0 rgba(255, 255, 255, 0.04);
+  }
+  .lg-card:hover::before {
+    opacity: 1;
+  }
+
+  /* ─────── Card Typography ─────── */
+  .lg-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #9fb8d8;
+    background: rgba(70, 110, 170, 0.12);
+    border: 1px solid rgba(100, 140, 200, 0.22);
+    border-radius: 999px;
+    margin-bottom: 16px;
+  }
+
+  .lg-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    letter-spacing: -0.2px;
+    color: #ffffff;
+  }
+
+  .lg-desc {
+    font-size: 13px;
+    line-height: 1.6;
+    color: rgba(226, 232, 240, 0.72);
+  }
+
+  .lg-value {
+    font-size: 36px;
+    font-weight: 400;
+    letter-spacing: -0.8px;
+    margin-top: 16px;
+    background: linear-gradient(135deg, #e8eef8, #a8bfe0);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .lg-trend {
+    font-size: 12px;
+    color: #6ee7b7;
+    margin-top: 4px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lg-aurora::before, .lg-aurora::after { animation: none; }
+    .lg-card { transition: none; }
+  }
+</style>

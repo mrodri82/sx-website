@@ -1,0 +1,43 @@
+---
+export const prerender = false;
+
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Navigation from '@/components/Navigation.astro';
+import Footer from '@/components/Footer.astro';
+import ModuleRenderer from '@/components/modules/ModuleRenderer.astro';
+import { getPageSections } from '@/lib/wordpress';
+import type { Locale } from '@/lib/i18n';
+
+// This route serves the live preview for the Nova Editor iframe.
+// Always renders the actual page, never redirects.
+
+const path = Astro.params.path || '';
+// Extract locale prefix if present (handles both "en/page" and "en" alone)
+const localeMatch = path.match(/^(en|de)(\/|$)/);
+const locale: Locale = localeMatch ? localeMatch[1] as Locale : 'es';
+const cleanPath = path.replace(/^(en|de)(\/|$)/, '');
+const slug = cleanPath || 'homepage';
+
+let sections = [];
+try {
+  sections = (await getPageSections(slug)).sections;
+} catch (err) {
+  console.error('Preview: failed to fetch sections:', err);
+}
+
+const title = slug === 'homepage' ? 'ZDS — Preview' : `${slug} — Preview`;
+---
+
+<BaseLayout title={title}>
+  <Navigation />
+  {sections.length > 0 ? (
+    <ModuleRenderer sections={sections} locale={locale} />
+  ) : (
+    <section class="min-h-screen pt-32 pb-24">
+      <div class="max-w-4xl mx-auto px-6 text-center">
+        <p class="text-navy-500 text-lg">Noch keine Module auf dieser Seite.</p>
+      </div>
+    </section>
+  )}
+  <Footer />
+</BaseLayout>

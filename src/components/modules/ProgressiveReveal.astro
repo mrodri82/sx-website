@@ -1,0 +1,67 @@
+---
+/**
+ * ProgressiveReveal — Expandable long text with teaser + "Read more"
+ * Uses native <details>/<summary> — zero JavaScript, CSS animated.
+ * Great for long-form content that shouldn't overwhelm the page.
+ */
+import { t } from '@/lib/i18n';
+import type { Locale } from '@/lib/i18n';
+
+interface Props {
+  content: Record<string, unknown>;
+  style: Record<string, string>;
+  overrides?: Record<string, string>;
+  locale?: Locale;
+}
+
+const { content, style, overrides, locale = 'es' } = Astro.props;
+const label = t(content, 'label', locale);
+const headline = t(content, 'headline', locale);
+const teaser = t(content, 'teaser', locale) || t(content, 'subtitle', locale) || '';
+const bodyHtml = t(content, 'body_html', locale) || '';
+const expandText = locale === 'de' ? 'Weiterlesen' : locale === 'en' ? 'Read more' : 'Leer más';
+const collapseText = locale === 'de' ? 'Weniger anzeigen' : locale === 'en' ? 'Show less' : 'Mostrar menos';
+---
+
+<section class="py-20 relative">
+  <div class="max-w-3xl mx-auto px-6">
+    {label && <p class="text-xs font-mono text-brand-400 uppercase tracking-widest mb-4">{label}</p>}
+    {headline && <h2 class="text-3xl sm:text-4xl font-display font-bold text-white mb-6">{headline}</h2>}
+
+    <details class="reveal-block group">
+      <summary class="cursor-pointer list-none">
+        {/* Teaser (always visible) */}
+        <div class="reveal-teaser relative">
+          <div class="text-navy-300 leading-relaxed text-lg" set:html={teaser} />
+          <div class="reveal-gradient absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-navy-900 to-transparent pointer-events-none group-open:hidden"></div>
+        </div>
+
+        {/* Toggle button */}
+        <div class="mt-4 flex items-center gap-2 text-brand-400 hover:text-brand-300 transition-colors text-sm font-medium">
+          <span class="reveal-show group-open:hidden">{expandText}</span>
+          <span class="reveal-hide hidden group-open:inline">{collapseText}</span>
+          <svg class="w-4 h-4 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          </svg>
+        </div>
+      </summary>
+
+      {/* Full content (revealed on open) */}
+      {bodyHtml && (
+        <div class="mt-6 prose prose-invert prose-lg max-w-none text-navy-300
+                    prose-headings:text-white prose-headings:font-display
+                    prose-h2:text-2xl prose-h2:mt-10 prose-h2:mb-4
+                    prose-h3:text-xl prose-h3:mt-8 prose-h3:mb-3
+                    prose-a:text-brand-400 prose-strong:text-white"
+             set:html={bodyHtml} />
+      )}
+    </details>
+  </div>
+</section>
+
+<style>
+  .reveal-block summary::-webkit-details-marker { display: none; }
+  .reveal-block summary::marker { display: none; content: ''; }
+  .reveal-teaser { max-height: 180px; overflow: hidden; }
+  .reveal-block[open] .reveal-teaser { max-height: none; overflow: visible; }
+</style>

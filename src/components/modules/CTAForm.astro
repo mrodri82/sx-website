@@ -1,0 +1,147 @@
+---
+import { t } from '@/lib/i18n';
+import type { Locale } from '@/lib/i18n';
+
+interface Props {
+  content: Record<string, unknown>;
+  style: Record<string, string>;
+  overrides?: Record<string, string>;
+  locale?: Locale;
+}
+
+const { content, style, overrides, locale = 'es' } = Astro.props;
+
+const headline = t(content, 'headline', locale);
+const subtitle = t(content, 'subtitle', locale);
+const personName = (content.person_name as string) || 'Manuel Rodriguez';
+const personRole = t(content, 'person_role', locale) || 'Director';
+const personImage = (content.person_image as string) || '';
+---
+
+<section data-nova-el="cta-form" class="py-20 relative overflow-hidden">
+  <div class="absolute inset-0 bg-gradient-to-br from-brand-500/[0.06] via-transparent to-navy-800/50"></div>
+  <div class="max-w-7xl mx-auto px-6 relative z-10">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+      <!-- Left: Message + Person -->
+      <div>
+        {headline && (
+          <h2 data-animate="fade-up" class="text-3xl sm:text-4xl font-display font-bold text-white mb-4 leading-tight">
+            <Fragment set:html={headline} />
+          </h2>
+        )}
+        {subtitle && (
+          <p data-animate="fade-up" data-delay="0.1" class="text-lg text-navy-400 mb-8 leading-relaxed">{subtitle}</p>
+        )}
+
+        <!-- Person Card -->
+        <div data-animate="fade-up" data-delay="0.2" class="flex items-center gap-4 bg-navy-800/40 border border-navy-700/30 rounded-xl p-4">
+          {personImage ? (
+            <img src={personImage} alt={personName} class="w-14 h-14 rounded-full object-cover" />
+          ) : (
+            <div class="w-14 h-14 rounded-full bg-brand-500/20 flex items-center justify-center text-brand-400 font-bold text-lg">
+              {personName.split(' ').map(n => n[0]).join('')}
+            </div>
+          )}
+          <div>
+            <p class="text-white font-medium">{personName}</p>
+            <p class="text-sm text-navy-400">{personRole}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Compact Form -->
+      <div data-animate="fade-up" data-delay="0.2">
+        <form class="cta-inline-form space-y-4 bg-navy-800/30 border border-navy-700/30 rounded-2xl p-6">
+          <input type="hidden" name="source" class="cta-source" />
+          <div class="grid grid-cols-2 gap-4">
+            <label class="col-span-1">
+              <span class="sr-only">{locale === 'de' ? 'Name' : locale === 'en' ? 'Name' : 'Nombre'}</span>
+              <input name="name" type="text" required autocomplete="name"
+                     aria-label={locale === 'de' ? 'Name' : locale === 'en' ? 'Name' : 'Nombre'}
+                     placeholder={locale === 'de' ? 'Name' : locale === 'en' ? 'Name' : 'Nombre'}
+                     class="w-full bg-navy-800/50 border border-navy-700/50 rounded-xl px-4 py-3 text-white text-sm placeholder-navy-400 focus:outline-none focus:border-brand-500/50 transition-colors" />
+            </label>
+            <label class="col-span-1">
+              <span class="sr-only">Email</span>
+              <input name="email" type="email" required autocomplete="email" aria-label="Email"
+                     placeholder="Email"
+                     class="w-full bg-navy-800/50 border border-navy-700/50 rounded-xl px-4 py-3 text-white text-sm placeholder-navy-400 focus:outline-none focus:border-brand-500/50 transition-colors" />
+            </label>
+          </div>
+          <label class="block">
+            <span class="sr-only">{locale === 'de' ? 'Unternehmen' : locale === 'en' ? 'Company' : 'Empresa'}</span>
+            <input name="company" type="text" autocomplete="organization"
+                   aria-label={locale === 'de' ? 'Unternehmen' : locale === 'en' ? 'Company' : 'Empresa'}
+                   placeholder={locale === 'de' ? 'Unternehmen' : locale === 'en' ? 'Company' : 'Empresa'}
+                   class="w-full bg-navy-800/50 border border-navy-700/50 rounded-xl px-4 py-3 text-white text-sm placeholder-navy-400 focus:outline-none focus:border-brand-500/50 transition-colors" />
+          </label>
+          <label class="block">
+            <span class="sr-only">{locale === 'de' ? 'Nachricht' : locale === 'en' ? 'Message' : 'Mensaje'}</span>
+            <textarea name="message" rows="3" required
+                      aria-label={locale === 'de' ? 'Nachricht' : locale === 'en' ? 'Message' : 'Mensaje'}
+                      placeholder={locale === 'de' ? 'Ihre Nachricht...' : locale === 'en' ? 'Your message...' : 'Tu mensaje...'}
+                      class="w-full bg-navy-800/50 border border-navy-700/50 rounded-xl px-4 py-3 text-white text-sm placeholder-navy-400 focus:outline-none focus:border-brand-500/50 transition-colors resize-none"></textarea>
+          </label>
+
+          <div class="cta-form-status hidden text-center py-2 rounded-xl text-sm font-medium"></div>
+
+          <button type="submit"
+                  class="w-full bg-brand-500 hover:bg-brand-600 text-white py-3 rounded-xl text-sm font-medium transition-all hover:shadow-xl hover:shadow-brand-500/25">
+            {locale === 'de' ? 'Unverbindlich anfragen' : locale === 'en' ? 'Get in touch' : 'Solicitar información'}
+          </button>
+          <p class="text-[11px] text-navy-400 text-center">
+            {locale === 'de' ? 'Wir antworten innerhalb von 24h.' : locale === 'en' ? 'We reply within 24h.' : 'Respondemos en menos de 24h.'}
+          </p>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  document.querySelectorAll('.cta-inline-form').forEach(form => {
+    // Set source
+    const srcInput = form.querySelector('.cta-source');
+    if (srcInput) srcInput.value = window.location.pathname;
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fd = new FormData(form);
+      const data = Object.fromEntries(fd.entries());
+      data.source = window.location.pathname;
+      data.referrer = document.referrer || 'direct';
+
+      const btn = form.querySelector('button[type="submit"]');
+      const status = form.querySelector('.cta-form-status');
+      if (btn) { btn.disabled = true; btn.textContent = '...'; }
+      if (status) status.className = 'cta-form-status hidden';
+
+      try {
+        const res = await fetch('/api/contact', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+        if (res.ok) {
+          if (status) {
+            status.textContent = '¡Enviado! Te responderemos pronto.';
+            status.className = 'cta-form-status text-center py-2 rounded-xl text-sm font-medium bg-green-500/10 text-green-400 border border-green-500/20';
+          }
+          form.reset();
+          // GA4 Conversion
+          if (typeof gtag === 'function') {
+            gtag('event', 'generate_lead', { event_category: 'contact', event_label: data.source, value: 1 });
+          } else if (window.dataLayer) {
+            window.dataLayer.push({ event: 'generate_lead', event_category: 'contact', event_label: data.source });
+          }
+        } else { throw new Error(); }
+      } catch {
+        if (status) {
+          status.textContent = 'Error. Inténtalo de nuevo.';
+          status.className = 'cta-form-status text-center py-2 rounded-xl text-sm font-medium bg-red-500/10 text-red-400 border border-red-500/20';
+        }
+      }
+      if (btn) { btn.disabled = false; btn.textContent = 'Solicitar información'; }
+    });
+  });
+</script>
