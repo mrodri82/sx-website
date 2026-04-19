@@ -27,7 +27,7 @@ const posterUrl = (content.poster_url as string) || '';
 const sectionStyle = Object.entries(style['hero-video-section'] || {}).map(([k, v]) => `${k}: ${v}`).join('; ');
 ---
 
-<section data-nova-el="hero-video-section" class="relative w-full min-h-[85vh] overflow-hidden flex items-center justify-center bg-black" style={sectionStyle}>
+<section data-nova-el="hero-video-section" class="relative w-full min-h-[100vh] overflow-hidden flex items-end bg-black" style={sectionStyle}>
   {videoUrl && (
     <video
       class="absolute inset-0 w-full h-full object-cover"
@@ -37,20 +37,23 @@ const sectionStyle = Object.entries(style['hero-video-section'] || {}).map(([k, 
       <source src={videoUrl} type="video/mp4" />
     </video>
   )}
-  <div class="absolute inset-0 bg-black/60" aria-hidden="true"></div>
+  <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/30" aria-hidden="true"></div>
 
-  <div class="relative z-10 max-w-5xl mx-auto px-6 py-24 text-center">
+  <div class="relative z-10 w-full max-w-[1600px] mx-auto px-8 pb-16 md:pb-24">
     {badge && (
-      <p data-nova-el="hero-video-badge" class="inline-block text-xs font-bold uppercase tracking-[0.3em] text-brand-500 bg-black/60 px-4 py-1 mb-6">{badge}</p>
+      <p data-nova-el="hero-video-badge" class="text-[13px] font-medium uppercase tracking-[0.03em] text-brand-500 mb-4">{badge}</p>
     )}
     {headline && (
-      <h1 data-nova-el="hero-video-title" class="sx-heading text-6xl sm:text-7xl md:text-8xl lg:text-[9rem] text-white mb-6" set:html={headline} />
+      <h1 data-nova-el="hero-video-title"
+          class="sx-heading text-white mb-8"
+          style="font-size: clamp(72px, 10vw, 156px); letter-spacing: -0.04em; line-height: 0.9;"
+          set:html={headline} />
     )}
     {subtitle && (
-      <p data-nova-el="hero-video-subtitle" class="text-white/80 text-base sm:text-lg max-w-2xl mx-auto mb-10 leading-relaxed">{subtitle}</p>
+      <p data-nova-el="hero-video-subtitle" class="text-white/80 text-base max-w-xl mb-10 leading-relaxed uppercase font-medium tracking-wide">{subtitle}</p>
     )}
     {ctaText && (
-      <a data-nova-el="hero-video-cta" href={ctaUrl} class="sx-btn text-base px-8 py-4">{ctaText}</a>
+      <a data-nova-el="hero-video-cta" href={ctaUrl} class="sx-btn sx-btn--large">{ctaText}</a>
     )}
   </div>
 </section>

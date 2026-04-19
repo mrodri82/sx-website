@@ -1,10 +1,17 @@
 ---
 /**
  * SX Festival — Navigation
+ * Matches sxtech.eu: 98px tall, transparent background, 3-line logo,
+ * menu items right-aligned with yellow TICKETS button at the end.
  *
- * Matches sxtech.eu: fixed top nav, black bg,
- * logo left, menu center-right, yellow TICKETS button far right.
+ * Prop `transparent` (default true) → the nav overlays page content.
+ * On scroll, a subtle black fade appears so nav stays readable.
  */
+interface Props {
+  transparent?: boolean;
+}
+const { transparent = true } = Astro.props;
+
 const current = Astro.url.pathname.replace(/\/$/, '') || '/';
 const items = [
   { label: 'Regular Visitors', href: '/regular-visitors' },
@@ -15,26 +22,26 @@ const items = [
 ];
 ---
 
-<header class="sx-nav fixed top-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-sm border-b border-white/5">
-  <div class="max-w-[1600px] mx-auto px-6 py-3 flex items-center justify-between">
-    <a href="/" class="text-white font-black text-xs uppercase tracking-tight leading-tight flex-shrink-0">
-      <span class="block">sxfestival</span>
-      <span class="block">expo</span>
-      <span class="block text-brand-500">berlin</span>
+<header class={`sx-nav fixed top-0 left-0 right-0 z-50 h-[98px] flex items-center ${transparent ? 'bg-transparent' : 'bg-black'}`} data-sx-nav>
+  <div class="w-full max-w-[1600px] mx-auto px-8 flex items-center justify-between">
+    <a href="/" class="sx-logo">
+      <span>sxfestival</span>
+      <span>expo</span>
+      <span>berlin</span>
     </a>
 
-    <nav class="hidden md:flex items-center gap-8">
+    <nav class="hidden md:flex items-center gap-10">
       {items.map((item) => {
         const active = current === item.href;
         return (
-          <a href={item.href} class={`text-white text-xs font-bold uppercase tracking-wider hover:text-brand-500 transition-colors ${active ? 'text-brand-500' : ''}`}>
+          <a href={item.href} class={`text-white text-[13px] font-medium uppercase tracking-[0.03em] hover:text-brand-500 transition-colors ${active ? 'text-brand-500' : ''}`}>
             {item.label}
           </a>
         );
       })}
     </nav>
 
-    <a href="/regular-visitors" class="sx-btn text-xs">TICKETS</a>
+    <a href="/regular-visitors" class="sx-btn hidden md:inline-flex">TICKETS</a>
 
     <button id="sx-mobile-toggle" class="md:hidden text-white p-2" aria-label="Menu">
       <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -43,11 +50,11 @@ const items = [
     </button>
   </div>
 
-  <div id="sx-mobile-menu" class="hidden md:hidden border-t border-white/5 bg-black px-6 py-4 space-y-3">
+  <div id="sx-mobile-menu" class="hidden md:hidden fixed left-0 right-0 top-[98px] bg-black border-t border-white/10 px-6 py-4 space-y-3">
     {items.map((item) => (
-      <a href={item.href} class="block text-white text-sm font-bold uppercase tracking-wider py-2">{item.label}</a>
+      <a href={item.href} class="block text-white text-sm font-medium uppercase tracking-wider py-2">{item.label}</a>
     ))}
-    <a href="/regular-visitors" class="sx-btn text-xs w-full mt-2">TICKETS</a>
+    <a href="/regular-visitors" class="sx-btn w-full mt-2">TICKETS</a>
   </div>
 </header>
 
@@ -55,4 +62,15 @@ const items = [
   const toggle = document.getElementById('sx-mobile-toggle');
   const menu = document.getElementById('sx-mobile-menu');
   toggle?.addEventListener('click', () => menu?.classList.toggle('hidden'));
+
+  // Fade nav bg on scroll so transparent nav stays readable
+  const nav = document.querySelector('[data-sx-nav]');
+  function onScroll() {
+    if (!nav) return;
+    const scrolled = window.scrollY > 40;
+    nav.style.backgroundColor = scrolled ? 'rgba(0,0,0,0.88)' : '';
+    nav.style.backdropFilter = scrolled ? 'blur(8px)' : '';
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
 </script>
