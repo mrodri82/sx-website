@@ -40,7 +40,7 @@ const videoUrl = (content.video_url as string) || '';
 const posterUrl = (content.poster_url as string) || '';
 ---
 
-<section data-nova-el="hero-video-section" class="relative w-full h-screen overflow-hidden bg-black">
+<section data-nova-el="hero-video-section" class="sx-hero relative w-full min-h-screen overflow-hidden bg-black">
   {videoUrl && (
     <video
       class="absolute inset-0 w-full h-full object-cover"
@@ -50,63 +50,106 @@ const posterUrl = (content.poster_url as string) || '';
       <source src={videoUrl} type="video/mp4" />
     </video>
   )}
-  <div class="absolute inset-0 bg-black/55" aria-hidden="true"></div>
+  {/* No overlay — sxtech hero shows video full-color, only fade at bottom */}
+  <div class="absolute inset-x-0 bottom-0 h-[30%] bg-gradient-to-t from-black/70 to-transparent pointer-events-none" aria-hidden="true"></div>
 
-  <div class="relative z-10 w-full h-full max-w-[1600px] mx-auto px-8 flex items-center">
-    <div class="w-full">
+  <div class="relative z-10 w-full min-h-screen pt-[140px] pb-[50px] pl-[60px] pr-[60px] flex flex-col justify-between">
+    <div>
       {badge && (
-        <p data-nova-el="hero-video-badge"
-           class="text-[14px] sm:text-[15px] font-medium uppercase tracking-[0.02em] text-brand-500 mb-4">
-          {badge}
-        </p>
+        <p data-nova-el="hero-video-badge" class="sx-hero-badge">{badge}</p>
       )}
+    </div>
 
-      <h1 data-nova-el="hero-video-title" class="mb-4">
-        {title1 && (
-          <span class="sx-heading block text-brand-500"
-                style="font-size: clamp(72px, 10.8vw, 156px); letter-spacing: -0.04em; line-height: 0.95;">
-            {title1}
-          </span>
-        )}
-        <span class="flex flex-wrap items-start gap-x-8 gap-y-2">
-          {title2 && (
-            <span class="sx-heading text-brand-500"
-                  style="font-size: clamp(72px, 10.8vw, 156px); letter-spacing: -0.04em; line-height: 0.95;">
-              {title2}
-            </span>
-          )}
+    <div class="flex-1 flex flex-col justify-center">
+      <h1 data-nova-el="hero-video-title" class="sx-hero-title m-0">
+        {title1 && <span class="sx-hero-word">{title1}</span>}
+        <span class="sx-hero-row">
+          {title2 && <span class="sx-hero-word">{title2}</span>}
           {(date1 || date2 || date3) && (
-            <span class="sx-heading--bold text-brand-500 self-center"
-                  style="font-family: var(--font-display); font-weight: 800; text-transform: uppercase; letter-spacing: -0.02em; line-height: 1;">
-              {date1 && <span class="block" style="font-size: clamp(28px, 3.2vw, 46px);">{date1}</span>}
-              {date2 && <span class="block" style="font-size: clamp(28px, 3.2vw, 46px);">{date2}</span>}
-              {date3 && <span class="block" style="font-size: clamp(28px, 3.2vw, 46px);">{date3}</span>}
+            <span class="sx-hero-dates">
+              {date1 && <span class="block">{date1}</span>}
+              {date2 && <span class="block">{date2}</span>}
+              {date3 && <span class="block">{date3}</span>}
             </span>
           )}
         </span>
       </h1>
+    </div>
 
+    <div class="sx-hero-bottom">
       {taglineLabel && (
-        <p data-nova-el="hero-video-tagline-label"
-           class="text-brand-500 font-bold uppercase text-base sm:text-lg tracking-wide mb-1 mt-6">
-          {taglineLabel}
+        <p data-nova-el="hero-video-tagline-label" class="sx-hero-tagline-label">
+          <b>{taglineLabel}</b>
         </p>
       )}
       {taglineBody && (
-        <p data-nova-el="hero-video-tagline-body"
-           class="text-brand-500 font-medium uppercase text-sm sm:text-base leading-snug max-w-[720px] mb-8"
-           style="letter-spacing: 0.02em;"
+        <p data-nova-el="hero-video-tagline-body" class="sx-hero-tagline-body"
            set:html={taglineBody.replace(/\n/g, '<br>')} />
       )}
 
-      <div class="flex flex-wrap gap-4">
-        {cta1Text && (
-          <a data-nova-el="hero-video-cta1" href={cta1Url} class="sx-btn sx-btn--large">{cta1Text}</a>
-        )}
-        {cta2Text && (
-          <a data-nova-el="hero-video-cta2" href={cta2Url} class="sx-btn sx-btn--large sx-btn--ghost">{cta2Text}</a>
-        )}
+      <div class="sx-hero-ctas mt-6">
+        {cta1Text && <a data-nova-el="hero-video-cta1" href={cta1Url} class="sx-hero-btn">{cta1Text}</a>}
+        {cta2Text && <a data-nova-el="hero-video-cta2" href={cta2Url} class="sx-hero-btn">{cta2Text}</a>}
       </div>
     </div>
   </div>
 </section>
+
+<style is:global>
+  .sx-hero-badge {
+    font-family:'Inter', sans-serif;
+    font-size:23px; font-weight:500; line-height:1;
+    color:#ecfd21; text-transform:uppercase; letter-spacing:0;
+    margin:0 0 24px 0;
+  }
+  .sx-hero-title { display:block; }
+  .sx-hero-word {
+    font-family:'Oswald','Inter',sans-serif;
+    font-weight:800;
+    font-size:clamp(72px, 11vw, 156px);
+    line-height:.95;
+    letter-spacing:-0.04em;
+    text-transform:uppercase;
+    color:#ecfd21;
+    display:block;
+  }
+  .sx-hero-row { display:flex; flex-wrap:wrap; align-items:flex-start; gap:0 36px; }
+  .sx-hero-row .sx-hero-word { display:inline-block; }
+  .sx-hero-dates {
+    font-family:'Inter',sans-serif;
+    font-size:16px; font-weight:500; line-height:1.2;
+    color:#ecfd21; text-transform:uppercase;
+    align-self:flex-end;
+    padding-bottom:18px;
+  }
+  .sx-hero-tagline-label {
+    font-family:'Inter',sans-serif;
+    font-size:16px; font-weight:700;
+    color:#ecfd21; text-transform:uppercase; letter-spacing:0;
+    line-height:1.2;
+    margin:0 0 4px 0;
+  }
+  .sx-hero-tagline-label b { font-weight:700; }
+  .sx-hero-tagline-body {
+    font-family:'Inter',sans-serif;
+    font-size:16px; font-weight:500; line-height:1.25;
+    color:#ecfd21; text-transform:uppercase;
+    max-width:720px;
+    margin:0;
+  }
+  .sx-hero-ctas { display:flex; flex-wrap:wrap; gap:12px; }
+  .sx-hero-btn {
+    background:#ecfd21 !important; color:#000 !important;
+    font-family:'Inter',sans-serif;
+    font-size:15px; font-weight:500; line-height:1;
+    padding:25px 50px;
+    border:0; border-radius:0; outline:0;
+    text-decoration:none; display:inline-flex; align-items:center;
+    transition:opacity .15s;
+  }
+  .sx-hero-btn:hover { opacity:.85; }
+  @media (max-width: 768px) {
+    .sx-hero-word { font-size:clamp(48px, 14vw, 96px); }
+    .sx-hero-dates { padding-bottom:0; font-size:14px; }
+  }
+</style>
