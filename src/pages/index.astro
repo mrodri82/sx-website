@@ -18,22 +18,22 @@ try {
   seoTitle = result.seoTitle || '';
   seoDescription = result.seoDescription || '';
   ogImage = result.ogImage || '';
-  const firstSection = sections[0];
-  if (firstSection?.component === 'Hero' && firstSection.content?.background_image) {
-    heroImage = firstSection.content.background_image as string;
-  }
 } catch (err) {
   console.error('Failed to fetch sections from WP:', err);
 }
+
+// If the page is a bulk-imported Elementor mirror (RawHTML only), skip our Nav/Footer
+// because the imported HTML already contains the site's own nav + footer.
+const isMirror = sections.length > 0 && sections.every((s: any) => s.component === 'RawHTML');
 ---
 
 <BaseLayout
   title={seoTitle || "SX Festival & Expo 2026 | Berlin — June 26-28"}
-  description={seoDescription || "The world's most anticipated adult event. Modern Sex Culture. Global Expo, Elite Creators, Kink & Fetish Visionaries."}
+  description={seoDescription || "The world's most anticipated adult event. Modern Sex Culture."}
   ogImage={ogImage || undefined}
   heroImage={heroImage || undefined}
 >
-  <Navigation />
+  {!isMirror && <Navigation />}
   <ModuleRenderer sections={sections} />
-  <Footer />
+  {!isMirror && <Footer />}
 </BaseLayout>

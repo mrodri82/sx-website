@@ -110,6 +110,10 @@ def extract_elementor_html(full_html: str) -> str:
     # strip inline event handlers
     block = re.sub(r'\son[a-z]+\s*=\s*"[^"]*"', '', block, flags=re.IGNORECASE)
     block = re.sub(r"\son[a-z]+\s*=\s*'[^']*'", '', block, flags=re.IGNORECASE)
+    # remove wheel-of-fortune popup + any iframes
+    block = re.sub(r'<div[^>]*id="[^"]*mabel[^"]*"[^>]*>.*?</div>', '', block, flags=re.DOTALL | re.IGNORECASE)
+    block = re.sub(r'<div[^>]*class="[^"]*mabel[^"]*"[^>]*>.*?</div>', '', block, flags=re.DOTALL | re.IGNORECASE)
+    block = re.sub(r'<iframe[^>]*>.*?</iframe>', '', block, flags=re.DOTALL | re.IGNORECASE)
     return block
 
 def extract_css_urls(full_html: str) -> list[str]:
