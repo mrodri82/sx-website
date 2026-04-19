@@ -43,24 +43,26 @@ const posterUrl = (content.poster_url as string) || '';
 <section data-nova-el="hero-video-section" class="sx-hero relative w-full min-h-screen overflow-hidden bg-black">
   {videoUrl && (
     <video
-      class="absolute inset-0 w-full h-full object-cover"
+      class="sx-hero-video absolute inset-0 w-full h-full object-cover"
       autoplay muted loop playsinline preload="metadata"
       poster={posterUrl || undefined}
     >
-      <source src={videoUrl} type="video/mp4" />
+      {/* WebM first (smaller, Chrome/Firefox), MP4 fallback (Safari). If videoUrl
+          already ends in .mp4, assume companion .webm exists in same folder. */}
+      {videoUrl.endsWith('.mp4') && <source src={videoUrl.replace(/\.mp4$/, '.webm')} type="video/webm" />}
+      <source src={videoUrl} type={videoUrl.endsWith('.webm') ? 'video/webm' : 'video/mp4'} />
     </video>
   )}
-  {/* No overlay — sxtech hero shows video full-color, only fade at bottom */}
   <div class="absolute inset-x-0 bottom-0 h-[30%] bg-gradient-to-t from-black/70 to-transparent pointer-events-none" aria-hidden="true"></div>
 
-  <div class="relative z-10 w-full min-h-screen pt-[140px] pb-[50px] pl-[60px] pr-[60px] flex flex-col justify-between">
+  <div class="sx-hero-inner relative z-10 w-full min-h-screen flex flex-col justify-between">
     <div>
       {badge && (
         <p data-nova-el="hero-video-badge" class="sx-hero-badge">{badge}</p>
       )}
     </div>
 
-    <div class="flex-1 flex flex-col justify-center">
+    <div class="sx-hero-title-wrap flex-1 flex flex-col justify-center">
       <h1 data-nova-el="hero-video-title" class="sx-hero-title m-0">
         {title1 && <span class="sx-hero-word">{title1}</span>}
         <span class="sx-hero-row">
@@ -89,43 +91,44 @@ const posterUrl = (content.poster_url as string) || '';
 
       <div class="sx-hero-ctas mt-6">
         {cta1Text && <a data-nova-el="hero-video-cta1" href={cta1Url} class="sx-hero-btn">{cta1Text}</a>}
-        {cta2Text && <a data-nova-el="hero-video-cta2" href={cta2Url} class="sx-hero-btn">{cta2Text}</a>}
+        {cta2Text && <a data-nova-el="hero-video-cta2" href={cta2Url} class="sx-hero-btn sx-hero-btn--ghost">{cta2Text}</a>}
       </div>
     </div>
   </div>
 </section>
 
 <style is:global>
+  /* Shared content container — caps max content width on wide screens */
+  .sx-hero-inner { max-width:1600px; margin:0 auto; padding:140px 60px 50px; }
   .sx-hero-badge {
     font-family:'Inter', sans-serif;
     font-size:23px; font-weight:500; line-height:1;
-    color:#ecfd21; text-transform:uppercase; letter-spacing:0;
+    color:#ecfd21; text-transform:uppercase;
     margin:0 0 24px 0;
   }
   .sx-hero-title { display:block; }
   .sx-hero-word {
     font-family:'Oswald','Inter',sans-serif;
     font-weight:800;
-    font-size:clamp(72px, 11vw, 156px);
+    font-size:clamp(56px, 10vw, 156px);
     line-height:.95;
     letter-spacing:-0.04em;
     text-transform:uppercase;
     color:#ecfd21;
     display:block;
   }
-  .sx-hero-row { display:flex; flex-wrap:wrap; align-items:flex-start; gap:0 36px; }
+  .sx-hero-row { display:flex; flex-wrap:wrap; align-items:flex-end; gap:0 36px; }
   .sx-hero-row .sx-hero-word { display:inline-block; }
   .sx-hero-dates {
     font-family:'Inter',sans-serif;
-    font-size:16px; font-weight:500; line-height:1.2;
+    font-size:16px; font-weight:500; line-height:1.15;
     color:#ecfd21; text-transform:uppercase;
-    align-self:flex-end;
-    padding-bottom:18px;
+    padding-bottom:22px;
   }
   .sx-hero-tagline-label {
     font-family:'Inter',sans-serif;
     font-size:16px; font-weight:700;
-    color:#ecfd21; text-transform:uppercase; letter-spacing:0;
+    color:#ecfd21; text-transform:uppercase;
     line-height:1.2;
     margin:0 0 4px 0;
   }
@@ -144,12 +147,36 @@ const posterUrl = (content.poster_url as string) || '';
     font-size:15px; font-weight:500; line-height:1;
     padding:25px 50px;
     border:0; border-radius:0; outline:0;
-    text-decoration:none; display:inline-flex; align-items:center;
+    text-decoration:none; display:inline-flex; align-items:center; justify-content:center;
     transition:opacity .15s;
   }
   .sx-hero-btn:hover { opacity:.85; }
+
   @media (max-width: 768px) {
-    .sx-hero-word { font-size:clamp(48px, 14vw, 96px); }
-    .sx-hero-dates { padding-bottom:0; font-size:14px; }
+    /* Mobile: hide video, make layout vertical + dates at title size */
+    .sx-hero-video { display:none !important; }
+    .sx-hero-inner { padding:120px 24px 40px; }
+    .sx-hero-badge { font-size:18px; text-align:center; line-height:1.2; margin:0 auto 28px; max-width:280px; }
+    .sx-hero-word { font-size:clamp(48px, 13vw, 72px); }
+    .sx-hero-row { flex-direction:column; align-items:flex-start; gap:0; }
+    .sx-hero-dates {
+      /* Mobile: dates are same Oswald big-font style, stacked under EXPO */
+      font-family:'Oswald','Inter',sans-serif;
+      font-weight:800;
+      font-size:clamp(48px, 13vw, 72px);
+      line-height:.95;
+      letter-spacing:-0.04em;
+      padding-bottom:0;
+      margin-top:8px;
+    }
+    .sx-hero-dates .block { display:block; }
+    .sx-hero-tagline-label, .sx-hero-tagline-body { font-size:14px; }
+    .sx-hero-ctas { flex-direction:column; gap:14px; align-items:stretch; }
+    .sx-hero-btn { padding:20px 30px; font-size:16px; width:100%; }
+    .sx-hero-btn--ghost {
+      background:transparent !important;
+      color:#ecfd21 !important;
+      border:2px solid #ecfd21 !important;
+    }
   }
 </style>
