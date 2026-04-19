@@ -59,9 +59,9 @@ import { site } from '@/config/site';
           </a>
           <a href={site.linkedinUrl} target="_blank" rel="noopener" aria-label="LinkedIn"
             class="sx-social inline-flex items-center h-[34px]">
-            <svg viewBox="0 0 120 34" class="h-[34px] w-[120px]" fill="currentColor">
-              <text x="0" y="27" font-family="Inter, Arial, sans-serif" font-size="26" font-weight="700" letter-spacing="-1">Linked</text>
-              <rect x="84" y="2" width="30" height="30" rx="4"/>
+            <svg viewBox="0 0 120 34" class="h-[34px] w-[120px]">
+              <text x="0" y="27" font-family="Inter, Arial, sans-serif" font-size="26" font-weight="700" letter-spacing="-1" fill="#ecfd21">Linked</text>
+              <rect x="84" y="2" width="30" height="30" rx="4" fill="#ecfd21"/>
               <text x="90" y="25" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="900" fill="#000000">in</text>
             </svg>
           </a>
@@ -106,10 +106,14 @@ import { site } from '@/config/site';
     text-transform:uppercase; letter-spacing:-1px;
   }
   .sx-footer-cta {
-    background:#ecfd21; color:#000; font-family:'Inter', sans-serif;
+    background:#ecfd21 !important; color:#000 !important;
+    font-family:'Inter', sans-serif;
     font-size:18px; font-weight:700; letter-spacing:.5px; text-transform:uppercase;
-    padding:20px 36px; border:0; border-radius:0; cursor:pointer;
+    padding:20px 36px;
+    border:0 !important; border-radius:0 !important; outline:0;
+    cursor:pointer;
     transition:opacity .15s;
+    appearance:none; -webkit-appearance:none;
   }
   .sx-footer-cta:hover { opacity:.85; }
   .sx-footer-brand {
