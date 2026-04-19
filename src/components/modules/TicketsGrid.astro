@@ -1,0 +1,227 @@
+---
+/**
+ * TicketsGrid — 1:1 of sxtech.eu "TICKETS / Choose your experience" grid.
+ *
+ * Layout (desktop):
+ *   Column VISITOR (yellow)  | Column CREATOR (outline) | Column BUSINESS (outline)
+ *     VISITOR (large)             CREATOR (large)             BUSINESS (large)
+ *     SATURDAY (small)            APPLY FULL EVENT ACCESS     REGULAR BIZ (small)
+ *     SUNDAY (small)                                          REGULAR BIZ (small)
+ *     WEEKEND (small)                                         VIP BIZ (small)
+ *
+ * Content is edit-friendly via JSON: `columns[][cards[]]` with `variant`
+ * (yellow | outline) and `size` (large | small).
+ */
+import { t } from '@/lib/i18n';
+import { getLocaleFromPath } from '@/lib/i18n';
+import type { Locale } from '@/lib/i18n';
+
+interface Card {
+  title: string;
+  subtitle?: string;
+  description?: string;
+  date?: string;
+  cta_text?: string;
+  cta_url?: string;
+  size?: 'large' | 'small';
+}
+interface Column {
+  variant: 'yellow' | 'outline';
+  cards: Card[];
+}
+interface Props {
+  content: Record<string, unknown>;
+}
+
+const { content } = Astro.props;
+const locale = getLocaleFromPath(Astro.url.pathname) as Locale;
+
+const sectionTitle    = t(content, 'section_title', locale) || 'TICKETS';
+const sectionSubtitle = t(content, 'section_subtitle', locale) || 'Choose Your Experience';
+
+// Default layout — overridable via `content.columns_json` (stringified JSON)
+const defaultColumns: Column[] = [
+  {
+    variant: 'yellow',
+    cards: [
+      {
+        title: 'VISITOR',
+        subtitle: 'For curious explorers of modern sexuality.',
+        description: 'Talks, shows, workshops, Expo, immersive experiences.',
+        cta_text: 'LINE UP', cta_url: '#lineup',
+        size: 'large',
+      },
+      { title: 'SATURDAY', date: '27.06.26', cta_text: 'TICKET', cta_url: '#buy-sat', size: 'small' },
+      { title: 'SUNDAY',   date: '28.06.26', cta_text: 'TICKET', cta_url: '#buy-sun', size: 'small' },
+      { title: 'WEEKEND',  date: '2 DAYS',   cta_text: 'TICKET', cta_url: '#buy-weekend', size: 'small' },
+    ],
+  },
+  {
+    variant: 'outline',
+    cards: [
+      {
+        title: 'CREATOR',
+        subtitle: 'For Adult Content Creators',
+        description: 'Connect, grow your audience, network.',
+        cta_text: 'FREE ACCESS', cta_url: '#creators',
+        size: 'large',
+      },
+      {
+        title: 'APPLY FULL EVENT ACCESS',
+        cta_text: '2 DAYS TICKET', cta_url: '#apply',
+        size: 'large',
+      },
+    ],
+  },
+  {
+    variant: 'outline',
+    cards: [
+      {
+        title: 'BUSINESS',
+        subtitle: 'For Business Professionals and B2B Only',
+        description: 'B2B VIP Area, networking, all business opportunities in one place.',
+        cta_text: 'BIZ LINEUP VIEW', cta_url: '#biz-lineup',
+        size: 'large',
+      },
+      { title: 'REGULAR BIZ', date: '27.06.26',    cta_text: 'TICKET',        cta_url: '#biz-sat', size: 'small' },
+      { title: 'REGULAR BIZ', date: '28.06.26',    cta_text: 'TICKET',        cta_url: '#biz-sun', size: 'small' },
+      { title: 'VIP BIZ',     date: '27-28.06.26', cta_text: '2 DAYS TICKET', cta_url: '#biz-vip', size: 'small' },
+    ],
+  },
+];
+const columns: Column[] = (content.columns as Column[]) || defaultColumns;
+---
+
+<section data-nova-el="tickets-grid" class="sx-tickets bg-black py-20">
+  <div class="sx-tickets-inner">
+    <header class="sx-tickets-head mb-12">
+      <h2 class="sx-tickets-title">{sectionTitle}</h2>
+      {sectionSubtitle && <p class="sx-tickets-subtitle">{sectionSubtitle}</p>}
+    </header>
+
+    <div class="sx-tickets-grid">
+      {columns.map((col) => (
+        <div class="sx-tickets-col">
+          {col.cards.map((card) => (
+            <article class={`sx-tix-card sx-tix-card--${col.variant} sx-tix-card--${card.size || 'large'}`}>
+              <h3 class="sx-tix-title">{card.title}</h3>
+              {card.size === 'small' && card.date && <p class="sx-tix-date">{card.date}</p>}
+              {card.size === 'large' && card.subtitle && <p class="sx-tix-sub">{card.subtitle}</p>}
+              {card.size === 'large' && card.description && <p class="sx-tix-desc">{card.description}</p>}
+              {card.cta_text && (
+                <a class={`sx-tix-cta sx-tix-cta--${card.size || 'large'}`} href={card.cta_url || '#'}>
+                  <span>{card.cta_text}</span>
+                  <svg viewBox="0 0 16 16" class="sx-tix-arrow"><path d="M4 12 L12 4 M6 4 L12 4 L12 10" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+                </a>
+              )}
+            </article>
+          ))}
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style is:global>
+  .sx-tickets-inner { max-width:1600px; margin:0 auto; padding:0 60px; }
+
+  .sx-tickets-title {
+    font-family:'Oswald','Inter',sans-serif;
+    font-size:clamp(42px, 4.5vw, 64px);
+    font-weight:800; line-height:1;
+    letter-spacing:-0.03em;
+    color:#ecfd21; text-transform:uppercase;
+    margin:0;
+  }
+  .sx-tickets-subtitle {
+    font-family:'Inter',sans-serif;
+    font-size:20px; font-weight:500;
+    color:#fff; text-transform:uppercase; letter-spacing:0.04em;
+    margin:8px 0 0 0;
+  }
+
+  .sx-tickets-grid {
+    display:grid; grid-template-columns:repeat(3, 1fr); gap:20px;
+    align-items:start;
+  }
+  .sx-tickets-col { display:flex; flex-direction:column; gap:20px; }
+
+  .sx-tix-card {
+    padding:32px 32px; display:flex; flex-direction:column;
+    min-height:120px;
+  }
+  .sx-tix-card--yellow {
+    background:#ecfd21; color:#000;
+  }
+  .sx-tix-card--outline {
+    background:transparent; color:#ecfd21;
+    border:1.5px solid #ecfd21;
+  }
+  .sx-tix-card--large { min-height:410px; }
+  .sx-tix-card--small { min-height:160px; }
+
+  .sx-tix-title {
+    font-family:'Oswald','Inter',sans-serif;
+    font-size:clamp(32px, 3vw, 44px);
+    font-weight:800; line-height:1;
+    letter-spacing:-0.02em;
+    text-transform:uppercase;
+    margin:0 0 auto 0;
+  }
+
+  .sx-tix-sub {
+    font-family:'Inter',sans-serif;
+    font-size:16px; font-weight:700;
+    margin:100px 0 0 0;
+    text-transform:none;
+  }
+  .sx-tix-desc {
+    font-family:'Inter',sans-serif;
+    font-size:16px; font-weight:400;
+    margin:10px 0 0 0;
+    line-height:1.4;
+  }
+  .sx-tix-date {
+    font-family:'Inter',sans-serif;
+    font-size:16px; font-weight:600;
+    margin:16px 0 0 0;
+  }
+
+  .sx-tix-cta {
+    display:inline-flex; align-items:center; justify-content:center; gap:10px;
+    font-family:'Inter',sans-serif;
+    font-size:14px; font-weight:700; letter-spacing:0.04em;
+    text-transform:uppercase; text-decoration:none;
+    transition:opacity .15s;
+  }
+  .sx-tix-cta:hover { opacity:.8; }
+  .sx-tix-arrow { width:12px; height:12px; flex:0 0 12px; }
+
+  /* Large CTA: full-width filled button, color inverted from card */
+  .sx-tix-cta--large {
+    margin-top:24px;
+    padding:20px 24px;
+    width:100%;
+  }
+  .sx-tix-card--yellow .sx-tix-cta--large {
+    background:#000; color:#fff;
+  }
+  .sx-tix-card--outline .sx-tix-cta--large {
+    background:transparent; color:#ecfd21;
+    border:1.5px solid #ecfd21;
+  }
+
+  /* Small CTA: plain text, aligned right */
+  .sx-tix-cta--small {
+    margin-top:auto;
+    justify-content:flex-end;
+    padding:0;
+  }
+  .sx-tix-card--yellow .sx-tix-cta--small { color:#000; }
+  .sx-tix-card--outline .sx-tix-cta--small { color:#ecfd21; }
+
+  @media (max-width: 1024px) {
+    .sx-tickets-grid { grid-template-columns:1fr; }
+    .sx-tickets-inner { padding:0 24px; }
+  }
+</style>
