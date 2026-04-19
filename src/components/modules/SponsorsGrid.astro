@@ -1,0 +1,103 @@
+---
+/**
+ * SponsorsGrid — 1:1 of sxtech.eu "EXHIBITORS AND SPONSORS" logo wall.
+ *
+ * Grayscale logos on black background, responsive flex-wrap layout.
+ */
+import { t } from '@/lib/i18n';
+import { getLocaleFromPath } from '@/lib/i18n';
+import type { Locale } from '@/lib/i18n';
+
+interface Logo { src: string; alt?: string; href?: string; }
+interface Props { content: Record<string, unknown>; }
+
+const { content } = Astro.props;
+const locale = getLocaleFromPath(Astro.url.pathname) as Locale;
+
+const heading = t(content, 'heading', locale) || 'EXHIBITORS AND SPONSORS';
+
+const defaultLogos: Logo[] = [
+  { src: '/media/sponsors/1-1024x724.webp',        alt: 'TENGA Company' },
+  { src: '/media/sponsors/2-1024x138.webp',        alt: 'Sext Panther' },
+  { src: '/media/sponsors/cropped-Bez-nazwy.webp', alt: 'SXPR' },
+  { src: '/media/sponsors/3-1024x724.webp',        alt: 'Orgie' },
+  { src: '/media/sponsors/8-removebg-preview.webp',alt: 'Little Leaf Agency' },
+  { src: '/media/sponsors/LL-agency_black-1-300x137-1.webp', alt: 'LL Agency' },
+  { src: '/media/sponsors/logo-web-1024x328.webp', alt: 'Kauf Mich' },
+  { src: '/media/sponsors/7-removebg-preview.webp',alt: 'Luxylist' },
+  { src: '/media/sponsors/4-removebg-preview.webp',alt: 'Fasto' },
+  { src: '/media/sponsors/12-scaled-1-1024x1024.webp', alt: 'Sexy Streamers' },
+  { src: '/media/sponsors/6-2.webp',               alt: 'Naked News' },
+  { src: '/media/sponsors/11-1.webp',              alt: 'Rubber Missy' },
+  { src: '/media/sponsors/9-1.webp',               alt: 'Playful' },
+  { src: '/media/sponsors/leaf-1024x408.webp',     alt: 'Leaf' },
+  { src: '/media/sponsors/8-scaled-1-1024x280.webp', alt: 'Moonlight Society' },
+  { src: '/media/sponsors/10-scaled-1-1024x461.webp', alt: 'The Handy' },
+  { src: '/media/sponsors/3-scaled-1-1024x516.webp', alt: 'SF' },
+  { src: '/media/sponsors/Projekt-bez-nazwy-21.webp', alt: 'Passport2Pleasure' },
+  { src: '/media/sponsors/Projekt-bez-nazwy-22.webp', alt: 'Get Rude' },
+  { src: '/media/sponsors/Projekt-bez-nazwy-23.webp', alt: 'B' },
+];
+const logos: Logo[] = (content.logos as Logo[]) || defaultLogos;
+---
+
+<section data-nova-el="sponsors-grid" class="sx-sponsors bg-black py-20">
+  <div class="sx-sponsors-inner">
+    <h2 class="sx-sponsors-title">{heading}</h2>
+    <div class="sx-sponsors-wall">
+      {logos.map((l) => (
+        l.href ? (
+          <a href={l.href} target="_blank" rel="noopener" class="sx-sponsor-cell">
+            <img src={l.src} alt={l.alt || ''} loading="lazy" />
+          </a>
+        ) : (
+          <div class="sx-sponsor-cell">
+            <img src={l.src} alt={l.alt || ''} loading="lazy" />
+          </div>
+        )
+      ))}
+    </div>
+  </div>
+</section>
+
+<style is:global>
+  .sx-sponsors-inner { max-width:1600px; margin:0 auto; padding:0 60px; }
+  .sx-sponsors-title {
+    font-family:'Oswald','Inter',sans-serif;
+    font-size:clamp(36px, 3.5vw, 48px);
+    font-weight:800; line-height:1;
+    letter-spacing:-0.02em;
+    color:#ecfd21; text-transform:uppercase;
+    margin:0 0 40px 0;
+  }
+  .sx-sponsors-wall {
+    display:grid;
+    grid-template-columns:repeat(5, 1fr);
+    gap:48px 40px;
+    align-items:center; justify-items:center;
+  }
+  .sx-sponsor-cell {
+    display:flex; align-items:center; justify-content:center;
+    width:100%; height:100px;
+    transition:opacity .2s;
+  }
+  .sx-sponsor-cell img {
+    max-width:100%; max-height:100%;
+    object-fit:contain;
+    filter:grayscale(1) brightness(1.4);
+    opacity:.65;
+    transition:all .25s ease;
+  }
+  .sx-sponsor-cell:hover img {
+    filter:grayscale(0) brightness(1);
+    opacity:1;
+  }
+
+  @media (max-width:1024px) {
+    .sx-sponsors-wall { grid-template-columns:repeat(3, 1fr); gap:32px 24px; }
+  }
+  @media (max-width:640px) {
+    .sx-sponsors-wall { grid-template-columns:repeat(2, 1fr); gap:24px; }
+    .sx-sponsors-inner { padding:0 24px; }
+  }
+</style>
