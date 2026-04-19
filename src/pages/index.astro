@@ -22,9 +22,6 @@ try {
   console.error('Failed to fetch sections from WP:', err);
 }
 
-// If the page is a bulk-imported Elementor mirror (RawHTML only), skip our Nav/Footer
-// because the imported HTML already contains the site's own nav + footer.
-const isMirror = sections.length > 0 && sections.every((s: any) => s.component === 'RawHTML');
 ---
 
 <BaseLayout
@@ -35,5 +32,5 @@ const isMirror = sections.length > 0 && sections.every((s: any) => s.component =
 >
   <Navigation />
   <ModuleRenderer sections={sections} />
-  {!isMirror && <Footer />}
+  <Footer />
 </BaseLayout>

@@ -1,16 +1,20 @@
 ---
 /**
  * SX Festival — Navigation
- * Matches sxtech.eu: 98px tall, transparent background, 3-line logo,
- * menu items right-aligned with yellow TICKETS button at the end.
+ * 1:1 of sxtech.eu header (extracted 19.04.2026 via Playwright).
+ *   - 98px fixed header, bg transparent (scroll fade to black/blur)
+ *   - Layout: logo | menu (space-between) | TICKETS
+ *   - Logo: Arial Nova 30px fw400, lh 26px, letter-spacing -2.1px, yellow, 3-line wrap
+ *   - Menu items: Inter 16px fw400 uppercase white, padding 13px 20px
+ *   - Active: yellow bg (#ecfd21), black text
+ *   - TICKETS: Inter 18px fw700 yellow
  *
- * Prop `transparent` (default true) → the nav overlays page content.
- * On scroll, a subtle black fade appears so nav stays readable.
+ * Prop `variant`:
+ *   'transparent' (default) — overlay, fades on scroll
+ *   'solid'                 — permanent black bg (for inner pages)
  */
-interface Props {
-  transparent?: boolean;
-}
-const { transparent = true } = Astro.props;
+interface Props { variant?: 'transparent' | 'solid'; }
+const { variant = 'transparent' } = Astro.props;
 
 const current = Astro.url.pathname.replace(/\/$/, '') || '/';
 const items = [
@@ -20,52 +24,124 @@ const items = [
   { label: 'Program',          href: '/program' },
   { label: 'News',             href: '/news' },
 ];
+const isActive = (href: string) => current === href || current.startsWith(href + '/');
 ---
 
-<header class={`sx-nav fixed top-0 left-0 right-0 z-50 h-[98px] flex items-center ${transparent ? 'bg-transparent' : 'bg-black'}`} data-sx-nav>
-  <div class="w-full max-w-[1600px] mx-auto px-8 flex items-center justify-between">
-    <a href="/" class="sx-logo" style="color: var(--color-brand-500)">
-      <span style="color: var(--color-brand-500)">sxfestival</span>
-      <span style="color: var(--color-brand-500)">expo</span>
-      <span style="color: var(--color-brand-500)">berlin</span>
-    </a>
+<header
+  class={`sx-nav fixed top-0 left-0 right-0 z-50 h-[98px] ${variant === 'solid' ? 'bg-black' : 'bg-transparent'}`}
+  data-sx-nav
+  data-variant={variant}
+>
+  <div class="h-full w-full flex items-center pl-[50px] pr-[10px]">
+    <div class="w-full flex items-center justify-between gap-6">
+      {/* Logo — sits in a 157px-wide column so the three words wrap one per line */}
+      <a href="/" class="sx-nav-logo block" aria-label="SX Festival & Expo 2026 Berlin">
+        sxfestival expo berlin
+      </a>
 
-    <nav class="hidden md:flex items-center gap-10">
+      {/* Main menu (horizontal, justify between) */}
+      <nav class="hidden md:flex items-center gap-0 flex-1 justify-center" aria-label="Main">
+        <ul class="flex items-center gap-0 list-none p-0 m-0">
+          {items.map((item) => {
+            const active = isActive(item.href);
+            return (
+              <li class="m-0 p-0">
+                <a
+                  href={item.href}
+                  class={`sx-menu-item ${active ? 'sx-menu-item--active' : ''}`}
+                >{item.label}</a>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+
+      {/* Tickets */}
+      <a href="/regular-visitors" class="sx-tickets hidden md:inline-block">TICKETS</a>
+
+      {/* Mobile toggle */}
+      <button id="sx-mobile-toggle" class="md:hidden text-brand-500 p-2 ml-auto" aria-label="Menu">
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  {/* Mobile dropdown */}
+  <div id="sx-mobile-menu" class="hidden md:hidden fixed inset-x-0 top-[98px] bg-black border-t border-white/10 px-6 py-4 z-40">
+    <ul class="space-y-2 list-none p-0 m-0">
       {items.map((item) => {
-        const active = current === item.href;
+        const active = isActive(item.href);
         return (
-          <a href={item.href} class={`text-white text-[13px] font-medium uppercase tracking-[0.03em] hover:text-brand-500 transition-colors ${active ? 'text-brand-500' : ''}`}>
-            {item.label}
-          </a>
+          <li><a href={item.href} class={`sx-menu-item block ${active ? 'sx-menu-item--active' : ''}`}>{item.label}</a></li>
         );
       })}
-      <a href="/regular-visitors" class="text-brand-500 text-[13px] font-bold uppercase tracking-[0.03em] hover:opacity-80 transition-opacity">TICKETS</a>
-    </nav>
-
-    <button id="sx-mobile-toggle" class="md:hidden text-white p-2" aria-label="Menu">
-      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-      </svg>
-    </button>
-  </div>
-
-  <div id="sx-mobile-menu" class="hidden md:hidden fixed left-0 right-0 top-[98px] bg-black border-t border-white/10 px-6 py-4 space-y-3">
-    {items.map((item) => (
-      <a href={item.href} class="block text-white text-sm font-medium uppercase tracking-wider py-2">{item.label}</a>
-    ))}
-    <a href="/regular-visitors" class="sx-btn w-full mt-2">TICKETS</a>
+      <li><a href="/regular-visitors" class="sx-tickets block mt-2">TICKETS</a></li>
+    </ul>
   </div>
 </header>
+
+<style is:global>
+  .sx-nav-logo {
+    font-family: 'Arial Nova', 'Arial', sans-serif;
+    font-size: 30px;
+    font-weight: 400;
+    line-height: 26px;
+    letter-spacing: -2.1px;
+    color: var(--color-brand-500);
+    width: 157px;
+    flex: 0 0 157px;
+    text-transform: lowercase;
+    /* Three-word wrap happens naturally within 157px width */
+    word-spacing: 100vw; /* forces each word to its own line */
+  }
+  .sx-menu-item {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: 0;
+    color: #ffffff;
+    padding: 13px 20px;
+    display: inline-block;
+    text-decoration: none;
+    transition: background-color .15s, color .15s;
+  }
+  .sx-menu-item:hover {
+    background-color: var(--color-brand-500);
+    color: #000;
+  }
+  .sx-menu-item--active {
+    background-color: var(--color-brand-500);
+    color: #000;
+  }
+  .sx-tickets {
+    font-family: 'Inter', -apple-system, sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0;
+    color: var(--color-brand-500);
+    text-decoration: none;
+    padding: 0;
+    white-space: nowrap;
+    transition: opacity .15s;
+  }
+  .sx-tickets:hover { opacity: .8; }
+</style>
 
 <script>
   const toggle = document.getElementById('sx-mobile-toggle');
   const menu = document.getElementById('sx-mobile-menu');
   toggle?.addEventListener('click', () => menu?.classList.toggle('hidden'));
 
-  // Fade nav bg on scroll so transparent nav stays readable
-  const nav = document.querySelector('[data-sx-nav]');
+  const nav = document.querySelector('[data-sx-nav]') as HTMLElement | null;
+  const variant = nav?.dataset.variant || 'transparent';
   function onScroll() {
     if (!nav) return;
+    if (variant === 'solid') return; // solid stays solid
     const scrolled = window.scrollY > 40;
     nav.style.backgroundColor = scrolled ? 'rgba(0,0,0,0.88)' : '';
     nav.style.backdropFilter = scrolled ? 'blur(8px)' : '';
