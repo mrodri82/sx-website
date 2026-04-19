@@ -24,10 +24,10 @@ const items = [
 
 <header class={`sx-nav fixed top-0 left-0 right-0 z-50 h-[98px] flex items-center ${transparent ? 'bg-transparent' : 'bg-black'}`} data-sx-nav>
   <div class="w-full max-w-[1600px] mx-auto px-8 flex items-center justify-between">
-    <a href="/" class="sx-logo">
-      <span>sxfestival</span>
-      <span>expo</span>
-      <span>berlin</span>
+    <a href="/" class="sx-logo" style="color: var(--color-brand-500)">
+      <span style="color: var(--color-brand-500)">sxfestival</span>
+      <span style="color: var(--color-brand-500)">expo</span>
+      <span style="color: var(--color-brand-500)">berlin</span>
     </a>
 
     <nav class="hidden md:flex items-center gap-10">
@@ -39,9 +39,8 @@ const items = [
           </a>
         );
       })}
+      <a href="/regular-visitors" class="text-brand-500 text-[13px] font-bold uppercase tracking-[0.03em] hover:opacity-80 transition-opacity">TICKETS</a>
     </nav>
-
-    <a href="/regular-visitors" class="sx-btn hidden md:inline-flex">TICKETS</a>
 
     <button id="sx-mobile-toggle" class="md:hidden text-white p-2" aria-label="Menu">
       <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

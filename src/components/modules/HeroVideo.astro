@@ -1,8 +1,16 @@
 ---
 /**
- * HeroVideo — SX style
- * Full-viewport video background + huge bold uppercase title.
- * Matches sxtech.eu homepage hero pattern.
+ * HeroVideo — SX style, matches sxtech.eu exact layout
+ *
+ * Layout:
+ *   [label small yellow]
+ *   SX FESTIVAL            <- huge yellow Oswald line 1
+ *   EXPO  JUNE 26-28       <- huge yellow + inline date block
+ *         BERLIN
+ *         2026
+ *   [tagline_label yellow small]
+ *   [tagline_body yellow body]
+ *   [Primary Button (yellow fill)]  [Ghost Button (outlined white)]
  */
 import { t } from '@/lib/i18n';
 import { getLocaleFromPath } from '@/lib/i18n';
@@ -13,21 +21,26 @@ interface Props {
   style?: Record<string, Record<string, string>>;
 }
 
-const { content, style = {} } = Astro.props;
+const { content } = Astro.props;
 const locale = getLocaleFromPath(Astro.url.pathname) as Locale;
 
 const badge    = t(content, 'badge', locale);
-const headline = t(content, 'headline', locale);
-const subtitle = t(content, 'subtitle', locale);
-const ctaText  = t(content, 'cta_primary_text', locale);
-const ctaUrl   = (content.cta_primary_url as string) || '/regular-visitors';
+const title1   = t(content, 'title1', locale);
+const title2   = t(content, 'title2', locale);
+const date1    = t(content, 'date1', locale);
+const date2    = t(content, 'date2', locale);
+const date3    = t(content, 'date3', locale);
+const taglineLabel = t(content, 'tagline_label', locale);
+const taglineBody  = t(content, 'tagline_body', locale);
+const cta1Text = t(content, 'cta1_text', locale);
+const cta1Url  = (content.cta1_url as string) || '#';
+const cta2Text = t(content, 'cta2_text', locale);
+const cta2Url  = (content.cta2_url as string) || '#';
 const videoUrl = (content.video_url as string) || '';
 const posterUrl = (content.poster_url as string) || '';
-
-const sectionStyle = Object.entries(style['hero-video-section'] || {}).map(([k, v]) => `${k}: ${v}`).join('; ');
 ---
 
-<section data-nova-el="hero-video-section" class="relative w-full min-h-[100vh] overflow-hidden flex items-end bg-black" style={sectionStyle}>
+<section data-nova-el="hero-video-section" class="relative w-full h-screen overflow-hidden bg-black">
   {videoUrl && (
     <video
       class="absolute inset-0 w-full h-full object-cover"
@@ -37,23 +50,63 @@ const sectionStyle = Object.entries(style['hero-video-section'] || {}).map(([k, 
       <source src={videoUrl} type="video/mp4" />
     </video>
   )}
-  <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/30" aria-hidden="true"></div>
+  <div class="absolute inset-0 bg-black/55" aria-hidden="true"></div>
 
-  <div class="relative z-10 w-full max-w-[1600px] mx-auto px-8 pb-16 md:pb-24">
-    {badge && (
-      <p data-nova-el="hero-video-badge" class="text-[13px] font-medium uppercase tracking-[0.03em] text-brand-500 mb-4">{badge}</p>
-    )}
-    {headline && (
-      <h1 data-nova-el="hero-video-title"
-          class="sx-heading text-white mb-8"
-          style="font-size: clamp(72px, 10vw, 156px); letter-spacing: -0.04em; line-height: 0.9;"
-          set:html={headline} />
-    )}
-    {subtitle && (
-      <p data-nova-el="hero-video-subtitle" class="text-white/80 text-base max-w-xl mb-10 leading-relaxed uppercase font-medium tracking-wide">{subtitle}</p>
-    )}
-    {ctaText && (
-      <a data-nova-el="hero-video-cta" href={ctaUrl} class="sx-btn sx-btn--large">{ctaText}</a>
-    )}
+  <div class="relative z-10 w-full h-full max-w-[1600px] mx-auto px-8 flex items-center">
+    <div class="w-full">
+      {badge && (
+        <p data-nova-el="hero-video-badge"
+           class="text-[14px] sm:text-[15px] font-medium uppercase tracking-[0.02em] text-brand-500 mb-4">
+          {badge}
+        </p>
+      )}
+
+      <h1 data-nova-el="hero-video-title" class="mb-4">
+        {title1 && (
+          <span class="sx-heading block text-brand-500"
+                style="font-size: clamp(72px, 10.8vw, 156px); letter-spacing: -0.04em; line-height: 0.95;">
+            {title1}
+          </span>
+        )}
+        <span class="flex flex-wrap items-start gap-x-8 gap-y-2">
+          {title2 && (
+            <span class="sx-heading text-brand-500"
+                  style="font-size: clamp(72px, 10.8vw, 156px); letter-spacing: -0.04em; line-height: 0.95;">
+              {title2}
+            </span>
+          )}
+          {(date1 || date2 || date3) && (
+            <span class="sx-heading--bold text-brand-500 self-center"
+                  style="font-family: var(--font-display); font-weight: 800; text-transform: uppercase; letter-spacing: -0.02em; line-height: 1;">
+              {date1 && <span class="block" style="font-size: clamp(28px, 3.2vw, 46px);">{date1}</span>}
+              {date2 && <span class="block" style="font-size: clamp(28px, 3.2vw, 46px);">{date2}</span>}
+              {date3 && <span class="block" style="font-size: clamp(28px, 3.2vw, 46px);">{date3}</span>}
+            </span>
+          )}
+        </span>
+      </h1>
+
+      {taglineLabel && (
+        <p data-nova-el="hero-video-tagline-label"
+           class="text-brand-500 font-bold uppercase text-base sm:text-lg tracking-wide mb-1 mt-6">
+          {taglineLabel}
+        </p>
+      )}
+      {taglineBody && (
+        <p data-nova-el="hero-video-tagline-body"
+           class="text-brand-500 font-medium uppercase text-sm sm:text-base leading-snug max-w-[720px] mb-8"
+           style="letter-spacing: 0.02em;"
+           set:html={taglineBody.replace(/\n/g, '<br>')} />
+      )}
+
+      <div class="flex flex-wrap gap-4">
+        {cta1Text && (
+          <a data-nova-el="hero-video-cta1" href={cta1Url} class="sx-btn sx-btn--large">{cta1Text}</a>
+        )}
+        {cta2Text && (
+          <a data-nova-el="hero-video-cta2" href={cta2Url} class="sx-btn sx-btn--large sx-btn--ghost">{cta2Text}</a>
+        )}
+      </div>
+    </div>
   </div>
 </section>
