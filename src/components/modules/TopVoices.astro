@@ -1,0 +1,155 @@
+---
+/**
+ * TopVoices — horizontal photo carousel, 1:1 of sxtech.eu "TOP VOICES" section.
+ *
+ * Each voice has two images: a narrow `thumb` shown in the sliver state, and a
+ * wide `large` shown when active (the large image has name + role + date already
+ * baked into a yellow info bar). The carousel cycles, expanding the active
+ * slide to 740px and compressing the rest to 134px.
+ */
+import { t } from '@/lib/i18n';
+import { getLocaleFromPath } from '@/lib/i18n';
+import type { Locale } from '@/lib/i18n';
+
+interface Voice { large: string; thumb: string; alt?: string; }
+interface Props { content: Record<string, unknown>; }
+
+const { content } = Astro.props;
+const locale = getLocaleFromPath(Astro.url.pathname) as Locale;
+
+const heading = t(content, 'heading', locale) || 'TOP VOICES';
+
+const defaultVoices: Voice[] = [
+  { large: '/media/voices/cath1.webp',  thumb: '/media/voices/cath2.webp',  alt: 'Catherine' },
+  { large: '/media/voices/charl1.webp', thumb: '/media/voices/charl2.webp', alt: 'Charlotte' },
+  { large: '/media/voices/susan1.webp', thumb: '/media/voices/susan2.webp', alt: 'Susan' },
+  { large: '/media/voices/kylie.webp',  thumb: '/media/voices/kyli2.webp',  alt: 'Kylie Darling' },
+  { large: '/media/voices/bp2.webp',    thumb: '/media/voices/bp.webp',     alt: 'BP' },
+  { large: '/media/voices/kris3.webp',  thumb: '/media/voices/kris2.webp',  alt: 'Kris' },
+  { large: '/media/voices/mik4.webp',   thumb: '/media/voices/mik3.webp',   alt: 'Mik' },
+  { large: '/media/voices/moon2.webp',  thumb: '/media/voices/moon1.webp',  alt: 'Moon' },
+  { large: '/media/voices/muse2.webp',  thumb: '/media/voices/muse1.webp',  alt: 'Muse' },
+];
+const voices: Voice[] = (content.voices as Voice[]) || defaultVoices;
+---
+
+<section data-nova-el="top-voices" class="sx-voices bg-black py-16">
+  <div class="sx-voices-head">
+    <h2 class="sx-voices-title">{heading}</h2>
+  </div>
+
+  <div class="festival-slider">
+    <div class="slider-window">
+      <div class="slider-track">
+        {voices.map((v, i) => (
+          <div class={`slide ${i === 3 ? 'active' : ''}`} data-idx={i}>
+            <img class="thumb" src={v.thumb} alt={v.alt || ''} loading="lazy" />
+            <img class="large" src={v.large} alt={v.alt || ''} loading="lazy" />
+          </div>
+        ))}
+      </div>
+      <button class="nav prev" aria-label="Previous">❮</button>
+      <button class="nav next" aria-label="Next">❯</button>
+    </div>
+    <div class="progress-bar"><div class="progress"></div></div>
+  </div>
+</section>
+
+<style is:global>
+  .sx-voices-head { max-width:1366px; margin:0 auto 24px; padding:0 24px; text-align:center; }
+  .sx-voices-title {
+    font-family:'Oswald','Inter',sans-serif;
+    font-size:clamp(64px, 8vw, 120px);
+    font-weight:800; line-height:1;
+    letter-spacing:-0.03em;
+    color:#ecfd21; text-transform:uppercase;
+    margin:0;
+  }
+
+  .festival-slider { max-width:1366px; margin:0 auto; padding:0 24px; }
+  .slider-window { position:relative; overflow:hidden; height:530px; }
+  .slider-track { display:flex; align-items:center; transition:transform .6s ease; }
+  .slide {
+    flex:0 0 134px; height:490px; margin:0 10px;
+    overflow:hidden; position:relative;
+    transition:all .5s ease;
+    cursor:pointer;
+  }
+  .slide img {
+    position:absolute; width:100%; height:100%; object-fit:cover;
+    top:0; left:0;
+    transition:opacity .4s ease;
+  }
+  .slide .large { opacity:0; }
+  .slide.active { flex:0 0 740px; }
+  .slide.active .large { opacity:1; }
+  .slide.active .thumb { opacity:0; }
+
+  .nav {
+    position:absolute; top:50%; transform:translateY(-50%);
+    background:#000; color:#ecfd21; border:none;
+    padding:14px 18px; cursor:pointer; z-index:10;
+    font-size:20px; line-height:1;
+  }
+  .nav:hover { color:#fff; }
+  .prev { left:0; }
+  .next { right:0; }
+
+  .progress-bar { height:3px; background:#222; margin-top:20px; }
+  .progress { height:100%; width:0%; background:#ecfd21; transition:width .4s ease; }
+
+  @media (max-width:900px) {
+    .sx-voices-title { font-size:clamp(44px, 12vw, 72px); }
+    .slider-window { height:420px; }
+    .slide { flex:0 0 60px; height:380px; }
+    .slide.active { flex:0 0 82%; }
+  }
+</style>
+
+<script>
+  (function() {
+    const slider = document.currentScript?.previousElementSibling?.querySelector('.festival-slider') as HTMLElement | null;
+    // Use a generic selector since `currentScript.previousElementSibling` is unreliable across Astro hydration
+    const sliders = document.querySelectorAll<HTMLElement>('.festival-slider');
+    sliders.forEach(setupSlider);
+
+    function setupSlider(root: HTMLElement) {
+      const track = root.querySelector<HTMLElement>('.slider-track');
+      const slides = Array.from(root.querySelectorAll<HTMLElement>('.slide'));
+      const prevBtn = root.querySelector<HTMLButtonElement>('.prev');
+      const nextBtn = root.querySelector<HTMLButtonElement>('.next');
+      const progress = root.querySelector<HTMLElement>('.progress');
+      if (!track || !slides.length || !prevBtn || !nextBtn) return;
+
+      let index = slides.findIndex(s => s.classList.contains('active'));
+      if (index < 0) index = 0;
+
+      function update() {
+        slides.forEach((s, i) => s.classList.toggle('active', i === index));
+        // Center the active slide in the window
+        const activeEl = slides[index];
+        const rootRect = root.querySelector<HTMLElement>('.slider-window')!.getBoundingClientRect();
+        const slideRect = activeEl.getBoundingClientRect();
+        const trackRect = track!.getBoundingClientRect();
+        const currentOffset = parseFloat(track!.style.transform.replace(/[^-0-9.]/g, '')) || 0;
+        const delta = (slideRect.left + slideRect.width / 2) - (rootRect.left + rootRect.width / 2);
+        const newOffset = currentOffset - delta;
+        track!.style.transform = `translateX(${newOffset}px)`;
+        if (progress) progress.style.width = `${((index + 1) / slides.length) * 100}%`;
+      }
+
+      prevBtn.addEventListener('click', () => { index = (index - 1 + slides.length) % slides.length; update(); });
+      nextBtn.addEventListener('click', () => { index = (index + 1) % slides.length; update(); });
+      slides.forEach((s, i) => s.addEventListener('click', () => { index = i; update(); }));
+
+      // Auto-advance every 5s
+      let timer = setInterval(() => nextBtn!.click(), 5000);
+      root.addEventListener('mouseenter', () => clearInterval(timer));
+      root.addEventListener('mouseleave', () => { timer = setInterval(() => nextBtn!.click(), 5000); });
+
+      // Initial centering after layout settles
+      requestAnimationFrame(() => requestAnimationFrame(update));
+      window.addEventListener('resize', () => requestAnimationFrame(update));
+    }
+  })();
+</script>
