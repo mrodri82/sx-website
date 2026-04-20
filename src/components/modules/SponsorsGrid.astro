@@ -72,9 +72,10 @@ const logos: Logo[] = (content.logos as Logo[]) || defaultLogos;
   }
   .sx-sponsors-wall {
     display:grid;
-    grid-template-columns:repeat(5, 1fr);
+    grid-template-columns:repeat(5, minmax(0, 1fr));
     gap:48px 40px;
     align-items:center; justify-items:center;
+    min-width:0;
   }
   .sx-sponsor-cell {
     display:flex; align-items:center; justify-content:center;
@@ -96,10 +97,10 @@ const logos: Logo[] = (content.logos as Logo[]) || defaultLogos;
   }
 
   @media (max-width:1024px) {
-    .sx-sponsors-wall { grid-template-columns:repeat(3, 1fr); gap:32px 24px; }
+    .sx-sponsors-wall { grid-template-columns:repeat(3, minmax(0, 1fr)); gap:32px 24px; }
   }
   @media (max-width:640px) {
-    .sx-sponsors-wall { grid-template-columns:repeat(2, 1fr); gap:24px; }
+    .sx-sponsors-wall { grid-template-columns:repeat(2, minmax(0, 1fr)); gap:24px; }
     .sx-sponsors-inner { padding:0 24px; }
   }
 </style>

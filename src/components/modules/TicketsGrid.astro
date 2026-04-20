@@ -141,8 +141,9 @@ const columns: Column[] = (content.columns as Column[]) || defaultColumns;
   }
 
   .sx-tickets-grid {
-    display:grid; grid-template-columns:repeat(3, 1fr); gap:20px;
+    display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:20px;
     align-items:start;
+    min-width:0;
   }
   .sx-tickets-col { display:flex; flex-direction:column; gap:20px; }
 
