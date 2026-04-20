@@ -171,12 +171,17 @@ export async function getPageSections(pageSlug: string): Promise<{ sections: Mod
   const moduleMap = new Map(modules.map(m => [m.id, m]));
 
   const resolved = sections.map((section, idx) => {
+    // Preserve sections_json "id" (e.g. "hero-1", "tickets-1") as anchor
+    // so deep-links like /#tickets work. Author can override via
+    // content.anchor in the editor; otherwise the JSON id wins.
+    const jsonAnchor = typeof section.id === 'string' ? section.id : '';
+
     if (section.mode === 'detached' && section.data) {
       return {
         id: -(idx + 1),
         title: section.type,
         component: section.type,
-        content: section.data,
+        content: { ...(section.data as Record<string, unknown>), anchor: (section.data as any)?.anchor || jsonAnchor },
         // Per-instance module-level style (background, theme, spacing)
         // saved alongside content via the live editor.
         style: (section as any).style || {},
@@ -190,11 +195,12 @@ export async function getPageSections(pageSlug: string): Promise<{ sections: Mod
       return null;
     }
 
+    const modContent = safeJsonParse(mod.meta.content_json);
     return {
       id: mod.id,
       title: mod.title.rendered,
       component: mod.meta.component,
-      content: safeJsonParse(mod.meta.content_json),
+      content: { ...modContent, anchor: modContent.anchor || jsonAnchor },
       style: safeJsonParse(mod.meta.default_style),
       overrides: section.visual_overrides,
     };
