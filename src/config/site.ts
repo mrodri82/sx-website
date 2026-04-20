@@ -42,7 +42,8 @@ export const site = {
   postalCode:    env.ADDRESS_POSTCODE   || '10785',
   country:       env.ADDRESS_COUNTRY    || 'DE',
   foundingDate:  env.FOUNDING_DATE      || '2024',
-  linkedinUrl:   env.LINKEDIN_URL       || 'https://www.linkedin.com/company/sxtech-eu/',
+  linkedinUrl:   env.LINKEDIN_URL       || 'https://www.linkedin.com/company/13008767',
+  instagramUrl:  env.INSTAGRAM_URL      || 'https://www.instagram.com/sxtecheu/',
 
   // ── AI ──
   openrouterKey: env.OPENROUTER_API_KEY || '',

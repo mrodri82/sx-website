@@ -40,6 +40,12 @@ const sectionTitle    = t(content, 'section_title', locale) || 'TICKETS';
 const sectionSubtitle = t(content, 'section_subtitle', locale) || 'Choose Your Experience';
 
 // Default layout — overridable via `content.columns_json` (stringified JSON)
+// External endpoints taken 1:1 from sxtech.eu so outbound CTAs work on sx.zds.es.
+// Can later be swapped for internal forms / ticketing without code changes.
+const EVENTBRITE_VISITOR = 'https://www.eventbrite.ie/e/sx-festival-sx-expo-2026-berlin-tickets-1550925051579';
+const EVENTBRITE_BIZ     = 'https://www.eventbrite.ie/e/sx-festival-expo-2026-berlin-b2b-only-tickets-1461155267739';
+const CREATOR_FORM       = 'https://wkf.ms/4qpG1Ks';
+
 const defaultColumns: Column[] = [
   {
     variant: 'yellow',
@@ -48,12 +54,12 @@ const defaultColumns: Column[] = [
         title: 'VISITOR',
         subtitle: 'For curious explorers of modern sexuality.',
         description: 'Talks, shows, workshops, Expo, immersive experiences.',
-        cta_text: 'LINE UP', cta_url: '#lineup',
+        cta_text: 'LINE UP', cta_url: '/program',
         size: 'large',
       },
-      { title: 'SATURDAY', date: '27.06.26', cta_text: 'TICKET', cta_url: '#buy-sat', size: 'small' },
-      { title: 'SUNDAY',   date: '28.06.26', cta_text: 'TICKET', cta_url: '#buy-sun', size: 'small' },
-      { title: 'WEEKEND',  date: '2 DAYS',   cta_text: 'TICKET', cta_url: '#buy-weekend', size: 'small' },
+      { title: 'SATURDAY', date: '27.06.26', cta_text: 'TICKET', cta_url: EVENTBRITE_VISITOR, size: 'small' },
+      { title: 'SUNDAY',   date: '28.06.26', cta_text: 'TICKET', cta_url: EVENTBRITE_VISITOR, size: 'small' },
+      { title: 'WEEKEND',  date: '2 DAYS',   cta_text: 'TICKET', cta_url: EVENTBRITE_VISITOR, size: 'small' },
     ],
   },
   {
@@ -63,12 +69,12 @@ const defaultColumns: Column[] = [
         title: 'CREATOR',
         subtitle: 'For Adult Content Creators',
         description: 'Connect, grow your audience, network.',
-        cta_text: 'FREE ACCESS', cta_url: '#creators',
+        cta_text: 'FREE ACCESS', cta_url: CREATOR_FORM,
         size: 'large',
       },
       {
         title: 'APPLY FULL EVENT ACCESS',
-        cta_text: '2 DAYS TICKET', cta_url: '#apply',
+        cta_text: '2 DAYS TICKET', cta_url: CREATOR_FORM,
         size: 'large',
       },
     ],
@@ -80,12 +86,12 @@ const defaultColumns: Column[] = [
         title: 'BUSINESS',
         subtitle: 'For Business Professionals and B2B Only',
         description: 'B2B VIP Area, networking, all business opportunities in one place.',
-        cta_text: 'BIZ LINEUP VIEW', cta_url: '#biz-lineup',
+        cta_text: 'BIZ LINEUP VIEW', cta_url: '/exhibitors-b2b',
         size: 'large',
       },
-      { title: 'REGULAR BIZ', date: '27.06.26',    cta_text: 'TICKET',        cta_url: '#biz-sat', size: 'small' },
-      { title: 'REGULAR BIZ', date: '28.06.26',    cta_text: 'TICKET',        cta_url: '#biz-sun', size: 'small' },
-      { title: 'VIP BIZ',     date: '27-28.06.26', cta_text: '2 DAYS TICKET', cta_url: '#biz-vip', size: 'small' },
+      { title: 'REGULAR BIZ', date: '27.06.26',    cta_text: 'TICKET',        cta_url: EVENTBRITE_BIZ, size: 'small' },
+      { title: 'REGULAR BIZ', date: '28.06.26',    cta_text: 'TICKET',        cta_url: EVENTBRITE_BIZ, size: 'small' },
+      { title: 'VIP BIZ',     date: '27-28.06.26', cta_text: '2 DAYS TICKET', cta_url: EVENTBRITE_BIZ, size: 'small' },
     ],
   },
 ];
@@ -108,12 +114,17 @@ const columns: Column[] = (content.columns as Column[]) || defaultColumns;
               {card.size === 'small' && card.date && <p class="sx-tix-date">{card.date}</p>}
               {card.size === 'large' && card.subtitle && <p class="sx-tix-sub">{card.subtitle}</p>}
               {card.size === 'large' && card.description && <p class="sx-tix-desc">{card.description}</p>}
-              {card.cta_text && (
-                <a class={`sx-tix-cta sx-tix-cta--${card.size || 'large'}`} href={card.cta_url || '#'}>
-                  <span>{card.cta_text}</span>
-                  <svg viewBox="0 0 16 16" class="sx-tix-arrow"><path d="M4 12 L12 4 M6 4 L12 4 L12 10" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
-                </a>
-              )}
+              {card.cta_text && (() => {
+                const url = card.cta_url || '#';
+                const ext = /^https?:/.test(url);
+                return (
+                  <a class={`sx-tix-cta sx-tix-cta--${card.size || 'large'}`} href={url}
+                     target={ext ? '_blank' : undefined} rel={ext ? 'noopener' : undefined}>
+                    <span>{card.cta_text}</span>
+                    <svg viewBox="0 0 16 16" class="sx-tix-arrow"><path d="M4 12 L12 4 M6 4 L12 4 L12 10" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+                  </a>
+                );
+              })()}
             </article>
           ))}
         </div>
