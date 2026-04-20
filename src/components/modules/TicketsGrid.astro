@@ -153,7 +153,10 @@ const columns: Column[] = (content.columns as Column[]) || defaultColumns;
     min-width:0; /* allow long titles to wrap instead of forcing column width */
     overflow:hidden; /* safety net so no single long word breaks layout */
   }
-  .sx-tix-sub, .sx-tix-desc { word-break:break-word; overflow-wrap:anywhere; }
+  .sx-tix-sub, .sx-tix-desc, .sx-tix-date, .sx-tix-title {
+    white-space:normal !important;
+    word-break:break-word; overflow-wrap:anywhere;
+  }
   .sx-tix-card--yellow {
     background:#ecfd21; color:#000;
   }
