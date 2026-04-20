@@ -158,8 +158,17 @@ const componentMap: Record<string, any> = {
     animationDisabled ? 'nova-anim-off' : '',
   ].filter(Boolean).join(' ') || undefined;
 
+  // Anchor ID: explicit `content.anchor` wins; fallback to slugified section.id
+  // (only ASCII alnum + dash, no leading digit — valid HTML4/5 id).
+  const rawAnchor = (section.content?.anchor as string) || String(section.id || '');
+  const anchorId = rawAnchor
+    .toLowerCase()
+    .replace(/[^a-z0-9-_]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .replace(/^(\d)/, 's-$1') || undefined;
+
   return (
-    <div data-nova-module={section.id} data-nova-title={section.title} data-nova-component={section.component} class={wrapperClass} style={wrapperStyle || undefined}>
+    <div id={anchorId} data-nova-module={section.id} data-nova-title={section.title} data-nova-component={section.component} class={wrapperClass} style={wrapperStyle || undefined}>
       {s.background_video && (
         <video autoplay muted loop playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;">
           <source src={s.background_video} type="video/mp4" />
@@ -181,6 +190,9 @@ const componentMap: Record<string, any> = {
 })}
 
 <style is:global>
+  /* Anchor jumps: clear the fixed 98px header */
+  [data-nova-module][id] { scroll-margin-top: 110px; }
+  html { scroll-behavior: smooth; }
   /* Module-level visual override classes set by the Live Editor */
   [data-nova-module].nova-spacing-compact > div > * { padding-top: 2rem !important; padding-bottom: 2rem !important; }
   [data-nova-module].nova-spacing-spacious > div > * { padding-top: 8rem !important; padding-bottom: 8rem !important; }
