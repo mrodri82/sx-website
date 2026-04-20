@@ -229,7 +229,8 @@ const columns: Column[] = (content.columns as Column[]) || defaultColumns;
   .sx-tix-card--outline .sx-tix-cta--small { color:#ecfd21; }
 
   @media (max-width: 1024px) {
-    .sx-tickets-grid { grid-template-columns:1fr; }
+    .sx-tickets-grid { grid-template-columns:minmax(0, 1fr); }
     .sx-tickets-inner { padding:0 24px; }
   }
+  .sx-tickets-col { min-width:0; }
 </style>
