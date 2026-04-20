@@ -228,9 +228,17 @@ const columns: Column[] = (content.columns as Column[]) || defaultColumns;
   .sx-tix-card--yellow .sx-tix-cta--small { color:#000; }
   .sx-tix-card--outline .sx-tix-cta--small { color:#ecfd21; }
 
+  .sx-tickets-col { min-width:0; }
   @media (max-width: 1024px) {
     .sx-tickets-grid { grid-template-columns:minmax(0, 1fr); }
-    .sx-tickets-inner { padding:0 24px; }
+    .sx-tickets-inner { padding:0 16px; }
   }
-  .sx-tickets-col { min-width:0; }
+  @media (max-width: 640px) {
+    .sx-tix-card { padding:24px 20px; min-height:auto; }
+    .sx-tix-card--large { min-height:280px; }
+    .sx-tix-card--small  { min-height:100px; }
+    .sx-tix-title { font-size:clamp(28px, 7vw, 36px); }
+    .sx-tix-sub { margin-top:40px; }
+    .sx-tix-cta--large { padding:16px 20px; margin-top:18px; }
+  }
 </style>
