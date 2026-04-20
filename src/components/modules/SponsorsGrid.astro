@@ -45,17 +45,14 @@ const logos: Logo[] = (content.logos as Logo[]) || defaultLogos;
   <div class="sx-sponsors-inner">
     <h2 class="sx-sponsors-title">{heading}</h2>
     <div class="sx-sponsors-wall">
-      {logos.map((l) => (
-        l.href ? (
-          <a href={l.href} target="_blank" rel="noopener" class="sx-sponsor-cell">
-            <img src={l.src} alt={l.alt || ''} loading="lazy" />
-          </a>
+      {logos.map((l) => {
+        const style = `--logo-url:url('${l.src}')`;
+        return l.href ? (
+          <a href={l.href} target="_blank" rel="noopener" class="sx-sponsor-cell" style={style} aria-label={l.alt}></a>
         ) : (
-          <div class="sx-sponsor-cell">
-            <img src={l.src} alt={l.alt || ''} loading="lazy" />
-          </div>
-        )
-      ))}
+          <div class="sx-sponsor-cell" style={style} aria-label={l.alt}></div>
+        );
+      })}
     </div>
   </div>
 </section>
@@ -78,22 +75,27 @@ const logos: Logo[] = (content.logos as Logo[]) || defaultLogos;
     min-width:0;
   }
   .sx-sponsor-cell {
-    display:flex; align-items:center; justify-content:center;
-    width:100%; height:100px;
-    transition:opacity .2s;
+    /* Unified silhouette: logo rendered as CSS mask, fill = #fff.
+       Works regardless of original color (black, white, or multi-color)
+       because only the alpha channel defines the shape. */
+    display:block;
+    width:100%; max-width:220px;
+    height:80px;
+    background:#fff;
+    -webkit-mask-image: var(--logo-url);
+            mask-image: var(--logo-url);
+    -webkit-mask-repeat:no-repeat;
+            mask-repeat:no-repeat;
+    -webkit-mask-position:center;
+            mask-position:center;
+    -webkit-mask-size:contain;
+            mask-size:contain;
+    opacity:.72;
+    transition:opacity .25s ease, background-color .25s ease;
   }
-  .sx-sponsor-cell img {
-    max-width:100%; max-height:100%;
-    object-fit:contain;
-    /* Force every logo visible on black bg:
-       invert+brightness renders dark logos as white, already-white logos
-       stay white, mid-tones become light gray. Unified look. */
-    filter:brightness(0) invert(1);
-    opacity:.75;
-    transition:all .25s ease;
-  }
-  .sx-sponsor-cell:hover img {
+  .sx-sponsor-cell:hover {
     opacity:1;
+    background:#ecfd21; /* fill turns SX-yellow on hover */
   }
 
   @media (max-width:1024px) {
