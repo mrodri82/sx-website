@@ -61,7 +61,7 @@ const logos: Logo[] = (content.logos as Logo[]) || defaultLogos;
 </section>
 
 <style is:global>
-  .sx-sponsors-inner { max-width:1600px; margin:0 auto; padding:0 60px; }
+  .sx-sponsors-inner { max-width:1600px; margin:0 auto; padding:0 60px; box-sizing:border-box; width:100%; }
   .sx-sponsors-title {
     font-family:'Oswald','Inter',sans-serif;
     font-size:clamp(36px, 3.5vw, 48px);
@@ -84,12 +84,14 @@ const logos: Logo[] = (content.logos as Logo[]) || defaultLogos;
   .sx-sponsor-cell img {
     max-width:100%; max-height:100%;
     object-fit:contain;
-    filter:grayscale(1) brightness(1.4);
-    opacity:.65;
+    /* Force every logo visible on black bg:
+       invert+brightness renders dark logos as white, already-white logos
+       stay white, mid-tones become light gray. Unified look. */
+    filter:brightness(0) invert(1);
+    opacity:.75;
     transition:all .25s ease;
   }
   .sx-sponsor-cell:hover img {
-    filter:grayscale(0) brightness(1);
     opacity:1;
   }
 

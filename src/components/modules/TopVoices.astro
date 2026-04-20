@@ -56,7 +56,7 @@ const voices: Voice[] = (content.voices as Voice[]) || defaultVoices;
 </section>
 
 <style is:global>
-  .sx-voices-head { max-width:1366px; margin:0 auto 24px; padding:0 24px; text-align:center; }
+  .sx-voices-head { max-width:1366px; margin:0 auto 24px; padding:0 24px; text-align:center; box-sizing:border-box; width:100%; }
   .sx-voices-title {
     font-family:'Oswald','Inter',sans-serif;
     font-size:clamp(64px, 8vw, 120px);
@@ -66,7 +66,7 @@ const voices: Voice[] = (content.voices as Voice[]) || defaultVoices;
     margin:0;
   }
 
-  .festival-slider { max-width:1366px; margin:0 auto; padding:0 24px; }
+  .festival-slider { max-width:1366px; margin:0 auto; padding:0 24px; box-sizing:border-box; width:100%; }
   .slider-window { position:relative; overflow:hidden; height:530px; }
   .slider-track { display:flex; align-items:center; transition:transform .6s ease; }
   .slide {

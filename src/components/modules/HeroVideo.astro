@@ -99,7 +99,7 @@ const posterUrl = (content.poster_url as string) || '';
 
 <style is:global>
   /* Shared content container — caps max content width on wide screens */
-  .sx-hero-inner { max-width:1600px; margin:0 auto; padding:140px 60px 50px; }
+  .sx-hero-inner { max-width:1600px; margin:0 auto; padding:140px 60px 50px; box-sizing:border-box; width:100%; }
   .sx-hero-badge {
     font-family:'Inter', sans-serif;
     font-size:23px; font-weight:500; line-height:1;

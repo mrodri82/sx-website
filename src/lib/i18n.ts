@@ -1,36 +1,38 @@
 /**
  * i18n utilities for multilingual content.
- * Default: es (no prefix), en → /en/, de → /de/
+ * SX is an English-first international festival. Default: en (no prefix),
+ * de → /de/, es → /es/. Kept multi-locale to stay forward-compatible.
  */
 
-export const LOCALES = ['es', 'en', 'de'] as const;
+export const LOCALES = ['en', 'de', 'es'] as const;
 export type Locale = (typeof LOCALES)[number];
-export const DEFAULT_LOCALE: Locale = 'es';
+export const DEFAULT_LOCALE: Locale = 'en';
 
 /**
  * Extract locale from URL pathname.
- * /en/servicios → 'en'
- * /de/kontakt → 'de'
- * /servicios → 'es' (default, no prefix)
+ * /de/program → 'de'
+ * /es/entradas → 'es'
+ * /program → 'en' (default, no prefix)
  */
 export function getLocaleFromPath(pathname: string): Locale {
   const segments = pathname.split('/').filter(Boolean);
   const first = segments[0];
-  if (first === 'en' || first === 'de') return first;
+  if (first === 'de' || first === 'es') return first;
   return DEFAULT_LOCALE;
 }
 
 /**
  * Get a localized field from content object.
- * Tries the requested locale first, falls back to ES.
+ * Priority: requested locale → English → Spanish → shared field.
  */
 export function t(content: Record<string, unknown>, fieldBase: string, locale: Locale): string {
   const localized = content[`${fieldBase}_${locale}`];
   if (localized && String(localized).trim()) return String(localized);
-  // Fallback to Spanish
-  const fallback = content[`${fieldBase}_es`];
-  if (fallback) return String(fallback);
-  // Try without locale suffix (shared field)
+  // Fallback chain: English → Spanish → shared
+  const en = content[`${fieldBase}_en`];
+  if (en && String(en).trim()) return String(en);
+  const es = content[`${fieldBase}_es`];
+  if (es) return String(es);
   const shared = content[fieldBase];
   if (shared) return String(shared);
   return '';
