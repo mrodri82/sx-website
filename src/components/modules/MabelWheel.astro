@@ -16,7 +16,6 @@ import { site } from '@/config/site';
 
 const { content = {} } = Astro.props as { content?: Record<string, any> };
 const wheelId = content.wheel_id || 228;
-const title = content.title || 'SPIN & WIN';
 const bg = content.background || '/media/wheel-tlo.png';
 
 let wheelHtml = '<div style="padding:40px;text-align:center;color:#888">Wheel temporarily unavailable.</div>';
@@ -35,11 +34,7 @@ try {
 ---
 
 <section data-nova-el="mabel-wheel" class="sx-wof-section" style={bg ? `--wof-bg:url('${bg}')` : ''}>
-  <div class="sx-wof-bg" aria-hidden="true"></div>
-  <div class="sx-wof-inner">
-    <h2 class="sx-wof-title">{title}</h2>
-    <div class="sx-wof-holder" set:html={wheelHtml} />
-  </div>
+  <div class="sx-wof-holder" set:html={wheelHtml} />
 </section>
 
 <link rel="stylesheet" href="/wp-content/plugins/mabel-wheel-of-fortune/public/css/public.min.css?ver=4.0" />
@@ -51,21 +46,22 @@ try {
   body.wof-is-open { overflow: auto !important; height: auto !important; width: auto !important; }
 
   .sx-wof-section {
-    background: #000; position: relative; overflow: hidden;
-    padding: 120px 20px 100px; text-align: center;
-    scroll-margin-top: 100px; isolation: isolate;
+    background-color: #000;
+    background-image: var(--wof-bg);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    padding: 0; scroll-margin-top: 100px;
+    position: relative; isolation: isolate;
   }
-  .sx-wof-bg {
-    position: absolute; inset: 0; z-index: 0;
-    background-image: var(--wof-bg); background-size: cover; background-position: center;
-    opacity: 0.35; pointer-events: none;
+  .sx-wof-holder { position: relative; z-index: 1; }
+
+  /* Scale the standalone wheel up to match sxtech.eu sizing (originally
+     500px wheel-bg, we bump inner wheel width on desktop via CSS override). */
+  .sx-wof-section .wof-wheel-standalone { max-width: 1200px; margin: 0 auto; padding: 60px 40px; }
+  .sx-wof-section .wof-wheel-standalone .wof-wheel-bg { width: 640px !important; height: 640px !important; }
+  @media (max-width: 900px) {
+    .sx-wof-section .wof-wheel-standalone { padding: 40px 20px; }
+    .sx-wof-section .wof-wheel-standalone .wof-wheel-bg { width: 90vw !important; height: 90vw !important; max-width: 500px; max-height: 500px; }
   }
-  .sx-wof-inner { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; }
-  .sx-wof-title {
-    font-family: 'Oswald', 'Inter', sans-serif; font-weight: 800;
-    font-size: clamp(56px, 8vw, 120px); letter-spacing: -0.03em;
-    color: #ecfd21; text-transform: uppercase; line-height: 1;
-    margin: 0 0 40px;
-  }
-  .sx-wof-holder { position: relative; }
 </style>
