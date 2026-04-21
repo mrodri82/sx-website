@@ -91,27 +91,39 @@ const logos: Logo[] = (content.logos as Logo[]) || defaultLogos;
     margin:0 0 40px 0;
   }
   .sx-sponsors-wall {
-    display:grid;
-    grid-template-columns:repeat(5, minmax(0, 1fr));
+    display:flex; flex-wrap:wrap;
+    justify-content:center; align-items:center;
     gap:40px 32px;
-    align-items:center; justify-items:center;
     min-width:0;
   }
   .sx-sponsor-cell {
     display:flex; align-items:center; justify-content:center;
-    width:100%; max-width:200px; height:90px;
+    flex: 0 0 calc((100% - 4 * 32px) / 5);
+    max-width:200px; height:90px;
     transition: transform .2s ease, opacity .2s ease;
+  }
+  @media (max-width:900px) {
+    .sx-sponsor-cell { flex: 0 0 calc((100% - 2 * 32px) / 3); }
+  }
+  @media (max-width:640px) {
+    .sx-sponsor-cell { flex: 0 0 calc((100% - 32px) / 2); }
   }
   .sx-sponsor-cell:hover { transform: scale(1.05); }
   .sx-sponsor-cell img {
     max-width:100%; max-height:100%;
     object-fit:contain;
-    /* Force every logo to a clean white silhouette on the black section. */
-    filter: brightness(0) invert(1);
-    opacity: .85;
-    transition: opacity .2s ease, filter .2s ease;
+    /* SX-yellow silhouette for every logo regardless of source color.
+       brightness(0) -> collapse to black, invert(.92) -> near-white,
+       sepia(1)+saturate(7)+hue-rotate(9deg) -> push into SX yellow. */
+    filter: brightness(0) invert(.92) sepia(1) saturate(7) hue-rotate(9deg);
+    opacity: .9;
+    transition: opacity .2s ease, filter .25s ease;
   }
-  .sx-sponsor-cell:hover img { opacity: 1; }
+  .sx-sponsor-cell:hover img {
+    opacity: 1;
+    /* Reveal original colors on hover */
+    filter: none;
+  }
 
   @media (max-width:1024px) {
     .sx-sponsors-wall { grid-template-columns:repeat(3, minmax(0, 1fr)); gap:32px 24px; }
