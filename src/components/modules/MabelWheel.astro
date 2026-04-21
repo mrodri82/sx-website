@@ -1,0 +1,71 @@
+---
+/**
+ * MabelWheel — SSR-renders the Mabel Wheel-of-Fortune shortcode live from WP.
+ *
+ * The plugin signs each render with a time-limited encrypted sequence + WP nonce
+ * (expires after ~20 min / 24 h respectively). Baking the HTML once into
+ * sections_json breaks the spinner with "Not allowed". This module refetches
+ * on every request so the seq/nonce are always fresh.
+ *
+ * Fields (content):
+ *   - wheel_id: WP post ID of the wheel (default 228)
+ *   - title: heading shown above (default "SPIN & WIN")
+ *   - background: hero-style background image URL (optional)
+ */
+import { site } from '@/config/site';
+
+const { content = {} } = Astro.props as { content?: Record<string, any> };
+const wheelId = content.wheel_id || 228;
+const title = content.title || 'SPIN & WIN';
+const bg = content.background || '/media/wheel-tlo.png';
+
+let wheelHtml = '<div style="padding:40px;text-align:center;color:#888">Wheel temporarily unavailable.</div>';
+
+try {
+  const res = await fetch(`${site.cmsUrl}/index.php/?rest_route=/sx/v1/wheel/${wheelId}`, {
+    headers: { Host: site.cmsHost },
+  });
+  if (res.ok) {
+    const data = await res.json();
+    if (data?.html) wheelHtml = data.html;
+  }
+} catch (err) {
+  console.error('[MabelWheel] failed to fetch wheel', err);
+}
+---
+
+<section data-nova-el="mabel-wheel" class="sx-wof-section" style={bg ? `--wof-bg:url('${bg}')` : ''}>
+  <div class="sx-wof-bg" aria-hidden="true"></div>
+  <div class="sx-wof-inner">
+    <h2 class="sx-wof-title">{title}</h2>
+    <div class="sx-wof-holder" set:html={wheelHtml} />
+  </div>
+</section>
+
+<link rel="stylesheet" href="/wp-content/plugins/mabel-wheel-of-fortune/public/css/public.min.css?ver=4.0" />
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js" is:inline></script>
+<script src="/wp-content/plugins/mabel-wheel-of-fortune/public/js/public.min.js?ver=4.0" is:inline></script>
+
+<style is:global>
+  /* Cancel any body-lock the plugin JS might set — keep page scrollable */
+  body.wof-is-open { overflow: auto !important; height: auto !important; width: auto !important; }
+
+  .sx-wof-section {
+    background: #000; position: relative; overflow: hidden;
+    padding: 120px 20px 100px; text-align: center;
+    scroll-margin-top: 100px; isolation: isolate;
+  }
+  .sx-wof-bg {
+    position: absolute; inset: 0; z-index: 0;
+    background-image: var(--wof-bg); background-size: cover; background-position: center;
+    opacity: 0.35; pointer-events: none;
+  }
+  .sx-wof-inner { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; }
+  .sx-wof-title {
+    font-family: 'Oswald', 'Inter', sans-serif; font-weight: 800;
+    font-size: clamp(56px, 8vw, 120px); letter-spacing: -0.03em;
+    color: #ecfd21; text-transform: uppercase; line-height: 1;
+    margin: 0 0 40px;
+  }
+  .sx-wof-holder { position: relative; }
+</style>
