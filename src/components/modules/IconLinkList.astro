@@ -1,0 +1,57 @@
+---
+/**
+ * IconLinkList — list of links with an arrow icon prefix.
+ * Used for "TICKETS" on regular-visitors: DAY 1, DAY 2, WEEKEND, RED MOON PARTY.
+ *
+ * Fields:
+ *   - heading: section heading (optional)
+ *   - items:   Array<{ label, href, color? (inline color override) }>
+ */
+interface Item { label: string; href: string; color?: string; }
+interface Props { content: Record<string, any>; }
+const { content = {} } = Astro.props;
+const heading = content.heading || '';
+const items: Item[] = Array.isArray(content.items) ? content.items : [];
+---
+
+<section data-nova-el="icon-link-list" class="sx-ill">
+  <div class="sx-ill-inner">
+    {heading && <h2 class="sx-ill-heading">{heading}</h2>}
+    <ul class="sx-ill-list">
+      {items.map((it) => (
+        <li class="sx-ill-item">
+          <a href={it.href} target={it.href?.startsWith('http') ? '_blank' : undefined} rel="noopener">
+            <span class="sx-ill-icon" aria-hidden="true">↗</span>
+            <span class="sx-ill-label" style={it.color ? `color:${it.color}` : undefined}>{it.label}</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </div>
+</section>
+
+<style>
+  .sx-ill { background: #000; padding: 60px 50px; }
+  .sx-ill-inner { max-width: 1600px; margin: 0 auto; }
+  .sx-ill-heading {
+    font-family: 'Oswald', sans-serif; font-weight: 800;
+    font-size: clamp(48px, 6vw, 96px); line-height: 1;
+    letter-spacing: -0.02em; text-transform: uppercase;
+    color: #ecfd21; margin: 0 0 32px;
+  }
+  .sx-ill-list { list-style: none; padding: 0; margin: 0; }
+  .sx-ill-item { margin: 0; }
+  .sx-ill-item a {
+    display: inline-flex; align-items: center; gap: 12px;
+    padding: 10px 0; text-decoration: none;
+    font-family: 'Inter', sans-serif; font-weight: 700;
+    font-size: 20px; letter-spacing: 0.5px; text-transform: uppercase;
+    color: #fff; transition: color .3s;
+  }
+  .sx-ill-item a:hover { color: #ecfd21; }
+  .sx-ill-icon { color: #ecfd21; font-size: 22px; line-height: 1; display: inline-block; }
+  @media (max-width: 768px) {
+    .sx-ill { padding: 40px 24px; }
+    .sx-ill-item a { font-size: 17px; }
+  }
+</style>

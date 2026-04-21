@@ -1,0 +1,50 @@
+---
+/**
+ * CTABanner — big yellow-on-black "GET YOUR TICKETS" section.
+ *
+ * Fields:
+ *   - title:   big yellow Oswald headline
+ *   - subtitle: optional grey subtitle
+ *   - cta_text: button label
+ *   - cta_url:  button href
+ */
+interface Props { content: Record<string, any>; }
+const { content = {} } = Astro.props;
+const title    = content.title    || '';
+const subtitle = content.subtitle || '';
+const ctaText  = content.cta_text || '';
+const ctaUrl   = content.cta_url  || '#';
+---
+
+<section data-nova-el="cta-banner" class="sx-ctab">
+  <div class="sx-ctab-inner">
+    {title && <h2 class="sx-ctab-title">{title}</h2>}
+    {subtitle && <p class="sx-ctab-sub">{subtitle}</p>}
+    {ctaText && <a href={ctaUrl} target={ctaUrl.startsWith('http') ? '_blank' : undefined} rel="noopener" class="sx-ctab-cta">{ctaText}</a>}
+  </div>
+</section>
+
+<style>
+  .sx-ctab { background: #000; padding: 100px 50px; }
+  .sx-ctab-inner { max-width: 1600px; margin: 0 auto; text-align: center; }
+  .sx-ctab-title {
+    font-family: 'Oswald', sans-serif; font-weight: 800;
+    font-size: clamp(56px, 8vw, 120px); line-height: 1;
+    letter-spacing: -0.03em; text-transform: uppercase;
+    color: #ecfd21; margin: 0 0 16px;
+  }
+  .sx-ctab-sub {
+    font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 400;
+    color: #D1D1D1; text-transform: uppercase; letter-spacing: 0.5px;
+    margin: 0 0 32px;
+  }
+  .sx-ctab-cta {
+    display: inline-block;
+    background: #ecfd21; color: #000; text-decoration: none;
+    padding: 20px 48px; font-family: 'Inter', sans-serif;
+    font-size: 16px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+    transition: opacity .15s;
+  }
+  .sx-ctab-cta:hover { opacity: .85; }
+  @media (max-width: 768px) { .sx-ctab { padding: 60px 24px; } }
+</style>

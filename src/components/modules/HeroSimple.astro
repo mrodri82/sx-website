@@ -1,0 +1,65 @@
+---
+/**
+ * HeroSimple — inner-page hero (black bg, yellow title, optional subtitle + CTA).
+ * Used on regular-visitors / exhibitors-b2b / creators / program / news.
+ *
+ * Fields:
+ *   - title:    big yellow Oswald headline
+ *   - subtitle: smaller grey subtitle (#D1D1D1)
+ *   - cta_text: optional CTA button label
+ *   - cta_url:  CTA href
+ *   - bg_image: optional hero background image URL
+ */
+interface Props { content: Record<string, any>; }
+const { content = {} } = Astro.props;
+const title    = content.title    || '';
+const subtitle = content.subtitle || '';
+const ctaText  = content.cta_text || '';
+const ctaUrl   = content.cta_url  || '#';
+const bgImage  = content.bg_image || '';
+---
+
+<section data-nova-el="hero-simple" class="sx-hs" style={bgImage ? `--hs-bg:url('${bgImage}')` : ''}>
+  {bgImage && <div class="sx-hs-bg" aria-hidden="true"></div>}
+  <div class="sx-hs-inner">
+    {title && <h1 class="sx-hs-title">{title}</h1>}
+    {subtitle && <p class="sx-hs-sub">{subtitle}</p>}
+    {ctaText && <a href={ctaUrl} class="sx-hs-cta">{ctaText}</a>}
+  </div>
+</section>
+
+<style>
+  .sx-hs {
+    background: #000; color: #ecfd21;
+    padding: 140px 50px 80px;
+    position: relative; isolation: isolate;
+  }
+  .sx-hs-bg {
+    position: absolute; inset: 0; z-index: 0;
+    background-image: var(--hs-bg); background-size: cover; background-position: center;
+    opacity: 0.3; pointer-events: none;
+  }
+  .sx-hs-inner { position: relative; z-index: 1; max-width: 1600px; margin: 0 auto; }
+  .sx-hs-title {
+    font-family: 'Oswald', sans-serif; font-weight: 800;
+    font-size: clamp(56px, 9vw, 140px); line-height: 1;
+    letter-spacing: -0.03em; text-transform: uppercase;
+    color: #ecfd21; margin: 0 0 16px;
+  }
+  .sx-hs-sub {
+    font-family: 'Inter', sans-serif; font-size: 18px; font-weight: 400;
+    color: #D1D1D1; text-transform: uppercase; letter-spacing: 0.5px;
+    margin: 0 0 32px; max-width: 720px;
+  }
+  .sx-hs-cta {
+    display: inline-block;
+    background: #ecfd21; color: #000; text-decoration: none;
+    padding: 18px 40px; font-family: 'Inter', sans-serif;
+    font-size: 16px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+    transition: opacity .15s;
+  }
+  .sx-hs-cta:hover { opacity: .85; }
+  @media (max-width: 768px) {
+    .sx-hs { padding: 120px 24px 60px; }
+  }
+</style>
