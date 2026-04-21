@@ -55,7 +55,7 @@ const posterUrl = (content.poster_url as string) || '';
   )}
   <div class="absolute inset-x-0 bottom-0 h-[30%] bg-gradient-to-t from-black/70 to-transparent pointer-events-none" aria-hidden="true"></div>
 
-  <div class="sx-hero-inner relative z-10 w-full min-h-screen flex flex-col justify-between">
+  <div class="sx-hero-inner relative z-10 w-full min-h-screen flex flex-col justify-evenly">
     <div>
       {badge && (
         <p data-nova-el="hero-video-badge" class="sx-hero-badge">{badge}</p>
@@ -152,10 +152,19 @@ const posterUrl = (content.poster_url as string) || '';
     transition:opacity .15s;
   }
   .sx-hero-btn:hover { opacity:.85; }
-  .sx-hero-btn--ghost {
+  .sx-hero-btn--ghost,
+  .sx-hero-btn--ghost:link,
+  .sx-hero-btn--ghost:visited {
     background:transparent !important;
     color:#ecfd21 !important;
     border:2px solid #ecfd21 !important;
+    border-color:#ecfd21 !important;
+    box-shadow:none !important;
+  }
+  .sx-hero-btn--ghost:hover {
+    background:#ecfd21 !important;
+    color:#000 !important;
+    border-color:#ecfd21 !important;
   }
 
   @media (max-width: 768px) {
