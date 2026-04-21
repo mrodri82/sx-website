@@ -124,17 +124,29 @@ const voices: Voice[] = (content.voices as Voice[]) || defaultVoices;
       let index = slides.findIndex(s => s.classList.contains('active'));
       if (index < 0) index = 0;
 
+      function sizes() {
+        // Mirror CSS: mobile breakpoint at 900px. Narrow = flex-basis of
+        // inactive slides; wide = flex-basis of active slide. Horizontal
+        // margin is 10px each side → 20px total per slot.
+        const mobile = window.innerWidth <= 900;
+        const MARGIN = 20;
+        const NARROW = mobile ? 60 : 134;
+        const winW = root.querySelector<HTMLElement>('.slider-window')!.offsetWidth;
+        // On mobile active = 82% of window, on desktop fixed 740
+        const WIDE = mobile ? Math.round(winW * 0.82) : 740;
+        return { NARROW, WIDE, MARGIN, winW };
+      }
+
       function update() {
         slides.forEach((s, i) => s.classList.toggle('active', i === index));
-        // Center the active slide in the window
-        const activeEl = slides[index];
-        const rootRect = root.querySelector<HTMLElement>('.slider-window')!.getBoundingClientRect();
-        const slideRect = activeEl.getBoundingClientRect();
-        const trackRect = track!.getBoundingClientRect();
-        const currentOffset = parseFloat(track!.style.transform.replace(/[^-0-9.]/g, '')) || 0;
-        const delta = (slideRect.left + slideRect.width / 2) - (rootRect.left + rootRect.width / 2);
-        const newOffset = currentOffset - delta;
-        track!.style.transform = `translateX(${newOffset}px)`;
+        const { NARROW, WIDE, MARGIN, winW } = sizes();
+        // Offset from track origin to the CENTER of the active slide.
+        // All slides before `index` are narrow. Leading margin-left = MARGIN/2.
+        let offset = MARGIN / 2; // start at first slide's left edge + its margin-left
+        for (let i = 0; i < index; i++) offset += NARROW + MARGIN;
+        offset += WIDE / 2; // reach center of active
+        const translateX = winW / 2 - offset;
+        track!.style.transform = `translateX(${translateX}px)`;
         if (progress) progress.style.width = `${((index + 1) / slides.length) * 100}%`;
       }
 
