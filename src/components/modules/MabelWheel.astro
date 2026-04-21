@@ -63,11 +63,19 @@ try {
   /* Keep wheel + form side-by-side on desktop — prevent flex-wrap */
   .sx-wof-section .wof-wheel-standalone .wof-wheel .wof-inner-wrapper {
     flex-wrap: nowrap !important;
-    gap: 60px;
+    gap: 100px;
     justify-content: center;
   }
   .sx-wof-section .wof-wheel-standalone .wof-left { flex: 0 0 auto; }
   .sx-wof-section .wof-wheel-standalone .wof-right { flex: 1 1 380px; min-width: 320px; }
+  /* Title spec from sxtech: Oswald 42px 600 black */
+  .sx-wof-section .wof-wheel .wof-title {
+    font-family: 'Oswald', sans-serif !important;
+    font-size: 42px !important;
+    font-weight: 600 !important;
+    color: #000 !important;
+    line-height: 1.1;
+  }
   @media (max-width: 900px) {
     .sx-wof-section .wof-wheel-standalone { padding: 40px 20px; }
     .sx-wof-section .wof-wheel-standalone .wof-wheel-bg { width: 90vw !important; height: 90vw !important; max-width: 500px; max-height: 500px; }
