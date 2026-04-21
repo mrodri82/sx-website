@@ -4,6 +4,8 @@ dist/
 .env.*
 .astro/
 .tmp/
+__pycache__/
+*.pyc
 
 # Local media assets (managed via scripts/fetch_assets.sh, not committed)
 public/media/

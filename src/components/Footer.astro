@@ -13,7 +13,7 @@ import { site } from '@/config/site';
 ---
 
 <footer class="sx-footer bg-black text-[#ecfd21] pt-[60px] pb-10">
-  <div class="pl-[60px] pr-[60px] max-w-[1600px] mx-auto" style="box-sizing:border-box;width:100%">
+  <div class="sx-footer-container max-w-[1600px] mx-auto">
 
     {/* Row 1: Logo + Contact form */}
     <div class="grid grid-cols-1 md:grid-cols-2 gap-10 mb-8">
@@ -92,6 +92,22 @@ import { site } from '@/config/site';
 
 <style is:global>
   .sx-footer { background:#000; color:#ecfd21; font-family:'Inter', -apple-system, sans-serif; }
+  .sx-footer-container {
+    box-sizing:border-box; width:100%;
+    padding-left:60px; padding-right:60px;
+  }
+  @media (max-width:640px) {
+    .sx-footer-container { padding-left:20px; padding-right:20px; }
+    .sx-footer { padding-top:40px !important; }
+    .sx-footer-brand {
+      margin-top:40px !important;
+      max-width:none !important;
+    }
+    .sx-footer-cta {
+      padding:16px 24px !important; font-size:16px !important;
+      width:100%; display:block;
+    }
+  }
   .sx-footer-logo {
     display:inline-block;
     font-family:'Arial Nova', Arial, sans-serif;
@@ -118,12 +134,13 @@ import { site } from '@/config/site';
   .sx-footer-cta:hover { opacity:.85; }
   .sx-footer-brand {
     font-family:'Oswald', 'Inter', sans-serif;
-    font-size:clamp(56px, 7vw, 89px);
+    font-size:clamp(40px, 7vw, 89px);
     font-weight:800; line-height:.95;
     letter-spacing:-0.035em;
     text-transform:uppercase;
     margin:60px 0 0 0;
     max-width:720px;
+    overflow-wrap:anywhere;
   }
   .sx-footer-line {
     font-family:'Inter', sans-serif;

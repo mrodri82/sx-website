@@ -46,11 +46,11 @@ const logos: Logo[] = (content.logos as Logo[]) || defaultLogos;
     <h2 class="sx-sponsors-title">{heading}</h2>
     <div class="sx-sponsors-wall">
       {logos.map((l) => {
-        const style = `--logo-url:url('${l.src}')`;
+        const body = <img src={l.src} alt={l.alt || ''} loading="lazy" decoding="async" />;
         return l.href ? (
-          <a href={l.href} target="_blank" rel="noopener" class="sx-sponsor-cell" style={style} aria-label={l.alt}></a>
+          <a href={l.href} target="_blank" rel="noopener" class="sx-sponsor-cell" aria-label={l.alt}>{body}</a>
         ) : (
-          <div class="sx-sponsor-cell" style={style} aria-label={l.alt}></div>
+          <div class="sx-sponsor-cell" aria-label={l.alt}>{body}</div>
         );
       })}
     </div>
@@ -75,27 +75,25 @@ const logos: Logo[] = (content.logos as Logo[]) || defaultLogos;
     min-width:0;
   }
   .sx-sponsor-cell {
-    /* Unified silhouette: logo rendered as CSS mask, fill = #fff.
-       Works regardless of original color (black, white, or multi-color)
-       because only the alpha channel defines the shape. */
-    display:block;
-    width:100%; max-width:220px;
-    height:80px;
-    background:#fff;
-    -webkit-mask-image: var(--logo-url);
-            mask-image: var(--logo-url);
-    -webkit-mask-repeat:no-repeat;
-            mask-repeat:no-repeat;
-    -webkit-mask-position:center;
-            mask-position:center;
-    -webkit-mask-size:contain;
-            mask-size:contain;
-    opacity:.72;
-    transition:opacity .25s ease, background-color .25s ease;
+    display:flex; align-items:center; justify-content:center;
+    width:100%; max-width:220px; height:80px;
   }
-  .sx-sponsor-cell:hover {
-    opacity:1;
-    background:#ecfd21; /* fill turns SX-yellow on hover */
+  .sx-sponsor-cell img {
+    max-width:100%; max-height:100%;
+    object-fit:contain;
+    /* Brightness(0) collapses every color to black; invert(1) flips to white.
+       Result: every logo becomes a clean white silhouette regardless of source
+       color (black-on-transparent, multi-color, or even black-on-white rasters).
+       Works on any image with alpha OR opaque bg — more robust than mask-image. */
+    filter: brightness(0) invert(1);
+    opacity: .72;
+    transition: filter .25s ease, opacity .25s ease;
+  }
+  .sx-sponsor-cell:hover img {
+    opacity: 1;
+    /* SX yellow: brightness+invert to force pure white, then sepia+saturate+hue-rotate
+       to paint the silhouette yellow. */
+    filter: brightness(0) invert(.95) sepia(1) saturate(6) hue-rotate(5deg);
   }
 
   @media (max-width:1024px) {
