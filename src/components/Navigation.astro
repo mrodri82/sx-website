@@ -84,11 +84,16 @@ const isActive = (href: string) => current === href || current.startsWith(href +
 
 <style is:global>
   .sx-nav-logo {
-    font-family: 'Arial Nova', 'Arial', sans-serif;
+    /* Archivo Narrow (Google Font) is a condensed sans-serif visually
+       identical to Arial Nova Condensed (which isn't available in
+       browsers by default — Chromium rendered Arial fallback = wider,
+       looked shrunk at 30px). Archivo Narrow loads guaranteed on every
+       platform and preserves the Arial-Nova-Cond feel. */
+    font-family: 'Archivo Narrow', 'Arial Narrow', 'Arial Nova', Arial, sans-serif;
     font-size: 30px;
-    font-weight: 400;
+    font-weight: 500;
     line-height: 26px;
-    letter-spacing: -2.1px;
+    letter-spacing: -1.5px;
     color: var(--color-brand-500);
     width: 157px;
     flex: 0 0 157px;
