@@ -76,22 +76,18 @@ const logos: Logo[] = (content.logos as Logo[]) || defaultLogos;
   }
   .sx-sponsor-cell {
     display:flex; align-items:center; justify-content:center;
-    width:100%; max-width:220px; height:80px;
+    width:100%; max-width:220px; height:100px;
+    background:#fff; border-radius:6px; padding:14px 18px;
+    box-sizing:border-box;
+    transition: transform .2s ease, box-shadow .2s ease;
+  }
+  .sx-sponsor-cell:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(236,253,33,0.25);
   }
   .sx-sponsor-cell img {
     max-width:100%; max-height:100%;
     object-fit:contain;
-    /* Grayscale + low opacity keeps logos legible regardless of source
-       background (transparent PNG, white-bg PNG, or multi-color). Hover
-       brings colors back. mask-image / brightness-invert tricks failed on
-       logos with opaque white backgrounds — they collapsed to solid rectangles. */
-    filter: grayscale(1) brightness(1.1) contrast(1.05);
-    opacity: .8;
-    transition: filter .25s ease, opacity .25s ease;
-  }
-  .sx-sponsor-cell:hover img {
-    opacity: 1;
-    filter: grayscale(0);
   }
 
   @media (max-width:1024px) {
