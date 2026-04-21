@@ -1,0 +1,334 @@
+---
+/**
+ * SpinWheel — self-contained wheel-of-fortune for SX Festival.
+ *
+ * Visual direction is taken from sxtech.eu's Mabel-WOF plugin (black/yellow,
+ * standalone inline layout, email-capture → spin → prize), but the plugin
+ * itself is NOT used — no WP backend dependency, no `data-seq` token, no
+ * /wp-json/mabel-* endpoints. Just SVG + CSS + vanilla JS.
+ *
+ * Fields (content):
+ *   - title:      "WIN YOUR TICKET"          (heading above wheel)
+ *   - subtitle:   "Enter your email & spin"  (small intro line)
+ *   - prizes:     Array<{ label, code?, color?, weight? }>
+ *                 Defaults to the 4-prize pool (10% OFF / 2-for-1 / 15% / Free Day Ticket).
+ *   - disclaimer: "By entering you agree to…" (below button)
+ *   - endpoint:   "/api/spin"  (POST target; failure is non-fatal)
+ *
+ * Style (content.style is honored via ModuleRenderer like any other module).
+ */
+import { t } from '@/lib/i18n';
+import type { Locale } from '@/lib/i18n';
+
+interface Props {
+  content: Record<string, any>;
+  style?: Record<string, string>;
+  locale?: Locale;
+}
+const { content = {}, locale = 'en' } = Astro.props;
+
+const title     = t(content, 'title', locale)     || 'WIN YOUR SX TICKET';
+const subtitle  = t(content, 'subtitle', locale)  || 'Enter your email and spin the wheel.';
+const disclaimer = t(content, 'disclaimer', locale) || 'One spin per email. Your address goes to the SX mailing list.';
+const endpoint  = (content.endpoint as string) || '/api/spin';
+
+type Prize = { label: string; code?: string; color?: string; weight?: number };
+const defaultPrizes: Prize[] = [
+  { label: '10% OFF',        code: 'SX10',       color: '#ecfd21', weight: 2 },
+  { label: '2-FOR-1 TICKET', code: 'SX241',      color: '#111111', weight: 1 },
+  { label: '15% OFF',        code: 'SX15',       color: '#ecfd21', weight: 2 },
+  { label: 'FREE DAY TICKET',code: 'SXFREE',     color: '#111111', weight: 1 },
+];
+const prizes: Prize[] = Array.isArray(content.prizes) && content.prizes.length ? content.prizes : defaultPrizes;
+
+// Duplicate to 8 slices for a nicer-looking wheel (each prize appears twice, alternating).
+const slices: Prize[] = prizes.length <= 4
+  ? [...prizes, ...prizes].map((p, i) => ({ ...p, color: i % 2 === 0 ? '#111111' : '#ecfd21' }))
+  : prizes;
+---
+
+<section data-nova-el="spin-wheel" class="sx-spin">
+  <div class="sx-spin-inner">
+    <header class="sx-spin-head">
+      <h2 class="sx-spin-title">{title}</h2>
+      <p class="sx-spin-sub">{subtitle}</p>
+    </header>
+
+    <div class="sx-spin-stage">
+      <!-- pointer -->
+      <div class="sx-spin-pointer" aria-hidden="true">
+        <svg viewBox="0 0 40 40" width="40" height="40">
+          <path d="M20 32 L6 8 L34 8 Z" fill="#ecfd21" stroke="#111" stroke-width="2"/>
+        </svg>
+      </div>
+
+      <!-- wheel -->
+      <div class="sx-spin-wheel" data-slices={JSON.stringify(slices)}>
+        <svg viewBox="-100 -100 200 200" width="100%" height="100%" aria-label="Prize wheel">
+          {slices.map((p, i) => {
+            const count = slices.length;
+            const a0 = (i * 360) / count - 90 - (360 / count) / 2;
+            const a1 = a0 + 360 / count;
+            const r = 100;
+            const r0 = a0 * Math.PI / 180;
+            const r1 = a1 * Math.PI / 180;
+            const x0 = r * Math.cos(r0), y0 = r * Math.sin(r0);
+            const x1 = r * Math.cos(r1), y1 = r * Math.sin(r1);
+            const large = (a1 - a0) > 180 ? 1 : 0;
+            const path = `M 0 0 L ${x0.toFixed(3)} ${y0.toFixed(3)} A ${r} ${r} 0 ${large} 1 ${x1.toFixed(3)} ${y1.toFixed(3)} Z`;
+            const mid = (a0 + a1) / 2;
+            const rMid = mid * Math.PI / 180;
+            const tx = 62 * Math.cos(rMid);
+            const ty = 62 * Math.sin(rMid);
+            const textColor = p.color === '#ecfd21' ? '#111' : '#ecfd21';
+            return (
+              <g>
+                <path d={path} fill={p.color} stroke="#111" stroke-width="0.5"/>
+                <text
+                  x={tx} y={ty}
+                  fill={textColor}
+                  transform={`rotate(${mid + 90}, ${tx}, ${ty})`}
+                  text-anchor="middle"
+                  font-family="Oswald, 'Arial Narrow', sans-serif"
+                  font-weight="700"
+                  font-size="8"
+                  style="letter-spacing:0.5px"
+                >{p.label}</text>
+              </g>
+            );
+          })}
+          <!-- center cap -->
+          <circle cx="0" cy="0" r="14" fill="#111" stroke="#ecfd21" stroke-width="2"/>
+          <text x="0" y="3" fill="#ecfd21" text-anchor="middle" font-family="Oswald, sans-serif" font-weight="800" font-size="7">SX</text>
+        </svg>
+      </div>
+    </div>
+
+    <form class="sx-spin-form" data-endpoint={endpoint} autocomplete="off">
+      <label class="sr-only" for="sx-spin-email">Email</label>
+      <input id="sx-spin-email" class="sx-spin-email" type="email" name="email" required placeholder="your.email@example.com" />
+      <button class="sx-spin-btn" type="submit">SPIN THE WHEEL</button>
+    </form>
+
+    <p class="sx-spin-disclaimer">{disclaimer}</p>
+
+    <!-- Result overlay -->
+    <div class="sx-spin-result" role="alertdialog" aria-hidden="true" hidden>
+      <div class="sx-spin-result-card">
+        <p class="sx-spin-result-lede">YOU WON</p>
+        <p class="sx-spin-result-prize" data-prize></p>
+        <p class="sx-spin-result-code">Use code <span data-code></span> at checkout</p>
+        <button class="sx-spin-result-close" type="button">CLOSE</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .sx-spin { background: #0a0a0a; color: #fff; padding: 80px 24px; position: relative; overflow: hidden; }
+  .sx-spin::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at center, rgba(236,253,33,0.08), transparent 60%);
+    pointer-events: none;
+  }
+  .sx-spin-inner { max-width: 640px; margin: 0 auto; position: relative; z-index: 1; text-align: center; }
+  .sx-spin-head { margin-bottom: 28px; }
+  .sx-spin-title {
+    font-family: 'Oswald', 'Arial Narrow', sans-serif;
+    font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px;
+    font-size: clamp(36px, 6vw, 64px); line-height: 1;
+    color: #fff; margin: 0 0 10px;
+  }
+  .sx-spin-title::after {
+    content: ''; display: block; width: 72px; height: 4px;
+    background: #ecfd21; margin: 14px auto 0;
+  }
+  .sx-spin-sub { color: #bfbfbf; font-size: 15px; margin: 0; }
+
+  .sx-spin-stage {
+    position: relative; width: min(440px, 90vw); aspect-ratio: 1/1;
+    margin: 0 auto 28px;
+  }
+  .sx-spin-pointer {
+    position: absolute; top: -6px; left: 50%; transform: translateX(-50%);
+    z-index: 3; filter: drop-shadow(0 3px 6px rgba(0,0,0,0.5));
+  }
+  .sx-spin-wheel {
+    width: 100%; height: 100%;
+    border-radius: 50%;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.6), inset 0 0 0 4px #ecfd21;
+    transition: transform 5s cubic-bezier(0.17, 0.67, 0.26, 1.01);
+    transform: rotate(0deg);
+    will-change: transform;
+  }
+  .sx-spin-wheel.spinning { transition-duration: 5.5s; }
+
+  .sx-spin-form {
+    display: flex; gap: 10px; max-width: 520px; margin: 0 auto 16px;
+    flex-wrap: wrap;
+  }
+  .sx-spin-email {
+    flex: 1 1 260px; min-width: 0;
+    padding: 14px 18px; font-size: 15px;
+    background: #1a1a1a; border: 1px solid #333; color: #fff;
+    border-radius: 4px; outline: none; font-family: inherit;
+    transition: border-color 0.15s;
+  }
+  .sx-spin-email:focus { border-color: #ecfd21; }
+  .sx-spin-email::placeholder { color: #666; }
+  .sx-spin-btn {
+    flex: 0 0 auto; padding: 14px 28px;
+    font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 14px;
+    letter-spacing: 1.5px; text-transform: uppercase;
+    background: #ecfd21; color: #000; border: 0; border-radius: 4px;
+    cursor: pointer; transition: transform 0.1s, box-shadow 0.2s;
+  }
+  .sx-spin-btn:hover:not(:disabled) { box-shadow: 0 0 20px rgba(236,253,33,0.5); }
+  .sx-spin-btn:active:not(:disabled) { transform: scale(0.97); }
+  .sx-spin-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .sx-spin-disclaimer { color: #777; font-size: 11px; max-width: 480px; margin: 0 auto; }
+
+  /* Result overlay */
+  .sx-spin-result {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.82);
+    display: none; place-items: center; z-index: 9999; padding: 20px;
+    opacity: 0; transition: opacity 0.3s;
+  }
+  .sx-spin-result.visible { display: grid; opacity: 1; }
+  .sx-spin-result-card {
+    background: #111; border: 2px solid #ecfd21; border-radius: 8px;
+    padding: 44px 36px; max-width: 440px; text-align: center;
+    box-shadow: 0 0 60px rgba(236,253,33,0.3);
+    transform: scale(0.9); transition: transform 0.4s cubic-bezier(0.17, 0.67, 0.3, 1.33);
+  }
+  .sx-spin-result.visible .sx-spin-result-card { transform: scale(1); }
+  .sx-spin-result-lede {
+    font-family: 'Oswald', sans-serif; font-size: 13px; letter-spacing: 2px;
+    color: #ecfd21; text-transform: uppercase; margin: 0 0 8px;
+  }
+  .sx-spin-result-prize {
+    font-family: 'Oswald', sans-serif; font-weight: 800;
+    font-size: 38px; color: #fff; text-transform: uppercase;
+    line-height: 1.1; margin: 0 0 16px;
+  }
+  .sx-spin-result-code { color: #bfbfbf; font-size: 14px; margin: 0 0 24px; }
+  .sx-spin-result-code span {
+    font-family: 'JetBrains Mono', 'Consolas', monospace; color: #ecfd21;
+    background: rgba(236,253,33,0.1); padding: 2px 8px; border-radius: 3px;
+    letter-spacing: 1px; font-weight: 600;
+  }
+  .sx-spin-result-close {
+    background: transparent; color: #ecfd21; border: 1px solid #ecfd21;
+    padding: 10px 24px; font-family: 'Oswald', sans-serif; font-weight: 600;
+    font-size: 13px; letter-spacing: 1px; text-transform: uppercase;
+    cursor: pointer; border-radius: 3px; transition: all 0.15s;
+  }
+  .sx-spin-result-close:hover { background: #ecfd21; color: #000; }
+
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+  }
+
+  @media (max-width: 520px) {
+    .sx-spin { padding: 56px 16px; }
+    .sx-spin-form { flex-direction: column; }
+    .sx-spin-email, .sx-spin-btn { width: 100%; flex: 1 1 100%; }
+  }
+</style>
+
+<script>
+  (function () {
+    const section = document.querySelector('[data-nova-el="spin-wheel"]');
+    if (!section) return;
+
+    const wheel   = section.querySelector('.sx-spin-wheel') as HTMLElement;
+    const form    = section.querySelector('.sx-spin-form') as HTMLFormElement;
+    const email   = section.querySelector('.sx-spin-email') as HTMLInputElement;
+    const btn     = section.querySelector('.sx-spin-btn') as HTMLButtonElement;
+    const result  = section.querySelector('.sx-spin-result') as HTMLElement;
+    const prizeEl = section.querySelector('[data-prize]') as HTMLElement;
+    const codeEl  = section.querySelector('[data-code]') as HTMLElement;
+    const closeBtn = section.querySelector('.sx-spin-result-close') as HTMLButtonElement;
+
+    let slices: { label: string; code?: string; weight?: number }[] = [];
+    try { slices = JSON.parse(wheel.dataset.slices || '[]'); } catch {}
+    if (!slices.length) return;
+
+    // One spin per device (localStorage). Reset on-demand via key wipe.
+    const SPUN_KEY = 'sx-spin-done';
+    if (localStorage.getItem(SPUN_KEY)) {
+      btn.disabled = true;
+      btn.textContent = 'ALREADY SPUN';
+    }
+
+    // Weighted random pick
+    function pickIndex(): number {
+      const weights = slices.map(s => s.weight ?? 1);
+      const total = weights.reduce((a, b) => a + b, 0);
+      let r = Math.random() * total;
+      for (let i = 0; i < weights.length; i++) {
+        r -= weights[i];
+        if (r <= 0) return i;
+      }
+      return 0;
+    }
+
+    let currentRotation = 0;
+
+    async function spin(e: Event) {
+      e.preventDefault();
+      if (!email.value || !email.validity.valid) { email.focus(); return; }
+      if (localStorage.getItem(SPUN_KEY)) return;
+
+      btn.disabled = true;
+      btn.textContent = 'SPINNING…';
+
+      const winIdx = pickIndex();
+      const count  = slices.length;
+      const segDeg = 360 / count;
+      // The pointer sits at top (0deg of wheel = right by SVG default, but wheel is rotated so first slice centers at top).
+      // My SVG generates slices starting at -90° (top). So to land segment `winIdx` under the top pointer:
+      //   target rotation = -(winIdx * segDeg) + small random jitter inside the slice
+      const jitter = (Math.random() - 0.5) * (segDeg * 0.7);
+      const target = -(winIdx * segDeg) + jitter;
+      // Add 6 full spins for drama, land on target
+      currentRotation += 6 * 360 + target - (currentRotation % 360);
+      wheel.classList.add('spinning');
+      wheel.style.transform = `rotate(${currentRotation}deg)`;
+
+      // Submit to endpoint (fire & forget — non-fatal)
+      const endpoint = form.dataset.endpoint || '/api/spin';
+      fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email.value,
+          prize: slices[winIdx].label,
+          code: slices[winIdx].code,
+          at: new Date().toISOString(),
+        }),
+      }).catch(() => { /* non-fatal */ });
+
+      // Wait for the CSS transition + a beat, then show result
+      setTimeout(() => {
+        const w = slices[winIdx];
+        prizeEl.textContent = w.label;
+        codeEl.textContent = w.code || 'SX2026';
+        result.hidden = false;
+        requestAnimationFrame(() => result.classList.add('visible'));
+        localStorage.setItem(SPUN_KEY, JSON.stringify({ prize: w.label, code: w.code, at: Date.now() }));
+      }, 5700);
+    }
+
+    function closeResult() {
+      result.classList.remove('visible');
+      setTimeout(() => { result.hidden = true; }, 300);
+    }
+
+    form.addEventListener('submit', spin);
+    closeBtn.addEventListener('click', closeResult);
+    result.addEventListener('click', (e) => { if (e.target === result) closeResult(); });
+  })();
+</script>
