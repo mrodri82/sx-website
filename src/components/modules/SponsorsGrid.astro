@@ -64,7 +64,7 @@ const defaultLogos: Logo[] = [
 const logos: Logo[] = (content.logos as Logo[]) || defaultLogos;
 ---
 
-<section data-nova-el="sponsors-grid" class="sx-sponsors py-20" style="background:#ecfd21">
+<section data-nova-el="sponsors-grid" class="sx-sponsors bg-black py-20">
   <div class="sx-sponsors-inner">
     <h2 class="sx-sponsors-title">{heading}</h2>
     <div class="sx-sponsors-wall">
@@ -87,27 +87,31 @@ const logos: Logo[] = (content.logos as Logo[]) || defaultLogos;
     font-size:clamp(36px, 3.5vw, 48px);
     font-weight:800; line-height:1;
     letter-spacing:-0.02em;
-    color:#000; text-transform:uppercase;
+    color:#ecfd21; text-transform:uppercase;
     margin:0 0 40px 0;
   }
   .sx-sponsors-wall {
     display:grid;
     grid-template-columns:repeat(5, minmax(0, 1fr));
-    gap:32px 24px;
+    gap:40px 32px;
     align-items:center; justify-items:center;
     min-width:0;
   }
   .sx-sponsor-cell {
     display:flex; align-items:center; justify-content:center;
-    width:100%; height:120px;
-    padding:12px 20px; box-sizing:border-box;
-    transition: transform .2s ease;
+    width:100%; max-width:200px; height:90px;
+    transition: transform .2s ease, opacity .2s ease;
   }
   .sx-sponsor-cell:hover { transform: scale(1.05); }
   .sx-sponsor-cell img {
     max-width:100%; max-height:100%;
     object-fit:contain;
+    /* Force every logo to a clean white silhouette on the black section. */
+    filter: brightness(0) invert(1);
+    opacity: .85;
+    transition: opacity .2s ease, filter .2s ease;
   }
+  .sx-sponsor-cell:hover img { opacity: 1; }
 
   @media (max-width:1024px) {
     .sx-sponsors-wall { grid-template-columns:repeat(3, minmax(0, 1fr)); gap:32px 24px; }
