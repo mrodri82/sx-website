@@ -154,7 +154,7 @@ const description = seoDescription || undefined;
 ---
 
 <BaseLayout title={seoTitle || `${pageTitle || title} — ${site.brandName}`} description={description} ogImage={ogImage || undefined} heroImage={heroImage || undefined}>
-  <Navigation />
+  <Navigation variant="solid" />
 
   {sections.length > 0 ? (
     <ModuleRenderer sections={sections} locale={locale} />
