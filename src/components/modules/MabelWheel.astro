@@ -60,8 +60,13 @@ try {
      500px wheel-bg, we bump inner wheel width on desktop via CSS override). */
   .sx-wof-section .wof-wheel-standalone { max-width: 1200px; margin: 0 auto; padding: 60px 40px; }
   .sx-wof-section .wof-wheel-standalone .wof-wheel-bg { width: 640px !important; height: 640px !important; }
+  /* Space between the wheel (wof-left) and the text/form column (wof-right) */
+  .sx-wof-section .wof-wheel-standalone .wof-wheel .wof-inner-wrapper { gap: 80px; }
+  .sx-wof-section .wof-wheel-standalone .wof-right { padding-left: 20px; }
   @media (max-width: 900px) {
     .sx-wof-section .wof-wheel-standalone { padding: 40px 20px; }
     .sx-wof-section .wof-wheel-standalone .wof-wheel-bg { width: 90vw !important; height: 90vw !important; max-width: 500px; max-height: 500px; }
+    .sx-wof-section .wof-wheel-standalone .wof-wheel .wof-inner-wrapper { gap: 36px; }
+    .sx-wof-section .wof-wheel-standalone .wof-right { padding-left: 0; margin-top: 20px; }
   }
 </style>
