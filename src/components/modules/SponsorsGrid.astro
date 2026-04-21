@@ -14,7 +14,7 @@ interface Props { content: Record<string, unknown>; }
 const { content } = Astro.props;
 const locale = getLocaleFromPath(Astro.url.pathname) as Locale;
 
-const heading = t(content, 'heading', locale) || 'EXHIBITORS AND SPONSORS';
+const heading = t(content, 'heading', locale) || 'FEATURED BRANDS';
 
 // 41 sponsors scraped from sxtech.eu "Featured Brands" carousel (5 slide-groups).
 // Linked out to each sponsor's own site via `href`. Sorted in carousel order.
