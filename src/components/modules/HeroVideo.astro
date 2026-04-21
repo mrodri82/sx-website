@@ -168,8 +168,9 @@ const posterUrl = (content.poster_url as string) || '';
   }
 
   @media (max-width: 768px) {
-    /* Mobile: hide video, make layout vertical + dates at title size */
-    .sx-hero-video { display:none !important; }
+    /* Mobile: keep the video (we diverge from sxtech on this — it looks better).
+       object-fit:cover + 40% opacity keeps text legible on top. */
+    .sx-hero-video { display:block !important; opacity:0.45; }
     .sx-hero-inner { padding:120px 24px 40px; }
     .sx-hero-badge { font-size:18px; text-align:center; line-height:1.2; margin:0 auto 28px; max-width:280px; }
     .sx-hero-word { font-size:clamp(48px, 13vw, 72px); }
