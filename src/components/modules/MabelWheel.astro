@@ -59,10 +59,15 @@ try {
   /* Scale the standalone wheel up to match sxtech.eu sizing (originally
      500px wheel-bg, we bump inner wheel width on desktop via CSS override). */
   .sx-wof-section .wof-wheel-standalone { max-width: 1200px; margin: 0 auto; padding: 60px 40px; }
-  .sx-wof-section .wof-wheel-standalone .wof-wheel-bg { width: 640px !important; height: 640px !important; }
-  /* Space between the wheel (wof-left) and the text/form column (wof-right) */
-  .sx-wof-section .wof-wheel-standalone .wof-wheel .wof-inner-wrapper { gap: 80px; }
-  .sx-wof-section .wof-wheel-standalone .wof-right { padding-left: 20px; }
+  .sx-wof-section .wof-wheel-standalone .wof-wheel-bg { width: 520px !important; height: 520px !important; }
+  /* Keep wheel + form side-by-side on desktop — prevent flex-wrap */
+  .sx-wof-section .wof-wheel-standalone .wof-wheel .wof-inner-wrapper {
+    flex-wrap: nowrap !important;
+    gap: 60px;
+    justify-content: center;
+  }
+  .sx-wof-section .wof-wheel-standalone .wof-left { flex: 0 0 auto; }
+  .sx-wof-section .wof-wheel-standalone .wof-right { flex: 1 1 380px; min-width: 320px; }
   @media (max-width: 900px) {
     .sx-wof-section .wof-wheel-standalone { padding: 40px 20px; }
     .sx-wof-section .wof-wheel-standalone .wof-wheel-bg { width: 90vw !important; height: 90vw !important; max-width: 500px; max-height: 500px; }
