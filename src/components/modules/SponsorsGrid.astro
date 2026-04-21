@@ -81,19 +81,17 @@ const logos: Logo[] = (content.logos as Logo[]) || defaultLogos;
   .sx-sponsor-cell img {
     max-width:100%; max-height:100%;
     object-fit:contain;
-    /* Brightness(0) collapses every color to black; invert(1) flips to white.
-       Result: every logo becomes a clean white silhouette regardless of source
-       color (black-on-transparent, multi-color, or even black-on-white rasters).
-       Works on any image with alpha OR opaque bg — more robust than mask-image. */
-    filter: brightness(0) invert(1);
-    opacity: .72;
+    /* Grayscale + low opacity keeps logos legible regardless of source
+       background (transparent PNG, white-bg PNG, or multi-color). Hover
+       brings colors back. mask-image / brightness-invert tricks failed on
+       logos with opaque white backgrounds — they collapsed to solid rectangles. */
+    filter: grayscale(1) brightness(1.1) contrast(1.05);
+    opacity: .8;
     transition: filter .25s ease, opacity .25s ease;
   }
   .sx-sponsor-cell:hover img {
     opacity: 1;
-    /* SX yellow: brightness+invert to force pure white, then sepia+saturate+hue-rotate
-       to paint the silhouette yellow. */
-    filter: brightness(0) invert(.95) sepia(1) saturate(6) hue-rotate(5deg);
+    filter: grayscale(0);
   }
 
   @media (max-width:1024px) {
