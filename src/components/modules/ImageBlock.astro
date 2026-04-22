@@ -1,0 +1,33 @@
+---
+/**
+ * ImageBlock — single centered image on a section (for the "loga-1.png"
+ * partner sheet on exhibitors-b2b, for example).
+ *
+ * Fields:
+ *   - image:     URL (required)
+ *   - max_width: e.g. '1366px' (default)
+ *   - alt:       optional alt text
+ */
+interface Props { content: Record<string, any>; }
+const { content = {} } = Astro.props;
+const image = content.image || '';
+const maxWidth = content.max_width || '1366px';
+const alt = content.alt || '';
+---
+
+{image && (
+  <section data-nova-el="image-block" class="sx-ib">
+    <div class="sx-ib-inner" style={`max-width:${maxWidth}`}>
+      <img src={image} alt={alt} loading="lazy" />
+    </div>
+  </section>
+)}
+
+<style>
+  .sx-ib { background: #000; padding: 40px 50px 80px; }
+  .sx-ib-inner { margin: 0 auto; }
+  .sx-ib-inner img { width: 100%; height: auto; display: block; }
+  @media (max-width: 768px) {
+    .sx-ib { padding: 30px 24px 60px; }
+  }
+</style>

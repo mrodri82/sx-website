@@ -1,0 +1,135 @@
+---
+/**
+ * FestivalSlider — 1:1 port of sxtech.eu's custom HTML-widget slider.
+ * Active slide expands (225→790px), inactive slides dim to 0.6 opacity.
+ * Each slide has two overlaid images: thumb (small view) + large (active).
+ * Progress bar advances per cycle.
+ *
+ * Fields:
+ *   - items: Array<{ thumb, large }>
+ *   - autoplay_ms: default 4000
+ */
+interface Item { thumb: string; large: string; }
+interface Props { content: Record<string, any>; }
+const { content = {} } = Astro.props;
+const items: Item[] = Array.isArray(content.items) ? content.items : [];
+const autoplayMs = Number(content.autoplay_ms) || 4000;
+---
+
+<section data-nova-el="festival-slider" class="sx-fs">
+  <div class="sx-fs-outer">
+    <div class="sx-fs-window">
+      <div class="sx-fs-track" data-autoplay={autoplayMs}>
+        {items.map((it, i) => (
+          <div class={`sx-fs-slide${i === 0 ? ' is-active' : ''}`}>
+            <img class="sx-fs-thumb" src={it.thumb} alt="" loading="lazy" />
+            <img class="sx-fs-large" src={it.large} alt="" loading="lazy" />
+          </div>
+        ))}
+      </div>
+      <button class="sx-fs-nav sx-fs-prev" type="button" aria-label="Previous">&#10094;</button>
+      <button class="sx-fs-nav sx-fs-next" type="button" aria-label="Next">&#10095;</button>
+    </div>
+    <div class="sx-fs-progress"><div class="sx-fs-progress-fill"></div></div>
+  </div>
+</section>
+
+<style>
+  /* 1:1 from sxtech .festival-slider inline CSS (element 74143e0). */
+  .sx-fs { background: #000; padding: 40px 50px 60px; }
+  .sx-fs-outer { max-width: 1240px; margin: 0 auto; }
+
+  .sx-fs-window { overflow: hidden; height: 490px; position: relative; }
+  .sx-fs-track {
+    display: flex; align-items: center;
+    transition: transform .5s ease;
+  }
+
+  .sx-fs-slide {
+    flex: 0 0 225px; height: 490px; margin: 0 10px;
+    position: relative; overflow: hidden;
+    opacity: 0.6; transition: all .4s ease;
+  }
+  .sx-fs-slide.is-active { flex: 0 0 790px; opacity: 1; }
+
+  .sx-fs-slide img {
+    position: absolute; top: 0; left: 0;
+    width: 100%; height: 100%; object-fit: cover;
+    transition: opacity .4s ease;
+  }
+  .sx-fs-large { opacity: 0; }
+  .sx-fs-slide.is-active .sx-fs-large { opacity: 1; }
+  .sx-fs-slide.is-active .sx-fs-thumb { opacity: 0; }
+
+  .sx-fs-nav {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    background: #000; color: #fff; border: none;
+    padding: 10px 14px; cursor: pointer; z-index: 10;
+    font-size: 20px;
+  }
+  .sx-fs-prev { left: 0; }
+  .sx-fs-next { right: 0; }
+
+  .sx-fs-progress { height: 4px; background: #222; margin-top: 20px; }
+  .sx-fs-progress-fill { height: 100%; width: 0%; background: #ECFD21; transition: width .4s linear; }
+
+  @media (max-width: 900px) {
+    .sx-fs-slide { flex: 0 0 120px; }
+    .sx-fs-slide.is-active { flex: 0 0 70%; }
+  }
+  @media (max-width: 600px) {
+    .sx-fs-slide { flex: 0 0 80%; }
+    .sx-fs-slide.is-active { flex: 0 0 90%; }
+  }
+</style>
+
+<script>
+  (function () {
+    const roots = document.querySelectorAll<HTMLElement>('.sx-fs-outer');
+    roots.forEach(setup);
+
+    function setup(root: HTMLElement) {
+      const track = root.querySelector<HTMLElement>('.sx-fs-track');
+      const slides = Array.from(root.querySelectorAll<HTMLElement>('.sx-fs-slide'));
+      const prev = root.querySelector<HTMLButtonElement>('.sx-fs-prev');
+      const next = root.querySelector<HTMLButtonElement>('.sx-fs-next');
+      const progress = root.querySelector<HTMLElement>('.sx-fs-progress-fill');
+      if (!track || slides.length === 0) return;
+
+      const intervalMs = Number(track.dataset.autoplay) || 4000;
+      let idx = 0;
+      let tickerStart = performance.now();
+
+      function apply() {
+        slides.forEach((s, i) => s.classList.toggle('is-active', i === idx));
+        const container = track!.parentElement!;
+        const active = slides[idx];
+        const cRect = container.getBoundingClientRect();
+        const aRect = active.getBoundingClientRect();
+        const offset = (active.offsetLeft + active.offsetWidth / 2) - cRect.width / 2;
+        track!.style.transform = `translateX(${-offset}px)`;
+      }
+      function step(d: 1 | -1) {
+        idx = (idx + d + slides.length) % slides.length;
+        tickerStart = performance.now();
+        apply();
+      }
+
+      prev?.addEventListener('click', () => step(-1));
+      next?.addEventListener('click', () => step(1));
+      let timer = window.setInterval(() => step(1), intervalMs);
+      root.addEventListener('mouseenter', () => clearInterval(timer));
+      root.addEventListener('mouseleave', () => { timer = window.setInterval(() => step(1), intervalMs); });
+      window.addEventListener('resize', () => requestAnimationFrame(apply));
+
+      function tick() {
+        const elapsed = performance.now() - tickerStart;
+        const pct = Math.min(100, (elapsed / intervalMs) * 100);
+        if (progress) progress.style.width = `${pct}%`;
+        requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(apply);
+      requestAnimationFrame(tick);
+    }
+  })();
+</script>

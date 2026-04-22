@@ -164,6 +164,72 @@ sections = [
             "size": "lg",
         },
     },
+    {
+        "id": -8, "type": "SectionTitle", "mode": "detached",
+        "data": {"title": "TOP VOICES", "size": "lg"},
+    },
+    {
+        "id": -9, "type": "FestivalSlider", "mode": "detached",
+        "data": {
+            "autoplay_ms": 4000,
+            "items": [
+                {"thumb": f"{DST}/wp-content/uploads/2026/04/carly-1.png",      "large": f"{DST}/wp-content/uploads/2026/04/carly1-1.png"},
+                {"thumb": f"{DST}/wp-content/uploads/2026/04/payfasto-1.png",   "large": f"{DST}/wp-content/uploads/2026/04/payfasto1-1.png"},
+                {"thumb": f"{DST}/wp-content/uploads/2026/04/sp-1.png",         "large": f"{DST}/wp-content/uploads/2026/04/sp1-1.png"},
+                {"thumb": f"{DST}/wp-content/uploads/2026/04/susan-1.png",      "large": f"{DST}/wp-content/uploads/2026/04/susan1-1.png"},
+                {"thumb": f"{DST}/wp-content/uploads/2026/04/littleleaf-1.png", "large": f"{DST}/wp-content/uploads/2026/04/littleleaf1-1.png"},
+                {"thumb": f"{DST}/wp-content/uploads/2026/04/ai-1.png",         "large": f"{DST}/wp-content/uploads/2026/04/ai1-1.png"},
+                {"thumb": f"{DST}/wp-content/uploads/2026/04/payment-1.png",    "large": f"{DST}/wp-content/uploads/2026/04/payment1-1.png"},
+                {"thumb": f"{DST}/wp-content/uploads/2026/04/regulatory-1.png", "large": f"{DST}/wp-content/uploads/2026/04/regulatory1-1.png"},
+            ],
+        },
+    },
+    {
+        "id": -10, "type": "ProgramTable", "mode": "detached",
+        "data": {
+            "items": [
+                {"icon": f"{DST}/wp-content/uploads/2026/04/Projekt-bez-nazwy-1.png",
+                 "theme": "Cristina Dezi - Erotic Circuits", "voices": "Cristina Dezi",
+                 "track": "workshop\nPleasure & Wellness", "stage": "Edu Stage\n27.6.2026"},
+                {"icon": f"{DST}/wp-content/uploads/2026/04/littleleaf-1.png",
+                 "theme": "One Step Ahead: How can we market in an AI-landscape?",
+                 "voices": "Kathryn Byberg, Ashton Egner",
+                 "track": "panel\nAI", "stage": "Innovation Stage\n28.6.2026"},
+                {"icon": f"{DST}/wp-content/uploads/2026/04/Projekt-bez-nazwy-4-1.png",
+                 "theme": "AI Personalization & Ownership of the Customer Journey",
+                 "voices": "Raquel Shaw",
+                 "track": "keynote\nAI, ecommerce", "stage": "Innovation Stage\n28.6.2026"},
+                {"icon": f"{DST}/wp-content/uploads/2026/04/Projekt-bez-nazwy-5-1.png",
+                 "theme": "SEX MEDIA TRAFFIC: Algorithm Driven Media Impact",
+                 "voices": "TBA",
+                 "track": "panel\nMedia, Traffic", "stage": "Impact Stage\n28.6.2026"},
+                {"icon": f"{DST}/wp-content/uploads/2026/04/Projekt-bez-nazwy-6-1.png",
+                 "theme": "How do get payment processing for the adult industry",
+                 "voices": "Gerardo Martinez, CSO at PayFasto",
+                 "track": "keynote\nPayment", "stage": "Impact Stage\n28.6.2026"},
+                {"icon": f"{DST}/wp-content/uploads/2026/04/Projekt-bez-nazwy-7-1.png",
+                 "theme": "Hash-Matching Technologies in Platform, Payment, and Data Governance.",
+                 "voices": "TBA",
+                 "track": "panel\nRegulatory", "stage": "Impact Stage\n28.6.2026"},
+            ],
+        },
+    },
+    {
+        "id": -11, "type": "SectionTitle", "mode": "detached",
+        "data": {
+            "title": "Brands that trusted us since 2019",
+            "subtitle": "They showed up. It worked.",
+            "size": "sm",
+        },
+    },
+    {
+        "id": -12, "type": "ImageBlock", "mode": "detached",
+        "data": {
+            "image": f"{DST}/wp-content/uploads/2026/04/loga-1.png",
+            "max_width": "1830px",
+            "alt": "Partners & brands that trusted us",
+        },
+    },
 ]
 
 seed_dir = Path(__file__).parent.parent / "database" / "seeds"
