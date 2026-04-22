@@ -17,6 +17,7 @@ from pathlib import Path
 DST = "https://sx.zds.es"
 DST_USER = "manuel"
 DST_PW = "rrLJNonWxaLRgzkJEnbzhkQh"
+UPL = "/wp-content/uploads/2026/04"
 
 ctx = ssl.create_default_context()
 ctx.check_hostname = False
@@ -62,6 +63,7 @@ sections = [
                 {
                     "title": "EXPO BOOKING",
                     "description": "This is where people discover your brand.<br>Fancy LED Technology Booths.",
+                    "bg_image": f"{DST}{UPL}/1-3.png",
                     "buttons": [
                         {"label": "CATALOGUE",  "href": "https://www.canva.com/design/DAGvAUDhuZo/jwoR6VhF50iNblYsSIbo7w/view"},
                         {"label": "BOOK A BOOTH", "href": "https://forms.monday.com/forms/e108c50e7f486102cec78a2ee3a9f673?r=euc1"},
@@ -70,6 +72,7 @@ sections = [
                 {
                     "title": "SPONSORSHIP",
                     "description": "If you want attention, this is the paid version.",
+                    "bg_image": f"{DST}{UPL}/1-1-1.png",
                     "buttons": [
                         {"label": "VIEW OPTIONS", "href": "https://www.canva.com/design/DAGk477Z-Vk/Le7giNor9aVgix6F16Uu1Q/view"},
                         {"label": "BOOK A CALL",  "href": CALL},
@@ -78,6 +81,7 @@ sections = [
                 {
                     "title": "BUSINESS\nTICKETS",
                     "description": "BUSINESS & TECH TRACKS PROGRAM",
+                    "bg_image": f"{DST}{UPL}/1-2-1-1.png",
                     "buttons": [
                         {"label": "BUSINESS TICKET", "href": B2B_TICKET},
                         {"label": "BUSINESS VIP",    "href": B2B_TICKET},
@@ -86,6 +90,7 @@ sections = [
                 {
                     "title": "VENUE\nPLAN",
                     "description": "Where you stand matters.",
+                    "bg_image": f"{DST}{UPL}/1-1-1.png",
                     "buttons": [
                         {"label": "VIRTUAL TOUR", "href": "https://tours.nexpics.com/visitberlin/magazin-der-heeresbaeckerei/"},
                         {"label": "MAPS",         "href": "https://www.google.com/maps/dir/?api=1&destination=Heeresb%C3%A4ckerei+Berlin+K%C3%B6penicker+Stra%C3%9Fe+16+Berlin"},
