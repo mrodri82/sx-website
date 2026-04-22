@@ -26,20 +26,40 @@ def wp(method, path, body=None):
         return json.loads(r.read())
 
 POSTS = [
-    # (sxtech_url, target_slug, title, date_label, category, hero_image)
+    # (sxtech_url, target_slug, title, date_label, category, hero_image, inline_image?)
     ("https://sxtech.eu/2026/04/19/marius-rohde-interview/",
-     "post-marius-rohde-interview", "Marius Rohde INTERVIEW", "Apr 19, 2026", "NEWS", "7w-1.png"),
+     "post-marius-rohde-interview", "Marius Rohde INTERVIEW", "Apr 19, 2026", "NEWS", "7w-1.png",
+     "https://sxtech.eu/wp-content/uploads/2026/04/Projekt-bez-nazwy-2.png"),
     ("https://sxtech.eu/2026/04/19/sx-festival-artist-grant/",
-     "post-sx-festival-artist-grant", "SX FESTIVAL ARTIST GRANT", "Apr 19, 2026", "NEWS", "4w-1.png"),
+     "post-sx-festival-artist-grant", "SX FESTIVAL ARTIST GRANT", "Apr 19, 2026", "NEWS", "4w-1.png", None),
     ("https://sxtech.eu/2026/04/19/sxma-vote-04-08-05-08/",
-     "post-sxma-vote-04-08-05-08", "SXMA VOTE 04.08-05.08", "Apr 19, 2026", "NEWS", "1-3-2.png"),
+     "post-sxma-vote-04-08-05-08", "SXMA VOTE 04.08-05.08", "Apr 19, 2026", "NEWS", "1-3-2.png", None),
     ("https://sxtech.eu/2026/03/26/sxma-nominations-live/",
-     "post-sxma-nominations-live", "SXMA NOMINATIONS LIVE", "Mar 26, 2026", "NEWS", "nowlive-1.png"),
+     "post-sxma-nominations-live", "SXMA NOMINATIONS LIVE", "Mar 26, 2026", "NEWS", "nowlive-1.png", None),
     ("https://sxtech.eu/2026/02/24/hacking-desire/",
-     "post-hacking-desire", "HACKING DESIRE", "Feb 24, 2026", "NEWS", "irma-1.png"),
+     "post-hacking-desire", "HACKING DESIRE", "Feb 24, 2026", "NEWS", "irma-1.png", None),
     ("https://sxtech.eu/2026/02/10/ambassador-program-live/",
-     "post-ambassador-program-live", "AMBASSADOR PROGRAM LIVE", "Feb 10, 2026", "RECAP", "nonm-1.png"),
+     "post-ambassador-program-live", "AMBASSADOR PROGRAM LIVE", "Feb 10, 2026", "RECAP", "nonm-1.png", None),
 ]
+
+def inject_image_after_first_paragraph(body: str, image_url: str) -> str:
+    """Insert a <figure><img></figure> directly after the first closing </p>
+    that follows meaningful prose. Skips <p>s inside headings/meta blocks by
+    only matching plain-text paragraphs long enough to be actual content."""
+    if not image_url: return body
+    figure = (
+        f'<figure style="margin:32px 0;">'
+        f'<img src="{image_url}" alt="" loading="lazy" '
+        f'style="width:100%;height:auto;display:block;"/>'
+        f'</figure>'
+    )
+    for m in re.finditer(r'</p>', body, flags=re.I):
+        segment = body[max(0, m.start()-400):m.start()]
+        # first paragraph with >80 chars of visible prose is the intro
+        txt = re.sub(r'<[^>]+>', '', segment).strip()
+        if len(txt) > 80:
+            return body[:m.end()] + figure + body[m.end():]
+    return body + figure
 
 ELEMENTOR_POST_RE = re.compile(r'<div[^>]*data-elementor-type="wp-post"[^>]*>', re.I)
 
@@ -107,7 +127,7 @@ seed_dir = Path(__file__).parent.parent / "database" / "seeds"
 seed_dir.mkdir(parents=True, exist_ok=True)
 results = []
 
-for (url, slug, title, date, cat, img) in POSTS:
+for (url, slug, title, date, cat, img, inline_img) in POSTS:
     print(f"\n{slug}")
     try:
         html = fetch_text(url)
@@ -115,19 +135,23 @@ for (url, slug, title, date, cat, img) in POSTS:
         print(f"  fetch failed: {e}")
         continue
     body = extract_article_body(html)
+    body = inject_image_after_first_paragraph(body, inline_img)
     print(f"  body: {len(body)} chars")
 
     hero_img = f"{DST}{UPL}/{img}"
-    # Hero = full-bleed image under transparent nav (HeroSimple auto-detects
-    # bg_image → nav goes transparent + hero extends to top).
+    # Hero = 70vh full-bleed image under transparent nav with the title
+    # pinned to the bottom-left corner (sxtech.eu blog style). The meta line
+    # (category · date) lives in ArticleContent right below, so we don't
+    # duplicate it in the hero subtitle.
     sections = [
         {
             "id": -1, "type": "HeroSimple", "mode": "detached",
             "data": {
                 "title": title,
-                "subtitle": f"{cat} · {date}",
                 "bg_image": hero_img,
                 "align": "start",
+                "valign": "end",
+                "min_height": "70vh",
             },
         },
         {

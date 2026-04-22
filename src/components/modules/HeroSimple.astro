@@ -33,6 +33,9 @@ const chips: Array<{label?: string; href?: string; variant?: string} | string> =
 const minHeight = content.min_height || '';
 const theme = (content.theme === 'light' ? 'light' : 'dark') as 'light'|'dark';
 const align = (content.align === 'center' ? 'center' : 'start') as 'center'|'start';
+/* Vertical alignment of the content block inside the hero — 'end' pushes
+   title + subtitle + ctas to the bottom edge (blog article cover). */
+const valign = (['end','start','center'].includes(content.valign) ? content.valign : 'center') as 'center'|'start'|'end';
 /* cta2_variant: 'ghost' (default, yellow border + transparent) | 'solid' (yellow fill)
    | 'white' (white fill + white border). cta2_ghost=false kept as legacy shortcut. */
 const cta2Variant = (content.cta2_variant as string)
@@ -44,7 +47,7 @@ const hasMedia = !!(videoUrl || bgImage);
 
 <section
   data-nova-el="hero-simple"
-  class={`sx-hs sx-hs--${theme} sx-hs--align-${align} ${hasMedia ? 'sx-hs--overlay' : ''}`}
+  class={`sx-hs sx-hs--${theme} sx-hs--align-${align} sx-hs--valign-${valign} ${hasMedia ? 'sx-hs--overlay' : ''}`}
   style={`${bgImage ? `--hs-bg:url('${bgImage}');` : ''}${minHeight ? `min-height:${minHeight};` : ''}`}
 >
   {videoUrl && (
@@ -95,6 +98,9 @@ const hasMedia = !!(videoUrl || bgImage);
   .sx-hs--align-center .sx-hs-inner { text-align: center; }
   .sx-hs--align-center .sx-hs-ctas,
   .sx-hs--align-center .sx-hs-chips { justify-content: center; }
+  /* Vertical placement of the content block. Default = center (see base rule). */
+  .sx-hs--valign-start  { justify-content: flex-start; }
+  .sx-hs--valign-end    { justify-content: flex-end; }
   /* With media BG: hero extends to top (transparent nav overlays it). */
   .sx-hs--overlay { margin-top: 0; padding: 140px 50px 50px; min-height: 100vh; }
 

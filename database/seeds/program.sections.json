@@ -271,19 +271,22 @@
   },
   {
     "id": -10,
-    "type": "IconLinkList",
+    "type": "ButtonRow",
     "mode": "detached",
     "data": {
       "theme": "light",
       "align": "center",
+      "size": "lg",
       "items": [
         {
           "label": "BECOME AN EXHIBITOR",
-          "href": "/exhibitors-b2b"
+          "href": "/exhibitors-b2b",
+          "variant": "black"
         },
         {
           "label": "BECOME A SPONSOR",
-          "href": "mailto:info@sxtech.eu"
+          "href": "mailto:info@sxtech.eu",
+          "variant": "yellow"
         }
       ]
     }
