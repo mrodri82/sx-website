@@ -199,16 +199,18 @@ sections = [
             ],
         },
     },
-    # --- Berlin 2026 venue banner with text pinned to each corner ---
+    # --- Berlin 2026 venue banner with text pinned to each corner.
+    # Background is the real Heeresbäckerei photo sourced from the sxtech
+    # media library (same asset used on sxtech.eu /program). ---
     {
         "id": -11, "type": "LocationBanner", "mode": "detached",
         "data": {
-            "bg_image": f"{DST}{UPL}/tlo-2-1.png",
-            "height": "560px",
+            "bg_image": "https://sxtech.eu/wp-content/uploads/2026/03/cc.png",
+            "height": "520px",
             "color": "#ecfd21",
             "bw": True,
             "top_left":     {"lines": ["BERLIN 2026", "JUNE 26-28"], "size": "xl"},
-            "bottom_left":  {"lines": ["sxfestival", "expo", "berlin"], "size": "sm"},
+            "bottom_left":  {"lines": ["sxfestival", "expo", "berlin"], "size": "lg"},
             "bottom_right": {"lines": ["Heeresbäckerei Berlin", "Köpenicker Straße 16, Berlin"], "size": "md"},
         },
     },

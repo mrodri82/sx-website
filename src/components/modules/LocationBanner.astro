@@ -65,7 +65,13 @@ const style = `--lb-h:${height};--lb-c:${color};${bg ? `--lb-img:url('${bg}');` 
 
 <style>
   .sx-lb {
-    position: relative; width: 100%;
+    position: relative;
+    /* Full-bleed out of any 50px-padded section wrapper the template may
+       have: push the banner back to the viewport edges regardless of the
+       content container it's rendered inside. */
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+    width: 100vw;
     height: var(--lb-h, 560px);
     overflow: hidden; background: #000;
     isolation: isolate;
@@ -84,9 +90,10 @@ const style = `--lb-h:${height};--lb-c:${color};${bg ? `--lb-img:url('${bg}');` 
     line-height: .95; text-transform: uppercase;
     padding: 28px 40px;
   }
-  .sx-lb-text--xl { font-size: clamp(56px, 8vw, 120px); }
-  .sx-lb-text--md { font-size: clamp(22px, 2.4vw, 34px); }
-  .sx-lb-text--sm { font-size: clamp(14px, 1.4vw, 20px); }
+  .sx-lb-text--xl { font-size: clamp(40px, 5vw, 72px); }
+  .sx-lb-text--lg { font-size: clamp(24px, 3vw,   44px); }
+  .sx-lb-text--md { font-size: clamp(16px, 1.6vw, 22px); }
+  .sx-lb-text--sm { font-size: clamp(12px, 1.2vw, 16px); }
 
   .sx-lb-text--tl { top: 0; left: 0; }
   .sx-lb-text--tr { top: 0; right: 0; text-align: right; }
