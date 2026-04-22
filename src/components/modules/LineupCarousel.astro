@@ -33,7 +33,7 @@ const loopItems: Array<Item & { isClone?: boolean }> = [
       {subtitle && <p class="sx-lc-sub">{subtitle}</p>}
     </header>
 
-    <div class="sx-lc-row">
+    <div class="sx-lc-outer">
       <button class="sx-lc-nav sx-lc-prev" type="button" aria-label="Previous slide">
         <svg aria-hidden="true" viewBox="0 0 448 512" xmlns="http://www.w3.org/2000/svg"><path d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"/></svg>
       </button>
@@ -85,9 +85,10 @@ const loopItems: Array<Item & { isClone?: boolean }> = [
     color: #D1D1D1; margin: 0;
   }
 
-  /* Arrows live outside the overflow-clipped viewport (sxtech layout). */
-  .sx-lc-row { display: flex; align-items: center; gap: 16px; }
-  .sx-lc-viewport { flex: 1; min-width: 0; position: relative; overflow: hidden; }
+  /* Viewport is full-width; arrows float absolutely OUTSIDE its box,
+     overhanging into the section's 50px side-padding (sxtech layout). */
+  .sx-lc-outer { position: relative; }
+  .sx-lc-viewport { width: 100%; overflow: hidden; }
   .sx-lc-track {
     display: flex; gap: 14px;
     transition: transform .6s cubic-bezier(.4,0,.2,1);
@@ -125,10 +126,11 @@ const loopItems: Array<Item & { isClone?: boolean }> = [
     color: #000; margin-top: 2px;
   }
 
-  /* Thick, bold arrow buttons (sxtech fa-arrow svg path, outside viewport) */
+  /* Thick, bold arrow buttons (sxtech fa-arrow svg path).
+     Absolute-positioned, offset outside the viewport by ~50px. */
   .sx-lc-nav {
-    flex: 0 0 44px;
-    width: 44px; height: 44px;
+    position: absolute; top: 50%; transform: translateY(-50%);
+    width: 44px; height: 44px; z-index: 5;
     background: transparent; border: 0; color: #ecfd21;
     cursor: pointer; padding: 0;
     display: flex; align-items: center; justify-content: center;
@@ -136,6 +138,8 @@ const loopItems: Array<Item & { isClone?: boolean }> = [
   }
   .sx-lc-nav svg { width: 28px; height: 32px; fill: currentColor; }
   .sx-lc-nav:hover { color: #fff; }
+  .sx-lc-prev { left: -50px; }
+  .sx-lc-next { right: -50px; }
 
   @media (max-width: 1200px) {
     .sx-lc-card { flex: 0 0 calc((100% - 2 * 14px) / 3); }
@@ -146,6 +150,10 @@ const loopItems: Array<Item & { isClone?: boolean }> = [
     .sx-lc-name { font-size: 22px; padding: 5px 14px 0; }
     .sx-lc-role { font-size: 14px; padding: 0 14px 5px; }
     .sx-lc-info { bottom: 40px; padding: 5px 14px; }
+    /* Mobile: pull arrows in so they don't clip outside the 24px section pad */
+    .sx-lc-prev { left: -22px; }
+    .sx-lc-next { right: -22px; }
+    .sx-lc-nav svg { width: 20px; height: 24px; }
   }
 </style>
 
