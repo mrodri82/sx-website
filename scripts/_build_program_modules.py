@@ -187,15 +187,17 @@ sections = [
             "repeat": 6,
         },
     },
-    # --- Exhibit / Sponsor buttons row ---
+    # --- Exhibit / Sponsor buttons row — 2 solid buttons, centered, white
+    # section bg (kept inside the content container, not full-bleed). ---
     {
-        "id": -10, "type": "IconLinkList", "mode": "detached",
+        "id": -10, "type": "ButtonRow", "mode": "detached",
         "data": {
             "theme": "light",
             "align": "center",
+            "size":  "lg",
             "items": [
-                {"label": "BECOME AN EXHIBITOR", "href": "/exhibitors-b2b"},
-                {"label": "BECOME A SPONSOR",    "href": "mailto:info@sxtech.eu"},
+                {"label": "BECOME AN EXHIBITOR", "href": "/exhibitors-b2b",      "variant": "black"},
+                {"label": "BECOME A SPONSOR",    "href": "mailto:info@sxtech.eu", "variant": "yellow"},
             ],
         },
     },

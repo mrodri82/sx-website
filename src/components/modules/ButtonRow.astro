@@ -1,0 +1,81 @@
+---
+/**
+ * ButtonRow — a single centered row of big uppercase buttons, inside the
+ * standard content container (not full-bleed). Each button picks from a
+ * small set of solid variants so we can mix colors on one row.
+ *
+ * Variants:
+ *   - black  : black bg, white text
+ *   - yellow : brand-yellow bg, black text
+ *   - solid  : default (same as black)
+ *   - ghost  : transparent, black border+text
+ *
+ * Fields:
+ *   - items: Array<{ label, href, variant?: 'black'|'yellow'|'solid'|'ghost', new_tab?: boolean }>
+ *   - theme: 'light' | 'dark'   (default 'light' — white section bg)
+ *   - align: 'center' | 'start' (default 'center')
+ *   - size:  'md' | 'lg'        (default 'lg')
+ */
+interface Item { label: string; href: string; variant?: string; new_tab?: boolean; }
+interface Props { content: Record<string, any>; }
+const { content = {} } = Astro.props;
+const items: Item[] = Array.isArray(content.items) ? content.items : [];
+const theme = (content.theme === 'dark' ? 'dark' : 'light') as 'light'|'dark';
+const align = (content.align === 'start' ? 'start' : 'center') as 'center'|'start';
+const size  = (content.size  === 'md'    ? 'md'    : 'lg')    as 'md'|'lg';
+---
+
+<section data-nova-el="button-row" class={`sx-br sx-br--${theme} sx-br--align-${align} sx-br--${size}`}>
+  <div class="sx-br-inner">
+    {items.map((it) => (
+      <a
+        class={`sx-br-btn sx-br-btn--${it.variant || 'black'}`}
+        href={it.href}
+        target={it.new_tab || it.href?.startsWith('http') ? '_blank' : undefined}
+        rel="noopener"
+      >{it.label}</a>
+    ))}
+  </div>
+</section>
+
+<style>
+  .sx-br { padding: 28px 50px; }
+  .sx-br--light { background: #FFFFFF; }
+  .sx-br--dark  { background: #000000; }
+
+  .sx-br-inner {
+    max-width: 1366px; margin: 0 auto;
+    display: flex; flex-wrap: wrap; gap: 16px;
+  }
+  .sx-br--align-center .sx-br-inner { justify-content: center; }
+  .sx-br--align-start  .sx-br-inner { justify-content: flex-start; }
+
+  .sx-br-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    text-decoration: none;
+    font-family: 'Inter', sans-serif; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 1px;
+    border: 1px solid transparent;
+    transition: background .2s, color .2s, border-color .2s;
+    white-space: nowrap;
+  }
+  .sx-br--lg .sx-br-btn { padding: 16px 36px; font-size: 16px; min-width: 268px; }
+  .sx-br--md .sx-br-btn { padding: 12px 24px; font-size: 14px; min-width: 200px; }
+
+  .sx-br-btn--black,
+  .sx-br-btn--solid { background: #000; color: #fff; border-color: #000; }
+  .sx-br-btn--black:hover,
+  .sx-br-btn--solid:hover { background: transparent; color: #000; }
+
+  .sx-br-btn--yellow { background: #ecfd21; color: #000; border-color: #ecfd21; }
+  .sx-br-btn--yellow:hover { background: transparent; color: #000; border-color: #000; }
+
+  .sx-br-btn--ghost { background: transparent; color: #000; border-color: #000; }
+  .sx-br-btn--ghost:hover { background: #000; color: #fff; }
+
+  @media (max-width: 768px) {
+    .sx-br { padding: 20px 24px; }
+    .sx-br-btn { min-width: 0 !important; width: 100%; }
+    .sx-br-inner { flex-direction: column; align-items: stretch; }
+  }
+</style>
