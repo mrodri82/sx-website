@@ -1,8 +1,8 @@
 ---
 /**
- * PricingTiers — 3-column sponsorship tier cards. Each tier has a name,
- * price, bullet-list of features, and a CTA. Accent color shifts per tier
- * (grey → white → yellow to signal tier progression).
+ * PricingTiers — 3-column sponsorship tier cards, stacked border style
+ * from sxtech.eu post-19 (header + body + separated CTA, accent-colored
+ * borders). Accent shifts per tier (grey → white → yellow).
  *
  * Fields:
  *   - items: Array<{ name, price, features: string[], cta_label, cta_href, accent? }>
@@ -27,13 +27,20 @@ const items: Item[] = Array.isArray(content.items) ? content.items : [];
               <div class="sx-pt-name">{it.name}</div>
               <div class="sx-pt-price">{it.price}</div>
             </header>
-            {Array.isArray(it.features) && it.features.length > 0 && (
-              <ul class="sx-pt-features">
-                {it.features.map((f) => (
-                  <li><span class="sx-pt-dot" aria-hidden="true"></span><span>{f}</span></li>
-                ))}
-              </ul>
-            )}
+            <div class="sx-pt-body">
+              {Array.isArray(it.features) && it.features.length > 0 && (
+                <ul class="sx-pt-features">
+                  {it.features.map((f) => (
+                    <li>
+                      <span class="sx-pt-dot" aria-hidden="true">
+                        <svg viewBox="0 0 512 512" width="14" height="14" fill="currentColor"><path d="M256 8C119.033 8 8 119.033 8 256s111.033 248 248 248 248-111.033 248-248S392.967 8 256 8zm80 248c0 44.112-35.888 80-80 80s-80-35.888-80-80 35.888-80 80-80 80 35.888 80 80z"/></svg>
+                      </span>
+                      <span>{f}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
             {it.cta_label && it.cta_href && (
               <a class="sx-pt-cta" href={it.cta_href} target={it.cta_href.startsWith('http') ? '_blank' : undefined} rel="noopener">{it.cta_label}</a>
             )}
@@ -45,54 +52,76 @@ const items: Item[] = Array.isArray(content.items) ? content.items : [];
 </section>
 
 <style>
-  /* Values from sxtech.eu post-19.css:
-     name (ac1bbd2/8acf709/43c5183): Oswald 37px 600 uppercase, accent-colored.
-     price (4913b6a/9f4fd5d/da72ed0): Inter 300 accent-colored. */
-  .sx-pt { background: #000; padding: 60px 50px 80px; }
+  /* Stacked border layout from sxtech post-19 (c32b843 header + 21fbd3e body +
+     c240d8e CTA with margin-top:10px). Accent-colored borders tie the whole
+     card together; no fill background. */
+  .sx-pt { background: #000; padding: 80px 50px 120px; }
   .sx-pt-inner { max-width: 1366px; margin: 0 auto; }
   .sx-pt-grid {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 50px;
   }
+
   .sx-pt-card {
-    background: #1a1a1a; padding: 40px;
-    display: flex; flex-direction: column; gap: 28px;
-    border-top: 3px solid var(--accent, #FFFFFF);
+    display: flex; flex-direction: column;
+    color: var(--accent, #FFFFFF);
   }
-  .sx-pt-head { color: var(--accent, #FFFFFF); }
+  .sx-pt-head {
+    padding: 20px;
+    border: 1px solid var(--accent, #FFFFFF);
+    border-bottom: 0;
+  }
   .sx-pt-name {
     font-family: 'Oswald', sans-serif; font-weight: 600;
     font-size: 37px; line-height: 1;
     text-transform: uppercase; color: inherit;
   }
   .sx-pt-price {
-    font-family: 'Inter', sans-serif; font-size: 64px; font-weight: 300;
-    line-height: 1; margin-top: 12px; color: inherit;
+    font-family: 'Inter Tight', 'Inter', sans-serif;
+    font-size: 64px; font-weight: 300; line-height: 1;
+    margin-top: 12px; color: inherit;
   }
-  .sx-pt-features { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+
+  .sx-pt-body {
+    padding: 20px;
+    border: 1px solid var(--accent, #FFFFFF);
+    min-height: 375px;
+    display: flex; flex-direction: column;
+  }
+  .sx-pt-features { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; }
+  .sx-pt-features li:not(:last-child) { padding-bottom: 10.5px; }
+  .sx-pt-features li:not(:first-child) { margin-top: 10.5px; }
   .sx-pt-features li {
-    font-family: 'Inter', sans-serif; font-size: 15px; line-height: 1.4;
-    color: #fff; display: flex; align-items: flex-start; gap: 10px;
+    font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 400;
+    line-height: 1.35; text-transform: uppercase;
+    color: inherit;
+    display: flex; align-items: flex-start; gap: 10px;
   }
   .sx-pt-dot {
-    flex: 0 0 8px; width: 8px; height: 8px; border-radius: 50%;
-    background: var(--accent, #FFFFFF); margin-top: 7px;
+    flex: 0 0 14px; width: 14px; height: 14px;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--accent, #FFFFFF);
+    margin-top: 2px;
   }
+
   .sx-pt-cta {
-    display: inline-block; text-align: center;
-    padding: 16px 24px;
-    font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500;
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 25px; margin-top: 10px;
+    font-family: 'Inter Tight', 'Inter', sans-serif;
+    font-size: 28px; font-weight: 300;
     text-transform: uppercase; text-decoration: none;
     background: var(--accent, #FFFFFF); color: #000;
-    margin-top: auto;
     transition: opacity .15s;
   }
   .sx-pt-cta:hover { opacity: .85; }
 
-  @media (max-width: 900px) {
-    .sx-pt-grid { grid-template-columns: 1fr; }
-    .sx-pt { padding: 40px 24px 60px; }
-    .sx-pt-card { padding: 28px; }
+  @media (max-width: 1024px) {
+    .sx-pt-grid { grid-template-columns: 1fr; gap: 30px; }
+    .sx-pt-card { max-width: 560px; margin: 0 auto; width: 100%; }
+  }
+  @media (max-width: 768px) {
+    .sx-pt { padding: 40px 24px 80px; }
     .sx-pt-name { font-size: 28px; }
     .sx-pt-price { font-size: 48px; }
+    .sx-pt-cta { font-size: 22px; padding: 20px; }
   }
 </style>

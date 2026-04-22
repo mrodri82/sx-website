@@ -154,7 +154,16 @@ const description = seoDescription || undefined;
 ---
 
 <BaseLayout title={seoTitle || `${pageTitle || title} — ${site.brandName}`} description={description} ogImage={ogImage || undefined} heroImage={heroImage || undefined}>
-  <Navigation variant="solid" />
+  {/* Pages whose first section has a video/image background render the
+      hero all the way to the top under a transparent nav. Plain-black-hero
+      pages (regular-visitors etc.) get a solid nav so text stays legible. */}
+  <Navigation variant={(() => {
+    const first = sections[0] as any;
+    if (!first) return 'solid';
+    if (first.type === 'HeroVideo') return 'transparent';
+    if (first.type === 'HeroSimple' && (first.data?.video_url || first.data?.bg_image)) return 'transparent';
+    return 'solid';
+  })()} />
 
   {sections.length > 0 ? (
     <ModuleRenderer sections={sections} locale={locale} />

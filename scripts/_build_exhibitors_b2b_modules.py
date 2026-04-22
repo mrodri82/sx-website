@@ -35,18 +35,17 @@ def wp(method, path, body=None):
 CALL = "https://calendly.com/ola-sxtech/sx-expo-call"
 B2B_TICKET = "https://www.eventbrite.ie/e/sx-festival-expo-2026-berlin-business-tech-only-tickets-1461155267739"
 PAY = "https://wkf.ms/4tReioE"
-VIDEO = f"{DST}/wp-content/uploads/2026/04/mp4.mp4"
+VIDEO = f"{DST}/wp-content/uploads/2026/04/hero-exhibitors.mp4"
 
 sections = [
     {
         "id": -1,
-        "type": "HeroVideo",
+        "type": "HeroSimple",
         "mode": "detached",
         "data": {
-            "title1": "READY TO",
-            "title2": "EXHIBIT?",
-            "tagline_body": "If your brand matters, it should be here.",
-            "cta1_text": "BOOK A CALL", "cta1_url": CALL,
+            "title": "READY TO\nEXHIBIT?",
+            "subtitle": "If your brand matters, it should be here.",
+            "cta_text": "BOOK A CALL", "cta_url": CALL,
             "cta2_text": "BOOK A TICKET", "cta2_url": B2B_TICKET,
             "video_url": VIDEO,
         },
@@ -149,10 +148,12 @@ sections = [
         },
     },
     {
-        "id": -6, "type": "HeroSimple", "mode": "detached",
+        "id": -6, "type": "SectionTitle", "mode": "detached",
         "data": {
             "title": "THE B2B",
-            "subtitle": "JUNE 27-28\nBERLIN",
+            "subtitle": "june 27-28\nberlin",
+            "size": "lg",
+            "subtitle_style": "event",
         },
     },
     {
@@ -161,7 +162,6 @@ sections = [
             "title": "PROGRAM",
             "subtitle": "2 days in Berlin packed with a high-impact program. Bringing together industry leaders and important topics and talks in the industry",
             "size": "lg",
-            "subtitle_color": "#FFFFFF",
         },
     },
 ]

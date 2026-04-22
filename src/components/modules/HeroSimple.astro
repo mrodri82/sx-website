@@ -1,14 +1,19 @@
 ---
 /**
- * HeroSimple — inner-page hero (black bg, yellow title, optional subtitle + CTA).
- * Used on regular-visitors / exhibitors-b2b / creators / program / news.
+ * HeroSimple — inner-page hero (black bg, yellow title, optional subtitle + CTAs).
+ * Supports image OR video background. When a media background is present, the
+ * hero extends to the very top (under a transparent nav) and the first 98px
+ * of inner padding keep the content from colliding with the nav. Plain-black
+ * hero pages use a solid nav and sit below it (margin-top: 98px).
  *
  * Fields:
- *   - title:    big yellow Oswald headline
- *   - subtitle: smaller grey subtitle (#D1D1D1)
- *   - cta_text: optional CTA button label
- *   - cta_url:  CTA href
- *   - bg_image: optional hero background image URL
+ *   - title:      big yellow Oswald headline
+ *   - subtitle:   smaller subtitle line
+ *   - cta_text / cta_url:   primary CTA
+ *   - cta2_text / cta2_url: optional secondary CTA
+ *   - bg_image:   optional hero background image URL
+ *   - video_url:  optional hero background video URL (mp4) — wins over bg_image
+ *   - poster_url: optional video poster frame
  */
 interface Props { content: Record<string, any>; }
 const { content = {} } = Astro.props;
@@ -16,36 +21,69 @@ const title    = content.title    || '';
 const subtitle = content.subtitle || '';
 const ctaText  = content.cta_text || '';
 const ctaUrl   = content.cta_url  || '#';
+const cta2Text = content.cta2_text || '';
+const cta2Url  = content.cta2_url  || '#';
 const bgImage  = content.bg_image || '';
+const videoUrl = content.video_url || '';
+const poster   = content.poster_url || '';
+
+const hasMedia = !!(videoUrl || bgImage);
 ---
 
-<section data-nova-el="hero-simple" class="sx-hs" style={bgImage ? `--hs-bg:url('${bgImage}')` : ''}>
-  {bgImage && <div class="sx-hs-bg" aria-hidden="true"></div>}
+<section
+  data-nova-el="hero-simple"
+  class={`sx-hs ${hasMedia ? 'sx-hs--overlay' : ''}`}
+  style={bgImage ? `--hs-bg:url('${bgImage}')` : ''}
+>
+  {videoUrl && (
+    <video class="sx-hs-video" autoplay muted loop playsinline preload="metadata" poster={poster || undefined}>
+      <source src={videoUrl} type="video/mp4" />
+    </video>
+  )}
+  {bgImage && !videoUrl && <div class="sx-hs-bg" aria-hidden="true"></div>}
+  {hasMedia && <div class="sx-hs-gradient" aria-hidden="true"></div>}
+
   <div class="sx-hs-inner">
     {title && <h1 class="sx-hs-title">{title}</h1>}
     {subtitle && <p class="sx-hs-sub">{subtitle}</p>}
-    {ctaText && <a href={ctaUrl} class="sx-hs-cta">{ctaText}</a>}
+    {(ctaText || cta2Text) && (
+      <div class="sx-hs-ctas">
+        {ctaText  && <a href={ctaUrl}  class="sx-hs-cta">{ctaText}</a>}
+        {cta2Text && <a href={cta2Url} class="sx-hs-cta sx-hs-cta--ghost">{cta2Text}</a>}
+      </div>
+    )}
   </div>
 </section>
 
 <style>
-  /* Values extracted 1:1 from sxtech.eu post-17.css — keep in sync with scraped CSS. */
-  /* HeroSimple is only used on inner pages (solid 98px nav).
-     margin-top: 98px pushes the hero below the fixed nav (no overlap).
-     min-height/flex matches sxtech post-17 container 5621734 (88vh, centered). */
+  /* Values from sxtech.eu post-17.css / post-19.css. */
   .sx-hs {
     background: #000; color: #ecfd21;
     padding: 50px; margin-top: 98px;
     min-height: 88vh;
     display: flex; flex-direction: column; justify-content: center; align-items: flex-start;
-    position: relative; isolation: isolate;
+    position: relative; isolation: isolate; overflow: hidden;
+  }
+  /* With media BG: hero extends to top (transparent nav overlays it). */
+  .sx-hs--overlay { margin-top: 0; padding: 140px 50px 50px; min-height: 100vh; }
+
+  .sx-hs-video {
+    position: absolute; inset: 0; z-index: 0;
+    width: 100%; height: 100%; object-fit: cover;
+    pointer-events: none;
   }
   .sx-hs-bg {
     position: absolute; inset: 0; z-index: 0;
     background-image: var(--hs-bg); background-size: cover; background-position: center;
     pointer-events: none;
   }
-  .sx-hs-inner { position: relative; z-index: 1; max-width: 1366px; width: 100%; margin: 0 auto; text-align: start; }
+  .sx-hs-gradient {
+    position: absolute; inset: 0; z-index: 1;
+    background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0) 40%);
+    pointer-events: none;
+  }
+  .sx-hs-inner { position: relative; z-index: 2; max-width: 1366px; width: 100%; margin: 0 auto; text-align: start; }
+
   .sx-hs-title {
     font-family: 'Oswald', sans-serif; font-weight: 800;
     font-size: 156px; line-height: 1;
@@ -53,14 +91,14 @@ const bgImage  = content.bg_image || '';
     color: #ecfd21; margin: 0 0 24px;
     white-space: pre-line;
   }
-  /* Subtitle values = computed style on sxtech.eu at desktop width. */
   .sx-hs-sub {
     font-family: 'Inter', sans-serif; font-size: 21px; font-weight: 500;
-    line-height: 21px; height: 63px;
+    line-height: 21px;
     color: #ecfd21; text-transform: uppercase;
     margin: 0 0 40px;
     white-space: pre-line;
   }
+  .sx-hs-ctas { display: flex; flex-wrap: wrap; gap: 12px; }
   .sx-hs-cta {
     display: inline-block;
     background: #ecfd21; color: #000; text-decoration: none;
@@ -70,6 +108,8 @@ const bgImage  = content.bg_image || '';
     transition: background .15s, color .15s, border-color .15s;
   }
   .sx-hs-cta:hover { background: transparent; color: #ecfd21; border-color: #FFFFFF; }
+  .sx-hs-cta--ghost { background: transparent; color: #ecfd21; }
+  .sx-hs-cta--ghost:hover { background: #ecfd21; color: #000; border-color: #ecfd21; }
 
   @media (max-width: 1366px) {
     .sx-hs-title { font-size: 138px; letter-spacing: -5px; }
@@ -78,21 +118,12 @@ const bgImage  = content.bg_image || '';
     .sx-hs-title { font-size: 131px; letter-spacing: -4px; }
   }
   @media (max-width: 768px) {
-    /* Mobile: drop the 88vh / flex-center anchor — when viewport is small the
-       content (title + subtitle + cta) would otherwise get centered and the
-       CTA collides with the subtitle. Use natural block flow with generous
-       bottom padding instead. */
-    .sx-hs {
-      padding: 40px 24px 60px;
-      min-height: 0;
-      display: block;
-    }
+    .sx-hs { padding: 40px 24px 60px; min-height: 0; display: block; }
+    .sx-hs--overlay { padding: 120px 24px 60px; min-height: 80vh; display: flex; }
     .sx-hs-inner { display: block; }
     .sx-hs-title { font-size: 65px; letter-spacing: -2px; margin-bottom: 24px; }
-    .sx-hs-sub {
-      font-size: 16px; line-height: 16px; height: 48px;
-      margin-bottom: 32px;
-    }
+    .sx-hs-sub { font-size: 16px; line-height: 16px; margin-bottom: 32px; }
     .sx-hs-cta { font-size: 18px; padding: 20px 40px; }
+    .sx-hs-ctas { flex-direction: column; gap: 14px; align-items: stretch; }
   }
 </style>

@@ -11,13 +11,18 @@ const { content = {} } = Astro.props;
 const title    = content.title    || '';
 const subtitle = content.subtitle || '';
 const size     = (content.size === 'lg' ? 'lg' : 'sm') as 'sm' | 'lg';
-const subColor = content.subtitle_color || (size === 'lg' ? '#FFFFFF' : '#A6A6A6');
+/* subtitle_style:
+   - default (size=sm): Oswald 42px 600 grey
+   - default (size=lg): Inter 28px 500 white
+   - 'event':           Oswald 72px 600 yellow (e.g. "june 27-28 berlin") */
+const subStyle = content.subtitle_style || 'default';
+const subColor = content.subtitle_color || '';
 ---
 
-<section data-nova-el="section-title" class={`sx-st sx-st--${size}`}>
+<section data-nova-el="section-title" class={`sx-st sx-st--${size} sx-st--sub-${subStyle}`}>
   <div class="sx-st-inner">
     {title && <h2 class="sx-st-title">{title}</h2>}
-    {subtitle && <p class="sx-st-sub" style={`color:${subColor}`}>{subtitle}</p>}
+    {subtitle && <p class="sx-st-sub" style={subColor ? `color:${subColor}` : undefined}>{subtitle}</p>}
   </div>
 </section>
 
@@ -35,10 +40,18 @@ const subColor = content.subtitle_color || (size === 'lg' ? '#FFFFFF' : '#A6A6A6
   }
 
   .sx-st--sm .sx-st-title { font-size: 42px; font-weight: 600; color: #ecfd21; }
-  .sx-st--sm .sx-st-sub   { font-size: 42px; }
+  .sx-st--sm .sx-st-sub   { font-size: 42px; color: #A6A6A6; }
 
+  .sx-st--lg { padding: 60px 50px; }
   .sx-st--lg .sx-st-title { font-size: 180px; font-weight: 900; color: #FFFFFF; letter-spacing: -4px; }
-  .sx-st--lg .sx-st-sub   { font-size: 28px; font-family: 'Inter', sans-serif; font-weight: 500; }
+  .sx-st--lg .sx-st-sub   { font-size: 28px; font-family: 'Inter', sans-serif; font-weight: 500; color: #FFFFFF; }
+
+  /* Event-style subtitle: Oswald 72px 600 yellow, stacked (e.g. "june 27-28\nberlin"). */
+  .sx-st--sub-event .sx-st-sub {
+    font-family: 'Oswald', sans-serif; font-size: 72px; font-weight: 600;
+    color: #ecfd21; text-transform: uppercase;
+    white-space: pre-line; line-height: .95; margin-top: 16px;
+  }
 
   @media (max-width: 1024px) {
     .sx-st--lg .sx-st-title { font-size: 120px; letter-spacing: -3px; }
@@ -48,5 +61,6 @@ const subColor = content.subtitle_color || (size === 'lg' ? '#FFFFFF' : '#A6A6A6
     .sx-st--sm .sx-st-title, .sx-st--sm .sx-st-sub { font-size: 32px; }
     .sx-st--lg .sx-st-title { font-size: 72px; letter-spacing: -2px; }
     .sx-st--lg .sx-st-sub   { font-size: 16px; }
+    .sx-st--sub-event .sx-st-sub { font-size: 40px; }
   }
 </style>
