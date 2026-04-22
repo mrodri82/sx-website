@@ -74,8 +74,23 @@ def extract_article_body(html: str) -> str:
     # strip inline on-handlers
     body = re.sub(r'\son[a-z]+\s*=\s*"[^"]*"', '', body, flags=re.I)
     body = re.sub(r"\son[a-z]+\s*=\s*'[^']*'", '', body, flags=re.I)
-    # rewrite sxtech.eu asset URLs to sx.zds.es (we've mirrored 2026/04/ uploads)
+
+    # The elementor-post block includes the whole page chrome (nav, logo,
+    # hero image, hero title, plus the actual article). Trim everything before
+    # the first text-editor widget — that's where the real prose starts.
+    text_editor_idx = body.find('elementor-widget-text-editor')
+    if text_editor_idx > 0:
+        # walk backwards to find the opening <div> of that widget
+        open_div = body.rfind('<div', 0, text_editor_idx)
+        if open_div > 0:
+            body = body[open_div:]
+
+    # rewrite sxtech.eu asset URLs to sx.zds.es
     body = body.replace("https://sxtech.eu/wp-content/uploads", f"{DST}/wp-content/uploads")
+    # drop any remaining nav-menu / logo-heading widgets (safety net)
+    body = re.sub(
+        r'<div[^>]*elementor-widget-nav-menu[^>]*>.*?(?=<div[^>]*elementor-(widget|element)-)',
+        '', body, flags=re.S|re.I)
     return body.strip()
 
 def upsert_page(slug: str, title: str, sections: list) -> int:
