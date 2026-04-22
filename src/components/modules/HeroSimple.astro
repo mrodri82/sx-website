@@ -27,7 +27,10 @@ const bgImage  = content.bg_image || '';
 const videoUrl = content.video_url || '';
 const poster   = content.poster_url || '';
 const chips: Array<{label: string; href?: string}> = Array.isArray(content.chips) ? content.chips : [];
-const cta2Ghost = content.cta2_ghost !== false;
+/* cta2_variant: 'ghost' (default, yellow border + transparent) | 'solid' (yellow fill)
+   | 'white' (white fill + white border). cta2_ghost=false kept as legacy shortcut. */
+const cta2Variant = (content.cta2_variant as string)
+  || (content.cta2_ghost === false ? 'solid' : 'ghost');
 
 const hasMedia = !!(videoUrl || bgImage);
 ---
@@ -60,7 +63,7 @@ const hasMedia = !!(videoUrl || bgImage);
     {(ctaText || cta2Text) && (
       <div class="sx-hs-ctas">
         {ctaText  && <a href={ctaUrl}  class="sx-hs-cta">{ctaText}</a>}
-        {cta2Text && <a href={cta2Url} class={`sx-hs-cta${cta2Ghost ? ' sx-hs-cta--ghost' : ''}`}>{cta2Text}</a>}
+        {cta2Text && <a href={cta2Url} class={`sx-hs-cta${cta2Variant !== 'solid' ? ' sx-hs-cta--' + cta2Variant : ''}`}>{cta2Text}</a>}
       </div>
     )}
   </div>
@@ -124,15 +127,18 @@ const hasMedia = !!(videoUrl || bgImage);
   .sx-hs-cta {
     display: inline-block;
     background: #ecfd21; color: #000; text-decoration: none;
-    padding: 25px 50px;
-    font-family: 'Inter', sans-serif; font-size: 28px; font-weight: 500;
+    padding: 18px 36px;
+    font-family: 'Inter', sans-serif; font-size: 19px; font-weight: 500;
+    text-transform: uppercase;
     border: 1px solid #ecfd21;
-    white-space: pre-line; text-align: center; line-height: 1.1;
+    white-space: pre-line; text-align: center; line-height: 1.2;
     transition: background .15s, color .15s, border-color .15s;
   }
   .sx-hs-cta:hover { background: transparent; color: #ecfd21; border-color: #FFFFFF; }
   .sx-hs-cta--ghost { background: transparent; color: #ecfd21; }
   .sx-hs-cta--ghost:hover { background: #ecfd21; color: #000; border-color: #ecfd21; }
+  .sx-hs-cta--white { background: #FFFFFF; color: #000; border-color: #FFFFFF; }
+  .sx-hs-cta--white:hover { background: transparent; color: #FFFFFF; border-color: #FFFFFF; }
 
   @media (max-width: 1366px) {
     .sx-hs-title { font-size: 138px; letter-spacing: -5px; }
@@ -146,7 +152,7 @@ const hasMedia = !!(videoUrl || bgImage);
     .sx-hs-inner { display: block; }
     .sx-hs-title { font-size: 65px; letter-spacing: -2px; margin-bottom: 24px; }
     .sx-hs-sub { font-size: 16px; line-height: 16px; margin-bottom: 32px; }
-    .sx-hs-cta { font-size: 18px; padding: 20px 40px; }
+    .sx-hs-cta { font-size: 16px; padding: 16px 28px; }
     .sx-hs-ctas { flex-direction: column; gap: 14px; align-items: stretch; }
   }
 </style>
