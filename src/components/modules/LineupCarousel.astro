@@ -33,10 +33,11 @@ const loopItems: Array<Item & { isClone?: boolean }> = [
       {subtitle && <p class="sx-lc-sub">{subtitle}</p>}
     </header>
 
-    <div class="sx-lc-viewport" data-clone-count={CLONE} data-real-count={items.length}>
-      <button class="sx-lc-nav sx-lc-prev" type="button" aria-label="Previous">
-        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+    <div class="sx-lc-row">
+      <button class="sx-lc-nav sx-lc-prev" type="button" aria-label="Previous slide">
+        <svg aria-hidden="true" viewBox="0 0 448 512" xmlns="http://www.w3.org/2000/svg"><path d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"/></svg>
       </button>
+      <div class="sx-lc-viewport" data-clone-count={CLONE} data-real-count={items.length}>
       <div class="sx-lc-track" data-autoplay={autoplayMs}>
         {loopItems.map((it) => (
           <article class={`sx-lc-card${it.isClone ? ' sx-lc-card--clone' : ''}`}>
@@ -60,8 +61,9 @@ const loopItems: Array<Item & { isClone?: boolean }> = [
           </article>
         ))}
       </div>
-      <button class="sx-lc-nav sx-lc-next" type="button" aria-label="Next">
-        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      </div>
+      <button class="sx-lc-nav sx-lc-next" type="button" aria-label="Next slide">
+        <svg aria-hidden="true" viewBox="0 0 448 512" xmlns="http://www.w3.org/2000/svg"><path d="M190.5 66.9l22.2-22.2c9.4-9.4 24.6-9.4 33.9 0L441 239c9.4 9.4 9.4 24.6 0 33.9L246.6 467.3c-9.4 9.4-24.6 9.4-33.9 0l-22.2-22.2c-9.5-9.5-9.3-25 .4-34.3L311.4 296H24c-13.3 0-24-10.7-24-24v-32c0-13.3 10.7-24 24-24h287.4L190.9 101.2c-9.8-9.3-10-24.8-.4-34.3z"/></svg>
       </button>
     </div>
   </div>
@@ -83,7 +85,9 @@ const loopItems: Array<Item & { isClone?: boolean }> = [
     color: #D1D1D1; margin: 0;
   }
 
-  .sx-lc-viewport { position: relative; overflow: hidden; }
+  /* Arrows live outside the overflow-clipped viewport (sxtech layout). */
+  .sx-lc-row { display: flex; align-items: center; gap: 16px; }
+  .sx-lc-viewport { flex: 1; min-width: 0; position: relative; overflow: hidden; }
   .sx-lc-track {
     display: flex; gap: 14px;
     transition: transform .6s cubic-bezier(.4,0,.2,1);
@@ -121,18 +125,17 @@ const loopItems: Array<Item & { isClone?: boolean }> = [
     color: #000; margin-top: 2px;
   }
 
-  /* Thick, bold arrow buttons (outside the track) */
+  /* Thick, bold arrow buttons (sxtech fa-arrow svg path, outside viewport) */
   .sx-lc-nav {
-    position: absolute; top: 50%; transform: translateY(-50%);
-    width: 44px; height: 44px; z-index: 5;
+    flex: 0 0 44px;
+    width: 44px; height: 44px;
     background: transparent; border: 0; color: #ecfd21;
     cursor: pointer; padding: 0;
     display: flex; align-items: center; justify-content: center;
     transition: color .15s;
   }
+  .sx-lc-nav svg { width: 28px; height: 32px; fill: currentColor; }
   .sx-lc-nav:hover { color: #fff; }
-  .sx-lc-prev { left: 8px; }
-  .sx-lc-next { right: 8px; }
 
   @media (max-width: 1200px) {
     .sx-lc-card { flex: 0 0 calc((100% - 2 * 14px) / 3); }

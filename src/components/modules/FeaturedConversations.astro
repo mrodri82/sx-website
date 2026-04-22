@@ -78,10 +78,11 @@ const items: Item[] = Array.isArray(content.items) ? content.items : [];
   }
   a.sx-fc-card:hover img { transform: scale(1.03); }
 
+  /* Force white over the parent yellow cascade (.sx-fc has color: #ecfd21). */
   .sx-fc-label, .sx-fc-status {
     position: absolute; top: 20px; z-index: 2;
     font-family: 'Inter', sans-serif; font-size: 18px; font-weight: 400;
-    text-transform: uppercase; color: #fff;
+    text-transform: uppercase; color: #fff !important;
   }
   .sx-fc-label  { left: 20px; }
   .sx-fc-status { right: 20px; }
@@ -90,7 +91,7 @@ const items: Item[] = Array.isArray(content.items) ? content.items : [];
     position: absolute; left: 20px; right: 20px; bottom: 24px; z-index: 2;
     font-family: 'Oswald', sans-serif; font-weight: 900;
     font-size: 40px; line-height: 1;
-    text-transform: uppercase; color: #fff;
+    text-transform: uppercase; color: #fff !important;
   }
 
   @media (max-width: 900px) {
