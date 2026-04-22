@@ -26,6 +26,7 @@ const cta2Url  = content.cta2_url  || '#';
 const bgImage  = content.bg_image || '';
 const videoUrl = content.video_url || '';
 const poster   = content.poster_url || '';
+const chips: Array<{label: string; href?: string}> = Array.isArray(content.chips) ? content.chips : [];
 
 const hasMedia = !!(videoUrl || bgImage);
 ---
@@ -45,6 +46,15 @@ const hasMedia = !!(videoUrl || bgImage);
 
   <div class="sx-hs-inner">
     {title && <h1 class="sx-hs-title">{title}</h1>}
+    {chips.length > 0 && (
+      <div class="sx-hs-chips">
+        {chips.map((c) => (
+          c.href
+            ? <a class="sx-hs-chip" href={c.href}>{c.label}</a>
+            : <span class="sx-hs-chip">{c.label}</span>
+        ))}
+      </div>
+    )}
     {subtitle && <p class="sx-hs-sub">{subtitle}</p>}
     {(ctaText || cta2Text) && (
       <div class="sx-hs-ctas">
@@ -97,6 +107,17 @@ const hasMedia = !!(videoUrl || bgImage);
     color: #ecfd21; text-transform: uppercase;
     margin: 0 0 40px;
     white-space: pre-line;
+  }
+  .sx-hs-chips {
+    display: flex; flex-wrap: wrap; gap: 12px;
+    margin: 0 0 32px;
+  }
+  .sx-hs-chip {
+    display: inline-block;
+    background: #ecfd21; color: #000; text-decoration: none;
+    padding: 8px 24px;
+    font-family: 'Oswald', sans-serif; font-size: 20px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 1px;
   }
   .sx-hs-ctas { display: flex; flex-wrap: wrap; gap: 12px; }
   .sx-hs-cta {

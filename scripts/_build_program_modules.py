@@ -21,6 +21,11 @@ sections = [
         "id": -1, "type": "HeroSimple", "mode": "detached",
         "data": {
             "title": "THE PROGRAM",
+            "chips": [
+                {"label": "26.6.26"},
+                {"label": "27.6.26"},
+                {"label": "28.6.26"},
+            ],
             "subtitle": "A multidisciplinary adult event blending ADULT entertainment, art, and live shows. Top influencers, media, SEX educators, sexologists, and kink communities all in one place.",
             "cta_text": "BUY TICKET",  "cta_url":  "https://sxtech.eu/#tickets",
             "cta2_text": "WIN TICKET", "cta2_url": "https://sxtech.eu/#spinner",
@@ -34,6 +39,7 @@ sections = [
                 {
                     "title": "SXMAwards",
                     "description": "<strong>26.6.26 — RSVP ONLY</strong><br>SEX MARKETING AWARDS honor the visionaries redefining pleasure and shaping the future of sex tech.<br><br>BEST SOCIAL MEDIA CAMPAIGN · Best Creator Platform Collaboration · Best Marketing Agency · Launch of the Year",
+                    "bg_image": f"{DST}{UPL}/tlo-2-1.png",
                     "buttons": [
                         {"label": "VOTING 01.04.2026", "href": "https://sxma.sxtech.eu/"},
                         {"label": "WIN TICKET AND VOTE", "href": "https://sxma.sxtech.eu/"},
@@ -42,6 +48,7 @@ sections = [
                 {
                     "title": "RED MOON\nPARTY",
                     "description": "<strong>28.6.26 — STARTS AT 21:30</strong><br>The afterparty of SX Festival — exclusive venue, late-night programme, surprise performers.",
+                    "bg_image": f"{DST}{UPL}/backg-2-1.png",
                     "buttons": [
                         {"label": "TICKETS COMING SOON", "href": "https://www.canva.com/design/DAGk477Z-Vk/Le7giNor9aVgix6F16Uu1Q/view"},
                     ],
@@ -49,6 +56,7 @@ sections = [
                 {
                     "title": "SX FESTIVAL",
                     "description": "<strong>27-28.6.26 · 11:00-20:30</strong><br>Two days of panels, workshops, performances and experiences across multiple stages and the SX Expo floor.",
+                    "bg_image": f"{DST}{UPL}/cc-1.png",
                     "buttons": [
                         {"label": "FOR REGULAR VISITORS",  "href": "https://sxtech.eu/#tickets"},
                         {"label": "FOR BUSINESS VISITORS", "href": "https://sxtech.eu/#tickets"},

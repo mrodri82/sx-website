@@ -5,6 +5,17 @@
     "mode": "detached",
     "data": {
       "title": "THE PROGRAM",
+      "chips": [
+        {
+          "label": "26.6.26"
+        },
+        {
+          "label": "27.6.26"
+        },
+        {
+          "label": "28.6.26"
+        }
+      ],
       "subtitle": "A multidisciplinary adult event blending ADULT entertainment, art, and live shows. Top influencers, media, SEX educators, sexologists, and kink communities all in one place.",
       "cta_text": "BUY TICKET",
       "cta_url": "https://sxtech.eu/#tickets",
@@ -22,6 +33,7 @@
         {
           "title": "SXMAwards",
           "description": "<strong>26.6.26 — RSVP ONLY</strong><br>SEX MARKETING AWARDS honor the visionaries redefining pleasure and shaping the future of sex tech.<br><br>BEST SOCIAL MEDIA CAMPAIGN · Best Creator Platform Collaboration · Best Marketing Agency · Launch of the Year",
+          "bg_image": "https://sx.zds.es/wp-content/uploads/2026/04/tlo-2-1.png",
           "buttons": [
             {
               "label": "VOTING 01.04.2026",
@@ -36,6 +48,7 @@
         {
           "title": "RED MOON\nPARTY",
           "description": "<strong>28.6.26 — STARTS AT 21:30</strong><br>The afterparty of SX Festival — exclusive venue, late-night programme, surprise performers.",
+          "bg_image": "https://sx.zds.es/wp-content/uploads/2026/04/backg-2-1.png",
           "buttons": [
             {
               "label": "TICKETS COMING SOON",
@@ -46,6 +59,7 @@
         {
           "title": "SX FESTIVAL",
           "description": "<strong>27-28.6.26 · 11:00-20:30</strong><br>Two days of panels, workshops, performances and experiences across multiple stages and the SX Expo floor.",
+          "bg_image": "https://sx.zds.es/wp-content/uploads/2026/04/cc-1.png",
           "buttons": [
             {
               "label": "FOR REGULAR VISITORS",
