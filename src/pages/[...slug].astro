@@ -160,8 +160,10 @@ const description = seoDescription || undefined;
   <Navigation variant={(() => {
     const first = sections[0] as any;
     if (!first) return 'solid';
-    if (first.type === 'HeroVideo') return 'transparent';
-    if (first.type === 'HeroSimple' && (first.data?.video_url || first.data?.bg_image)) return 'transparent';
+    /* sections are transformed via getPageSections: section.type -> component,
+       section.data -> content. Match on the resolved names. */
+    if (first.component === 'HeroVideo') return 'transparent';
+    if (first.component === 'HeroSimple' && (first.content?.video_url || first.content?.bg_image)) return 'transparent';
     return 'solid';
   })()} />
 
