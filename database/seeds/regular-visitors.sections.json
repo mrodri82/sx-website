@@ -1,0 +1,144 @@
+[
+  {
+    "id": -1,
+    "type": "HeroSimple",
+    "mode": "detached",
+    "data": {
+      "title": "THE\nLINEUP",
+      "subtitle": "Join artists, creators, and performers shaping\nmodern kink, fetish, and alternative culture at one\nof the most anticipated festivals of 2026.",
+      "cta_text": "GET TICKETS",
+      "cta_url": "https://www.eventbrite.ie/e/sx-festival-sx-expo-2026-berlin-tickets-1550925051579",
+      "bg_image": "https://sx.zds.es/wp-content/uploads/2026/04/backg-3.png"
+    }
+  },
+  {
+    "id": -2,
+    "type": "LineupCarousel",
+    "mode": "detached",
+    "data": {
+      "heading": "LINEUP",
+      "subtitle": "WATCH WHAT UNFOLDS",
+      "autoplay_ms": 5000,
+      "items": [
+        {
+          "name": "MUSE SACRED",
+          "role": "Speaker",
+          "image": "https://sx.zds.es/wp-content/uploads/2026/04/muse.png"
+        },
+        {
+          "name": "MARINA VALMONT",
+          "role": "Host",
+          "image": "https://sx.zds.es/wp-content/uploads/2026/04/marina.png",
+          "href": "https://www.instagram.com/marinavalmont/"
+        },
+        {
+          "name": "MISS MASOCHIST",
+          "role": "Speaker",
+          "image": "https://sx.zds.es/wp-content/uploads/2026/04/PHOTO3.png",
+          "href": "https://www.instagram.com/miss_masochist_/"
+        },
+        {
+          "name": "MAGDALENA PIECH",
+          "role": "Artist",
+          "image": "https://sx.zds.es/wp-content/uploads/2026/04/PHOTO4.png"
+        },
+        {
+          "name": "ANNE ALLURA",
+          "role": "Artist",
+          "image": "https://sx.zds.es/wp-content/uploads/2026/04/annaalura.png"
+        },
+        {
+          "name": "FIFI FANTOME",
+          "role": "Artist",
+          "image": "https://sx.zds.es/wp-content/uploads/2026/04/fifi.png"
+        },
+        {
+          "name": "KYLIE DARLING",
+          "role": "Artist",
+          "image": "https://sx.zds.es/wp-content/uploads/2026/04/kylie-2.png"
+        },
+        {
+          "name": "EROTIC CIRCUITS",
+          "role": "Artist",
+          "image": "https://sx.zds.es/wp-content/uploads/2026/04/erotic.png"
+        },
+        {
+          "name": "MARIE SAUVAGE",
+          "role": "Speaker",
+          "image": "https://sx.zds.es/wp-content/uploads/2026/04/marie.png",
+          "href": "https://www.instagram.com/marie.sauvage/"
+        },
+        {
+          "name": "CATHERINE DE NOIRE",
+          "role": "Host",
+          "image": "https://sx.zds.es/wp-content/uploads/2026/04/cath.png",
+          "href": "https://www.instagram.com/catherine_de_noire/"
+        },
+        {
+          "name": "CHARLIE BOUQUETT",
+          "role": "Artist",
+          "image": "https://sx.zds.es/wp-content/uploads/2026/04/chartlie.png",
+          "href": "https://www.instagram.com/charliebouquett/"
+        }
+      ]
+    }
+  },
+  {
+    "id": -3,
+    "type": "FeaturedConversations",
+    "mode": "detached",
+    "data": {
+      "heading": "FEATURED CONVERSATIONS",
+      "subtitle": "VOICES OF SX FESTIVAL & SX EXPO",
+      "autoplay_ms": 5000,
+      "items": [
+        {
+          "label": "INTERVIEW",
+          "status": "READ",
+          "name": "MARIUS ROHDE",
+          "image": "https://sx.zds.es/wp-content/uploads/2026/04/25.png",
+          "href": "https://sxtech.eu/2026/04/19/marius-rohde-interview/"
+        },
+        {
+          "label": "INTERVIEW",
+          "status": "COMING SOON",
+          "name": "CAT MINT",
+          "image": "https://sx.zds.es/wp-content/uploads/2026/04/25-1.png"
+        },
+        {
+          "label": "INTERVIEW",
+          "status": "COMING SOON",
+          "name": "CHARLIE BOUQUETT",
+          "image": "https://sx.zds.es/wp-content/uploads/2026/04/25-2.png"
+        }
+      ]
+    }
+  },
+  {
+    "id": -4,
+    "type": "IconLinkList",
+    "mode": "detached",
+    "data": {
+      "heading": "GET YOUR\nTICKETS",
+      "items": [
+        {
+          "label": "DAY 1  SATURDAY",
+          "href": "https://www.eventbrite.ie/e/sx-festival-sx-expo-2026-berlin-tickets-1550925051579"
+        },
+        {
+          "label": "DAY 2 SUNDAY",
+          "href": "https://www.eventbrite.ie/e/sx-festival-sx-expo-2026-berlin-tickets-1550925051579"
+        },
+        {
+          "label": "WEEKEND",
+          "href": "https://www.eventbrite.ie/e/sx-festival-sx-expo-2026-berlin-tickets-1550925051579"
+        },
+        {
+          "label": "RED MOON PARTY",
+          "href": "https://www.eventbrite.ie/e/sx-festival-sx-expo-2026-berlin-tickets-1550925051579",
+          "color": "#e30613"
+        }
+      ]
+    }
+  }
+]

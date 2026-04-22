@@ -9,7 +9,7 @@
  *   - items:    Array<{ image, label, name, href? }>
  *   - autoplay_ms: default 5000
  */
-interface Item { image: string; label: string; name: string; href?: string; }
+interface Item { image: string; label: string; status?: string; name: string; href?: string; }
 interface Props { content: Record<string, any>; }
 const { content = {} } = Astro.props;
 const heading  = content.heading  || 'FEATURED CONVERSATIONS';
@@ -34,7 +34,10 @@ const autoplayMs = Number(content.autoplay_ms) || 5000;
               <a class="sx-fc-imgwrap" href={it.href} target={it.href.startsWith('http') ? '_blank' : undefined} rel="noopener">
                 <img src={it.image} alt={it.name} loading="lazy" />
                 <div class="sx-fc-meta">
-                  <div class="sx-fc-label">{it.label}</div>
+                  <div class="sx-fc-labels">
+                    <span class="sx-fc-label">{it.label}</span>
+                    {it.status && <span class="sx-fc-status">{it.status}</span>}
+                  </div>
                   <div class="sx-fc-name">{it.name}</div>
                 </div>
               </a>
@@ -42,7 +45,10 @@ const autoplayMs = Number(content.autoplay_ms) || 5000;
               <div class="sx-fc-imgwrap">
                 <img src={it.image} alt={it.name} loading="lazy" />
                 <div class="sx-fc-meta">
-                  <div class="sx-fc-label">{it.label}</div>
+                  <div class="sx-fc-labels">
+                    <span class="sx-fc-label">{it.label}</span>
+                    {it.status && <span class="sx-fc-status">{it.status}</span>}
+                  </div>
                   <div class="sx-fc-name">{it.name}</div>
                 </div>
               </div>
@@ -56,18 +62,19 @@ const autoplayMs = Number(content.autoplay_ms) || 5000;
 </section>
 
 <style>
+  /* Values extracted 1:1 from sxtech.eu post-17.css (elements b646e6a/6dd4495/a87da93/702a734) */
   .sx-fc { background: #000; padding: 60px 50px 80px; color: #ecfd21; }
   .sx-fc-inner { max-width: 1600px; margin: 0 auto; }
   .sx-fc-head { margin-bottom: 32px; }
   .sx-fc-title {
-    font-family: 'Oswald', sans-serif; font-weight: 800;
-    font-size: clamp(48px, 6vw, 96px); line-height: 1;
-    letter-spacing: -0.02em; text-transform: uppercase;
+    font-family: 'Oswald', sans-serif; font-weight: 600;
+    font-size: 42px; line-height: 1;
+    text-transform: uppercase;
     color: #ecfd21; margin: 0 0 4px;
   }
   .sx-fc-sub {
-    font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 400;
-    color: #D1D1D1; text-transform: uppercase; letter-spacing: 0.5px;
+    font-family: 'Inter', sans-serif; font-size: 19px; font-weight: 400;
+    color: #D1D1D1; text-transform: uppercase;
     margin: 0;
   }
 
