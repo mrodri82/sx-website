@@ -140,6 +140,10 @@ const hasMedia = !!(videoUrl || bgImage);
     font-family: 'Oswald', sans-serif; font-size: 20px; font-weight: 600;
     text-transform: uppercase; letter-spacing: 1px;
     border-radius: 999px;
+    /* sxtech measured pill width (desktop) — keeps all 3 date pills the
+       same physical size regardless of the text they carry. */
+    min-width: 268.325px;
+    text-align: center;
   }
   .sx-hs-chip--primary { background: #FF6600; color: #555; }
   .sx-hs-chip--muted   { background: #D1D1D1; color: #ecfd21; }
@@ -177,5 +181,6 @@ const hasMedia = !!(videoUrl || bgImage);
     .sx-hs-sub { font-size: 16px; line-height: 16px; margin-bottom: 32px; }
     .sx-hs-cta { font-size: 16px; padding: 16px 28px; }
     .sx-hs-ctas { flex-direction: column; gap: 14px; align-items: stretch; }
+    .sx-hs-chip { min-width: 0; padding: 6px 18px; font-size: 16px; }
   }
 </style>

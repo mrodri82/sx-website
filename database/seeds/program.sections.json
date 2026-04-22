@@ -293,8 +293,8 @@
     "type": "LocationBanner",
     "mode": "detached",
     "data": {
-      "bg_image": "https://sx.zds.es/wp-content/uploads/2026/04/tlo-2-1.png",
-      "height": "560px",
+      "bg_image": "https://sxtech.eu/wp-content/uploads/2026/03/cc.png",
+      "height": "520px",
       "color": "#ecfd21",
       "bw": true,
       "top_left": {
@@ -310,7 +310,7 @@
           "expo",
           "berlin"
         ],
-        "size": "sm"
+        "size": "lg"
       },
       "bottom_right": {
         "lines": [
