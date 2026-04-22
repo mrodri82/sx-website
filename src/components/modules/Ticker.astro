@@ -1,0 +1,57 @@
+---
+/**
+ * Ticker — horizontally scrolling text band (marquee-style). Used for
+ * "FULL PROGRAM COMING SOON" etc.
+ *
+ * Fields:
+ *   - text: the single phrase to repeat
+ *   - separator: default " • "
+ *   - speed_sec: animation duration in seconds (lower = faster); default 30
+ *   - theme: 'yellow' (default — black text on yellow bg) | 'inverse'
+ *   - repeat: how many copies to render in one loop segment (default 6)
+ */
+interface Props { content: Record<string, any>; }
+const { content = {} } = Astro.props;
+const text = content.text || '';
+const sep = content.separator || ' • ';
+const speed = Number(content.speed_sec) || 30;
+const theme = (content.theme === 'inverse' ? 'inverse' : 'yellow') as 'yellow'|'inverse';
+const repeat = Number(content.repeat) || 6;
+
+const phrase = Array.from({ length: repeat }).map(() => text).join(sep) + sep;
+---
+
+<section data-nova-el="ticker" class={`sx-tk sx-tk--${theme}`} style={`--speed:${speed}s`}>
+  <div class="sx-tk-track">
+    {/* duplicated so the marquee is seamless */}
+    <span class="sx-tk-phrase">{phrase}</span>
+    <span class="sx-tk-phrase" aria-hidden="true">{phrase}</span>
+  </div>
+</section>
+
+<style>
+  .sx-tk {
+    overflow: hidden; white-space: nowrap;
+    padding: 18px 0;
+  }
+  .sx-tk--yellow  { background: #ecfd21; color: #000; }
+  .sx-tk--inverse { background: #000;    color: #ecfd21; }
+  .sx-tk-track {
+    display: inline-flex; gap: 0;
+    animation: sx-tk-scroll var(--speed, 30s) linear infinite;
+    will-change: transform;
+  }
+  .sx-tk-phrase {
+    font-family: 'Oswald', sans-serif; font-weight: 700;
+    font-size: 32px; line-height: 1;
+    text-transform: uppercase; letter-spacing: 1px;
+    padding-inline: 10px;
+  }
+  @keyframes sx-tk-scroll {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+  @media (max-width: 768px) {
+    .sx-tk-phrase { font-size: 22px; }
+  }
+</style>

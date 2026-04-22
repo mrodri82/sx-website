@@ -118,20 +118,21 @@ for (url, slug, title, date, cat, img) in POSTS:
     print(f"  body: {len(body)} chars")
 
     hero_img = f"{DST}{UPL}/{img}"
+    # Hero = full-bleed image under transparent nav (HeroSimple auto-detects
+    # bg_image → nav goes transparent + hero extends to top).
     sections = [
         {
             "id": -1, "type": "HeroSimple", "mode": "detached",
             "data": {
                 "title": title,
                 "subtitle": f"{cat} · {date}",
-                "min_height": "48vh",
+                "bg_image": hero_img,
                 "align": "start",
             },
         },
         {
             "id": -2, "type": "ArticleContent", "mode": "detached",
             "data": {
-                "hero_image": hero_img,
                 "category": cat,
                 "date": date,
                 "html": body,

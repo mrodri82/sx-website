@@ -15,14 +15,20 @@ const { content = {} } = Astro.props;
 const items: Item[] = Array.isArray(content.items) ? content.items : [];
 const autoplayMs = Number(content.autoplay_ms) || 4000;
 const theme = (content.theme === 'light' ? 'light' : 'dark') as 'light'|'dark';
+
+/* Infinite loop: render items tripled so there's always fillers on both sides
+   of the active slide, no matter where we are in the cycle. Script starts at
+   index=items.length (middle copy) and jumps back to the middle when it
+   reaches either edge. */
+const tripled = items.length > 0 ? [...items, ...items, ...items] : [];
 ---
 
 <section data-nova-el="festival-slider" class={`sx-fs sx-fs--${theme}`}>
-  <div class="sx-fs-outer">
+  <div class="sx-fs-outer" data-real-count={items.length}>
     <div class="sx-fs-window">
       <div class="sx-fs-track" data-autoplay={autoplayMs}>
-        {items.map((it, i) => (
-          <div class={`sx-fs-slide${i === 0 ? ' is-active' : ''}`}>
+        {tripled.map((it, i) => (
+          <div class={`sx-fs-slide${i === items.length ? ' is-active' : ''}`}>
             <img class="sx-fs-thumb" src={it.thumb} alt="" loading="lazy" />
             <img class="sx-fs-large" src={it.large} alt="" loading="lazy" />
           </div>
@@ -48,6 +54,7 @@ const theme = (content.theme === 'light' ? 'light' : 'dark') as 'light'|'dark';
     display: flex; align-items: center;
     transition: transform .5s ease;
   }
+  .sx-fs-track.is-jumping { transition: none; }
 
   .sx-fs-slide {
     flex: 0 0 225px; height: 490px; margin: 0 10px;
@@ -101,7 +108,11 @@ const theme = (content.theme === 'light' ? 'light' : 'dark') as 'light'|'dark';
       if (!track || slides.length === 0) return;
 
       const intervalMs = Number(track.dataset.autoplay) || 4000;
-      let idx = 0;
+      /* Items are rendered tripled (3× real). Start idx in the middle copy so
+         we can scroll left AND right before hitting an edge. When we reach
+         either edge, silently jump back to the equivalent index in the middle. */
+      const real = Number(root.dataset.realCount) || Math.floor(slides.length / 3);
+      let idx = real;
       let tickerStart = performance.now();
 
       function apply() {
@@ -109,15 +120,25 @@ const theme = (content.theme === 'light' ? 'light' : 'dark') as 'light'|'dark';
         const container = track!.parentElement!;
         const active = slides[idx];
         const cRect = container.getBoundingClientRect();
-        const aRect = active.getBoundingClientRect();
         const offset = (active.offsetLeft + active.offsetWidth / 2) - cRect.width / 2;
         track!.style.transform = `translateX(${-offset}px)`;
       }
+      function jumpTo(i: number) {
+        track!.classList.add('is-jumping');
+        idx = i;
+        apply();
+        track!.getBoundingClientRect();
+        track!.classList.remove('is-jumping');
+      }
       function step(d: 1 | -1) {
-        idx = (idx + d + slides.length) % slides.length;
+        idx += d;
         tickerStart = performance.now();
         apply();
       }
+      track.addEventListener('transitionend', () => {
+        if (idx >= real * 2)      jumpTo(idx - real);
+        else if (idx < real)      jumpTo(idx + real);
+      });
 
       prev?.addEventListener('click', () => step(-1));
       next?.addEventListener('click', () => step(1));

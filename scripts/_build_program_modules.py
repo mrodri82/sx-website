@@ -1,6 +1,9 @@
 """Build program page — LIGHT theme (white bg, black text, centered).
 Matches sxtech /program layout where hero is white with black title + centered,
-nav logo black."""
+nav logo black. Includes date-pill variants, BUY/WIN buttons with inverse
+colors, 3 full-width ProgramBanners (sxtech-style), then my 3 FeatureCards as
+a compact recap, followed by TOP VOICES slider, ticker, and Exhibit/Sponsor
+buttons."""
 import base64, json, ssl, urllib.request
 from pathlib import Path
 
@@ -27,56 +30,105 @@ sections = [
             "align": "center",
             "min_height": "48vh",
             "chips": [
-                {"label": "26.6.26"},
-                {"label": "27.6.26"},
-                {"label": "28.6.26"},
+                {"label": "26.6.26", "variant": "primary"},
+                {"label": "27.6.26", "variant": "muted"},
+                {"label": "28.6.26", "variant": "muted"},
             ],
             "subtitle": "A multidisciplinary adult event blending ADULT entertainment, art, and live shows. Top influencers, media, SEX educators, sexologists, and kink communities all in one place.",
-            "cta_text": "BUY TICKET",  "cta_url":  "https://sxtech.eu/#tickets",
-            "cta2_text": "WIN TICKET", "cta2_url": "https://sxtech.eu/#spinner",
+            "cta_text": "BUY<br>TICKET",   "cta_url":  "https://sxtech.eu/#tickets",  "cta_variant": "black",
+            "cta2_text": "WIN<br>TICKET",  "cta2_url": "https://sxtech.eu/#spinner", "cta2_variant": "solid",
         },
     },
+    # --- sxtech 3 banners (kept as the primary design, even if minimal) ---
     {
-        "id": -2, "type": "FeatureCards", "mode": "detached",
+        "id": -2, "type": "ProgramBanners", "mode": "detached",
+        "data": {
+            "theme": "light",
+            "items": [
+                {
+                    "title": "SXMAwards",
+                    "date": "26.6.26",
+                    "info": "RSVP ONLY",
+                    "description": "SEX MARKETING AWARDS honor the visionaries redefining pleasure and shaping the future of sex tech.",
+                    "tags": [
+                        "Best Social Media Campaign",
+                        "Best Creator Platform Collaboration",
+                        "Best Marketing Agency",
+                        "Launch of the Year",
+                    ],
+                    "buttons": [
+                        {"label": "VOTING 01.04.2026",   "href": "https://sxma.sxtech.eu/"},
+                        {"label": "WIN TICKET AND VOTE", "href": "https://sxma.sxtech.eu/", "variant": "ghost"},
+                    ],
+                    "bg_image": f"{DST}{UPL}/tlo-2-1.png",
+                    "accent": "#ecfd21",
+                },
+                {
+                    "title": "RED MOON\nPARTY",
+                    "date": "28.6.26",
+                    "info": "STARTS AT 21:30",
+                    "description": "The afterparty of SX Festival — exclusive venue, late-night programme, surprise performers.",
+                    "buttons": [
+                        {"label": "TICKETS COMING SOON",
+                         "href": "https://www.canva.com/design/DAGk477Z-Vk/Le7giNor9aVgix6F16Uu1Q/view"},
+                    ],
+                    "bg_image": f"{DST}{UPL}/backg-2-1.png",
+                    "accent": "#FF3355",
+                },
+                {
+                    "title": "SX FESTIVAL",
+                    "date": "27-28.6.26",
+                    "info": "11:00 — 20:30",
+                    "description": "Two days of panels, workshops, performances and experiences across multiple stages and the SX Expo floor.",
+                    "buttons": [
+                        {"label": "FOR REGULAR VISITORS",  "href": "https://sxtech.eu/#tickets"},
+                        {"label": "FOR BUSINESS VISITORS", "href": "https://sxtech.eu/#tickets", "variant": "ghost"},
+                    ],
+                    "bg_image": f"{DST}{UPL}/cc-1.png",
+                    "accent": "#ecfd21",
+                },
+            ],
+        },
+    },
+    # --- my cleaner recap grid kept below (user explicitly wanted both) ---
+    {
+        "id": -3, "type": "SectionTitle", "mode": "detached",
+        "data": {"title": "AT A GLANCE", "size": "sm", "align": "center", "theme": "light"},
+    },
+    {
+        "id": -4, "type": "FeatureCards", "mode": "detached",
         "data": {
             "columns": 3,
             "theme": "light",
             "items": [
                 {
                     "title": "SXMAwards",
-                    "description": "<strong>26.6.26 — RSVP ONLY</strong><br>SEX MARKETING AWARDS honor the visionaries redefining pleasure and shaping the future of sex tech.<br><br>BEST SOCIAL MEDIA CAMPAIGN · Best Creator Platform Collaboration · Best Marketing Agency · Launch of the Year",
+                    "description": "<strong>26.6.26 — RSVP ONLY</strong><br>Sex Marketing Awards · 4 categories · voting opens 01.04.2026.",
                     "bg_image": f"{DST}{UPL}/tlo-2-1.png",
-                    "buttons": [
-                        {"label": "VOTING 01.04.2026", "href": "https://sxma.sxtech.eu/"},
-                        {"label": "WIN TICKET AND VOTE", "href": "https://sxma.sxtech.eu/"},
-                    ],
+                    "buttons": [{"label": "VOTE", "href": "https://sxma.sxtech.eu/"}],
                 },
                 {
                     "title": "RED MOON\nPARTY",
-                    "description": "<strong>28.6.26 — STARTS AT 21:30</strong><br>The afterparty of SX Festival — exclusive venue, late-night programme, surprise performers.",
+                    "description": "<strong>28.6.26 — STARTS 21:30</strong><br>The afterparty of SX Festival — exclusive venue + surprise performers.",
                     "bg_image": f"{DST}{UPL}/backg-2-1.png",
-                    "buttons": [
-                        {"label": "TICKETS COMING SOON", "href": "https://www.canva.com/design/DAGk477Z-Vk/Le7giNor9aVgix6F16Uu1Q/view"},
-                    ],
+                    "buttons": [{"label": "TICKETS SOON",
+                                  "href": "https://www.canva.com/design/DAGk477Z-Vk/Le7giNor9aVgix6F16Uu1Q/view"}],
                 },
                 {
                     "title": "SX FESTIVAL",
-                    "description": "<strong>27-28.6.26 · 11:00-20:30</strong><br>Two days of panels, workshops, performances and experiences across multiple stages and the SX Expo floor.",
+                    "description": "<strong>27-28.6.26 · 11:00-20:30</strong><br>Panels, workshops, performances across multiple stages.",
                     "bg_image": f"{DST}{UPL}/cc-1.png",
-                    "buttons": [
-                        {"label": "FOR REGULAR VISITORS",  "href": "https://sxtech.eu/#tickets"},
-                        {"label": "FOR BUSINESS VISITORS", "href": "https://sxtech.eu/#tickets"},
-                    ],
+                    "buttons": [{"label": "GET TICKET", "href": "https://sxtech.eu/#tickets"}],
                 },
             ],
         },
     },
     {
-        "id": -3, "type": "SectionTitle", "mode": "detached",
+        "id": -5, "type": "SectionTitle", "mode": "detached",
         "data": {"title": "TOP VOICES", "size": "md", "align": "center", "theme": "light"},
     },
     {
-        "id": -4, "type": "FestivalSlider", "mode": "detached",
+        "id": -6, "type": "FestivalSlider", "mode": "detached",
         "data": {
             "autoplay_ms": 4000,
             "theme": "light",
@@ -91,11 +143,21 @@ sections = [
         },
     },
     {
-        "id": -5, "type": "SectionTitle", "mode": "detached",
+        "id": -7, "type": "Ticker", "mode": "detached",
+        "data": {
+            "text": "FULL PROGRAM COMING SOON!",
+            "separator": " • ",
+            "speed_sec": 30,
+            "theme": "yellow",
+            "repeat": 6,
+        },
+    },
+    {
+        "id": -8, "type": "SectionTitle", "mode": "detached",
         "data": {"title": "HOT TOPICS & EXPERIENCES", "size": "md", "align": "center", "theme": "light"},
     },
     {
-        "id": -6, "type": "ProgramTable", "mode": "detached",
+        "id": -9, "type": "ProgramTable", "mode": "detached",
         "data": {
             "theme": "light",
             "labels": {"theme": "Theme", "voices": "Voices", "track": " ", "stage": "Stage & Date"},
@@ -126,6 +188,29 @@ sections = [
                  "track": "experience",
                  "stage": "Kink Market\n27-28.6.2026"},
             ],
+        },
+    },
+    # --- Exhibit / Sponsor buttons row ---
+    {
+        "id": -10, "type": "IconLinkList", "mode": "detached",
+        "data": {
+            "theme": "light",
+            "align": "center",
+            "items": [
+                {"label": "BECOME AN EXHIBITOR", "href": "/exhibitors-b2b"},
+                {"label": "BECOME A SPONSOR",    "href": "mailto:info@sxtech.eu"},
+            ],
+        },
+    },
+    # --- Berlin 2026 address block ---
+    {
+        "id": -11, "type": "ImageBlock", "mode": "detached",
+        "data": {
+            "image": f"{DST}{UPL}/tlo-2-1.png",
+            "title": "BERLIN 2026",
+            "subtitle": "STATION Berlin · Luckenwalder Str. 4-6 · 10963 Berlin",
+            "theme": "light",
+            "align": "center",
         },
     },
 ]

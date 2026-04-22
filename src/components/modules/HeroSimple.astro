@@ -26,7 +26,10 @@ const cta2Url  = content.cta2_url  || '#';
 const bgImage  = content.bg_image || '';
 const videoUrl = content.video_url || '';
 const poster   = content.poster_url || '';
-const chips: Array<{label: string; href?: string}> = Array.isArray(content.chips) ? content.chips : [];
+/* chips can be strings ('26.6.26') or objects with per-chip style variant:
+   { label, href?, variant: 'primary' | 'muted' }. primary = orange bg /
+   muted font (first date on sxtech). muted = grey bg / yellow font. */
+const chips: Array<{label?: string; href?: string; variant?: string} | string> = Array.isArray(content.chips) ? content.chips : [];
 const minHeight = content.min_height || '';
 const theme = (content.theme === 'light' ? 'light' : 'dark') as 'light'|'dark';
 const align = (content.align === 'center' ? 'center' : 'start') as 'center'|'start';
@@ -34,6 +37,7 @@ const align = (content.align === 'center' ? 'center' : 'start') as 'center'|'sta
    | 'white' (white fill + white border). cta2_ghost=false kept as legacy shortcut. */
 const cta2Variant = (content.cta2_variant as string)
   || (content.cta2_ghost === false ? 'solid' : 'ghost');
+const ctaVariant = (content.cta_variant as string) || 'solid';
 
 const hasMedia = !!(videoUrl || bgImage);
 ---
@@ -55,18 +59,20 @@ const hasMedia = !!(videoUrl || bgImage);
     {title && <h1 class="sx-hs-title">{title}</h1>}
     {chips.length > 0 && (
       <div class="sx-hs-chips">
-        {chips.map((c) => (
-          c.href
-            ? <a class="sx-hs-chip" href={c.href}>{c.label}</a>
-            : <span class="sx-hs-chip">{c.label}</span>
-        ))}
+        {chips.map((c: any) => {
+          const label = typeof c === 'string' ? c : (c?.label || '');
+          const href = typeof c === 'string' ? undefined : c?.href;
+          const v = (typeof c === 'object' && c?.variant) ? c.variant : 'default';
+          const cls = `sx-hs-chip sx-hs-chip--${v}`;
+          return href ? <a class={cls} href={href}>{label}</a> : <span class={cls}>{label}</span>;
+        })}
       </div>
     )}
     {subtitle && <p class="sx-hs-sub">{subtitle}</p>}
     {(ctaText || cta2Text) && (
       <div class="sx-hs-ctas">
-        {ctaText  && <a href={ctaUrl}  class="sx-hs-cta">{ctaText}</a>}
-        {cta2Text && <a href={cta2Url} class={`sx-hs-cta${cta2Variant !== 'solid' ? ' sx-hs-cta--' + cta2Variant : ''}`}>{cta2Text}</a>}
+        {ctaText  && <a href={ctaUrl}  class={`sx-hs-cta${ctaVariant !== 'solid' ? ' sx-hs-cta--' + ctaVariant : ''}`} set:html={ctaText} />}
+        {cta2Text && <a href={cta2Url} class={`sx-hs-cta${cta2Variant !== 'solid' ? ' sx-hs-cta--' + cta2Variant : ''}`} set:html={cta2Text} />}
       </div>
     )}
   </div>
@@ -133,7 +139,10 @@ const hasMedia = !!(videoUrl || bgImage);
     padding: 8px 24px;
     font-family: 'Oswald', sans-serif; font-size: 20px; font-weight: 600;
     text-transform: uppercase; letter-spacing: 1px;
+    border-radius: 999px;
   }
+  .sx-hs-chip--primary { background: #FF6600; color: #555; }
+  .sx-hs-chip--muted   { background: #D1D1D1; color: #ecfd21; }
   .sx-hs-ctas { display: flex; flex-wrap: wrap; gap: 12px; }
   .sx-hs-cta {
     display: inline-block;
@@ -150,6 +159,9 @@ const hasMedia = !!(videoUrl || bgImage);
   .sx-hs-cta--ghost:hover { background: #ecfd21; color: #000; border-color: #ecfd21; }
   .sx-hs-cta--white { background: #FFFFFF; color: #000; border-color: #FFFFFF; }
   .sx-hs-cta--white:hover { background: transparent; color: #FFFFFF; border-color: #FFFFFF; }
+  /* black: black bg, white text (program page "BUY TICKET") */
+  .sx-hs-cta--black { background: #000; color: #FFFFFF; border-color: #000; }
+  .sx-hs-cta--black:hover { background: transparent; color: #000; border-color: #000; }
 
   @media (max-width: 1366px) {
     .sx-hs-title { font-size: 138px; letter-spacing: -5px; }

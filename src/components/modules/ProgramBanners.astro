@@ -1,0 +1,137 @@
+---
+/**
+ * ProgramBanners — stack of full-width event banners (1 per row). Each
+ * banner has a big title, an optional date-pill, an info line (e.g.
+ * "RSVP ONLY"), a list of tags/bullets, 1-2 buttons, and an optional
+ * background image (with tint/gradient scrim).
+ *
+ * Fields:
+ *   - items: Array<{
+ *       title, date, info?, description?, tags?: string[],
+ *       buttons?: [{label, href, variant?}],
+ *       bg_image?, accent?
+ *     }>
+ *   - theme: 'light' | 'dark'  (default 'dark')
+ */
+interface Button { label: string; href: string; variant?: string; }
+interface Item {
+  title: string; date?: string; info?: string;
+  description?: string; tags?: string[];
+  buttons?: Button[]; bg_image?: string; accent?: string;
+}
+interface Props { content: Record<string, any>; }
+const { content = {} } = Astro.props;
+const items: Item[] = Array.isArray(content.items) ? content.items : [];
+const theme = (content.theme === 'light' ? 'light' : 'dark') as 'light'|'dark';
+---
+
+<section data-nova-el="program-banners" class={`sx-pb sx-pb--${theme}`}>
+  <div class="sx-pb-inner">
+    {items.map((it) => {
+      const accent = it.accent || '#ecfd21';
+      const hasBg = !!it.bg_image;
+      return (
+        <article
+          class={`sx-pb-banner${hasBg ? ' sx-pb-banner--bg' : ''}`}
+          style={`--accent:${accent};${hasBg ? `--bn-img:url('${it.bg_image}');` : ''}`}
+        >
+          <div class="sx-pb-main">
+            <h3 class="sx-pb-title">{it.title}</h3>
+            {it.description && <p class="sx-pb-desc">{it.description}</p>}
+            {it.tags && it.tags.length > 0 && (
+              <ul class="sx-pb-tags">{it.tags.map((t) => <li>{t}</li>)}</ul>
+            )}
+            {it.buttons && it.buttons.length > 0 && (
+              <div class="sx-pb-btns">
+                {it.buttons.map((b) => (
+                  <a class={`sx-pb-btn sx-pb-btn--${b.variant || 'solid'}`} href={b.href} target={b.href?.startsWith('http') ? '_blank' : undefined} rel="noopener">{b.label}</a>
+                ))}
+              </div>
+            )}
+          </div>
+          {(it.date || it.info) && (
+            <aside class="sx-pb-side">
+              {it.date && <div class="sx-pb-date">{it.date}</div>}
+              {it.info && <div class="sx-pb-info">{it.info}</div>}
+            </aside>
+          )}
+        </article>
+      );
+    })}
+  </div>
+</section>
+
+<style>
+  .sx-pb { padding: 20px 50px 40px; background: #000; }
+  .sx-pb--light { background: #FFFFFF; }
+  .sx-pb-inner { max-width: 1366px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
+
+  .sx-pb-banner {
+    display: grid; grid-template-columns: 1fr auto;
+    gap: 40px; align-items: stretch;
+    padding: 32px 40px;
+    background: var(--card-bg, #1a1a1a); color: #fff;
+    position: relative; overflow: hidden; isolation: isolate;
+    min-height: 220px;
+  }
+  .sx-pb-banner--bg {
+    background-image: var(--bn-img);
+    background-size: cover; background-position: center;
+  }
+  .sx-pb-banner--bg::before {
+    content: ""; position: absolute; inset: 0; z-index: -1;
+    background: linear-gradient(90deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 60%, rgba(0,0,0,0.5) 100%);
+  }
+
+  .sx-pb-main { display: flex; flex-direction: column; gap: 14px; }
+  .sx-pb-title {
+    font-family: 'Oswald', sans-serif; font-weight: 800;
+    font-size: 56px; line-height: 1;
+    text-transform: uppercase; color: var(--accent);
+    margin: 0; white-space: pre-line;
+  }
+  .sx-pb-desc {
+    font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 400;
+    line-height: 1.4; color: #fff; text-transform: uppercase;
+    margin: 0; max-width: 620px;
+  }
+  .sx-pb-tags { list-style: none; padding: 0; margin: 0;
+    display: flex; flex-direction: column; gap: 4px;
+    font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 18px;
+    color: var(--accent); text-transform: uppercase;
+  }
+
+  .sx-pb-btns { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+  .sx-pb-btn {
+    display: inline-block; padding: 12px 22px;
+    font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500;
+    text-transform: uppercase; text-decoration: none;
+    border: 1px solid var(--accent); background: var(--accent); color: #000;
+    transition: opacity .15s;
+  }
+  .sx-pb-btn:hover { opacity: .85; }
+  .sx-pb-btn--ghost { background: transparent; color: #fff; border-color: #fff; }
+  .sx-pb-btn--ghost:hover { background: #fff; color: #000; }
+
+  .sx-pb-side {
+    display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-start;
+    gap: 6px; min-width: 180px;
+  }
+  .sx-pb-date {
+    font-family: 'Oswald', sans-serif; font-weight: 800;
+    font-size: 42px; line-height: 1; color: var(--accent);
+    text-transform: uppercase;
+  }
+  .sx-pb-info {
+    font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600;
+    text-transform: uppercase; color: #fff; letter-spacing: 1px;
+  }
+
+  @media (max-width: 768px) {
+    .sx-pb { padding: 20px 24px 40px; }
+    .sx-pb-banner { grid-template-columns: 1fr; padding: 24px; }
+    .sx-pb-side { align-items: flex-start; }
+    .sx-pb-title { font-size: 40px; }
+    .sx-pb-date  { font-size: 32px; }
+  }
+</style>
