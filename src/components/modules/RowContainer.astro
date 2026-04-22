@@ -134,8 +134,13 @@ columns.forEach((col: any, ci: number) => {
     }
   });
 });
-const mobileCSS = mobileRules.length
-  ? `@media (max-width: 768px) { ${mobileRules.join(' ')} ${wrapMob ? `#${uid} .rc-row { flex-wrap: wrap; } #${uid} [data-col] { flex: 1 1 100% !important; max-width: 100% !important; }` : ''} }`
+const wrapRule = wrapMob
+  ? `#${uid} .rc-row { flex-wrap: wrap; } #${uid} [data-col] { flex: 1 1 100% !important; max-width: 100% !important; }`
+  : '';
+// Wrap-on-mobile must fire even when no per-value mobile overrides exist
+// — otherwise a simple two-column layout never collapses to one column.
+const mobileCSS = (mobileRules.length || wrapRule)
+  ? `@media (max-width: 768px) { ${mobileRules.join(' ')} ${wrapRule} }`
   : '';
 ---
 
