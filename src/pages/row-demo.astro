@@ -1,0 +1,219 @@
+---
+/* B-Spike demo page — three RowContainer instances showing:
+   1) The "3 lines on same height as 1 big word" case (the concrete
+      Elementor scenario Manuel mentioned).
+   2) Free pixel values for font-size/line-height mixed with tokens
+      for color/padding.
+   3) Per-column mobile overrides so responsive stays intentional.
+*/
+import '@/atomic/tokens.css';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Navigation from '@/components/Navigation.astro';
+import Footer from '@/components/Footer.astro';
+import RowContainer from '@/components/modules/RowContainer.astro';
+
+// ── Example 1: 1 big word left, 3 aligned lines right at matching total
+//    height. Desktop values are free px, mobile overrides shrink both.
+const example1 = {
+  gap: '48px',
+  padding: '2xl',
+  align: 'center',
+  wrap_on_mobile: true,
+  columns: [
+    {
+      width: '40%',
+      align: 'start',
+      justify: 'center',
+      mobile: { width: '100%' },
+      items: [
+        {
+          content: 'FESTIVAL',
+          font_size: '156px',
+          line_height: '0.9',
+          font_weight: 800,
+          font_family: 'display',
+          color: 'brand',
+          text_transform: 'uppercase',
+          letter_spacing: '-4px',
+          mobile: { font_size: '72px', letter_spacing: '-2px' },
+        },
+      ],
+    },
+    {
+      width: '60%',
+      align: 'start',
+      justify: 'center',
+      gap: '0',
+      items: [
+        {
+          content: 'Two days of panels, workshops, performances',
+          font_size: '46px',
+          line_height: '1.15',
+          font_weight: 500,
+          font_family: 'sans',
+          color: 'black',
+          mobile: { font_size: '22px' },
+        },
+        {
+          content: 'and experiences across multiple stages',
+          font_size: '46px',
+          line_height: '1.15',
+          font_weight: 500,
+          font_family: 'sans',
+          color: 'black',
+          mobile: { font_size: '22px' },
+        },
+        {
+          content: 'plus the full SX Expo floor.',
+          font_size: '46px',
+          line_height: '1.15',
+          font_weight: 500,
+          font_family: 'sans',
+          color: 'black',
+          mobile: { font_size: '22px' },
+        },
+      ],
+    },
+  ],
+};
+
+// ── Example 2: tokens on one side, free values on the other — shows
+// that both worlds live side-by-side without a regime change.
+const example2 = {
+  gap: 'lg',
+  padding: '2xl',
+  align: 'stretch',
+  columns: [
+    {
+      width: '50%',
+      padding: 'xl',
+      align: 'start',
+      justify: 'start',
+      gap: 'md',
+      items: [
+        {
+          content: '100% TOKENS',
+          font_size: '3xl',
+          line_height: '1.1',
+          font_weight: 700,
+          font_family: 'display',
+          color: 'black',
+          text_transform: 'uppercase',
+        },
+        {
+          content: 'padding: var(--t-space-xl), font-size: var(--t-font-3xl), color: var(--t-color-black). Snaps automatisch responsive durch clamp().',
+          font_size: 'md',
+          line_height: '1.5',
+          color: 'muted',
+        },
+      ],
+    },
+    {
+      width: '50%',
+      padding: '36px 24px 36px 24px',
+      align: 'start',
+      justify: 'start',
+      gap: '14px',
+      items: [
+        {
+          content: '100% FREI',
+          font_size: '52px',
+          line_height: '1.05',
+          font_weight: 800,
+          font_family: 'display',
+          color: '#FF3355',
+          text_transform: 'uppercase',
+          letter_spacing: '-1.5px',
+        },
+        {
+          content: 'padding: 36px 24px, font-size: 52px, color: #FF3355, letter-spacing: -1.5px. Keine Token-Einschränkung — dafür Verantwortung für Mobile-Overrides.',
+          font_size: '15.5px',
+          line_height: '1.55',
+          color: '#666666',
+        },
+      ],
+    },
+  ],
+};
+
+// ── Example 3: 3-column row, each column picks its own vertical
+// alignment so the 3 headings land at different visual heights.
+const example3 = {
+  gap: 'lg',
+  padding: '2xl',
+  align: 'stretch',
+  columns: [
+    {
+      width: '33.333%',
+      padding: 'lg',
+      align: 'start',
+      justify: 'start',
+      gap: 'sm',
+      items: [
+        { content: '01', font_size: '72px', font_weight: 800, font_family: 'display', color: 'brand', line_height: '1' },
+        { content: 'Tokens als Default', font_size: 'lg', color: 'black', font_weight: 600 },
+      ],
+    },
+    {
+      width: '33.333%',
+      padding: 'lg',
+      align: 'start',
+      justify: 'center',
+      gap: 'sm',
+      items: [
+        { content: '02', font_size: '72px', font_weight: 800, font_family: 'display', color: 'brand', line_height: '1' },
+        { content: 'Free values wenn nötig', font_size: 'lg', color: 'black', font_weight: 600 },
+      ],
+    },
+    {
+      width: '33.333%',
+      padding: 'lg',
+      align: 'start',
+      justify: 'end',
+      gap: 'sm',
+      items: [
+        { content: '03', font_size: '72px', font_weight: 800, font_family: 'display', color: 'brand', line_height: '1' },
+        { content: 'Mobile-Override pro Wert', font_size: 'lg', color: 'black', font_weight: 600 },
+      ],
+    },
+  ],
+};
+---
+
+<BaseLayout title="Row Container — B Spike">
+  <Navigation />
+  <main style="background: white; padding-top: 98px;">
+
+    <div style="padding: 40px 50px; max-width: 1366px; margin: 0 auto;">
+      <h1 style="font-family: 'Oswald', sans-serif; font-weight: 800; font-size: 48px; color: #000; margin: 0 0 8px; text-transform: uppercase;">
+        RowContainer · B-Spike
+      </h1>
+      <p style="font-family: 'Inter', sans-serif; font-size: 16px; color: #666; max-width: 720px; margin: 0;">
+        Free-value Elementor-style columns. Jede Control akzeptiert Token-Keyword oder frei-CSS. Mobile-Overrides pro Wert. Resize das Fenster unter 768px um die Mobile-Variante zu sehen.
+      </p>
+    </div>
+
+    <div style="padding: 0 0 8px 50px; max-width: 1366px; margin: 0 auto;">
+      <h2 style="font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #999; margin: 32px 0 0;">
+        Beispiel 1 — 1 Wort links, 3 Zeilen rechts, gleiche Höhe
+      </h2>
+    </div>
+    <RowContainer content={example1} />
+
+    <div style="padding: 0 0 8px 50px; max-width: 1366px; margin: 0 auto; border-top: 1px solid #eee; margin-top: 24px;">
+      <h2 style="font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #999; margin: 32px 0 0;">
+        Beispiel 2 — Tokens links, freie Werte rechts
+      </h2>
+    </div>
+    <RowContainer content={example2} />
+
+    <div style="padding: 0 0 8px 50px; max-width: 1366px; margin: 0 auto; border-top: 1px solid #eee; margin-top: 24px;">
+      <h2 style="font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #999; margin: 32px 0 0;">
+        Beispiel 3 — 3 Spalten, unterschiedliche vertikale Alignments
+      </h2>
+    </div>
+    <RowContainer content={example3} />
+
+  </main>
+  <Footer />
+</BaseLayout>

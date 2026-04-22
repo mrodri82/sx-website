@@ -1,0 +1,165 @@
+---
+/**
+ * RowContainer — Elementor-style flex row with N columns. Every layout +
+ * typography property accepts either a token-keyword ("md", "lg", "brand")
+ * OR a free CSS value ("13.5px", "#ff3355"). Each column also has a
+ * `mobile` override block with the same shape; desktop values cascade
+ * when mobile overrides are missing.
+ *
+ * This is the "B" spike — visible proof that a single module gives the
+ * Elementor-level freedom (free font-size, free line-height, free
+ * padding, per-column alignment) without breaking responsive.
+ *
+ * Content shape:
+ * {
+ *   gap: "24px" | "lg",
+ *   padding: "48px 50px" | "2xl",
+ *   max_width: "1366px",
+ *   align: "start" | "center" | "end" | "stretch",
+ *   wrap_on_mobile: true,
+ *   columns: [
+ *     {
+ *       width: "30%" | "auto",
+ *       padding: "...",
+ *       align: "start" | "center" | "end",
+ *       justify: "start" | "center" | "end",
+ *       items: [
+ *         {
+ *           content: "string (HTML allowed)",
+ *           font_size: "120px" | "4xl",
+ *           line_height: "0.9" | "1",
+ *           font_weight: 800,
+ *           font_family: "display" | "sans",
+ *           color: "#ecfd21" | "brand",
+ *           text_transform: "uppercase" | null,
+ *           letter_spacing: "-2px",
+ *           margin: "0" | "md",
+ *           mobile: { font_size?, line_height?, margin? },
+ *         }, ...
+ *       ],
+ *       mobile: { width?, padding?, align?, justify? },
+ *     }, ...
+ *   ],
+ * }
+ *
+ * Token-shortcuts a value may resolve to:
+ *   spacing:  xs/sm/md/lg/xl/2xl/3xl/4xl → var(--t-space-*)
+ *   fontSize: xs/sm/md/lg/xl/2xl/3xl/4xl/5xl → var(--t-font-*)
+ *   color:    brand/brand-alt/black/white/muted/accent → var(--t-color-*)
+ * Everything else is passed through verbatim.
+ */
+interface Props { content: Record<string, any>; }
+const { content = {} } = Astro.props;
+
+const SPACE_TOKENS = new Set(['0','xs','sm','md','lg','xl','2xl','3xl','4xl']);
+const FONT_TOKENS  = new Set(['xs','sm','md','lg','xl','2xl','3xl','4xl','5xl']);
+const COLOR_TOKENS = new Set(['brand','brand-alt','black','white','muted','accent']);
+
+function resolveSpace(v: any): string {
+  if (v == null || v === '') return '';
+  if (typeof v === 'string' && SPACE_TOKENS.has(v)) return `var(--t-space-${v})`;
+  return String(v);
+}
+function resolveFont(v: any): string {
+  if (v == null || v === '') return '';
+  if (typeof v === 'string' && FONT_TOKENS.has(v)) return `var(--t-font-${v})`;
+  return String(v);
+}
+function resolveColor(v: any): string {
+  if (v == null || v === '') return '';
+  if (typeof v === 'string' && COLOR_TOKENS.has(v)) return `var(--t-color-${v})`;
+  return String(v);
+}
+function resolveFontFamily(v: any): string {
+  if (v === 'display' || v === 'sans') return `var(--t-font-${v})`;
+  if (v) return String(v);
+  return '';
+}
+
+function itemStyle(it: any, forMobile = false): string {
+  const src = forMobile && it.mobile ? { ...it, ...it.mobile } : it;
+  return [
+    src.font_size     ? `font-size: ${resolveFont(src.font_size)};` : '',
+    src.line_height   ? `line-height: ${src.line_height};` : '',
+    src.font_weight   ? `font-weight: ${src.font_weight};` : '',
+    src.font_family   ? `font-family: ${resolveFontFamily(src.font_family)};` : '',
+    src.color         ? `color: ${resolveColor(src.color)};` : '',
+    src.text_transform? `text-transform: ${src.text_transform};` : '',
+    src.letter_spacing? `letter-spacing: ${src.letter_spacing};` : '',
+    src.margin !== undefined ? `margin: ${resolveSpace(src.margin)};` : 'margin: 0;',
+  ].filter(Boolean).join(' ');
+}
+
+function columnStyle(col: any, forMobile = false): string {
+  const src = forMobile && col.mobile ? { ...col, ...col.mobile } : col;
+  const justifyMap: Record<string,string> = {
+    start:'flex-start', center:'center', end:'flex-end',
+  };
+  const alignMap: Record<string,string> = {
+    start:'flex-start', center:'center', end:'flex-end', stretch:'stretch',
+  };
+  return [
+    'display: flex; flex-direction: column;',
+    src.width           ? `flex: 0 0 ${src.width}; max-width: ${src.width};` : 'flex: 1;',
+    src.padding !== undefined ? `padding: ${resolveSpace(src.padding)};` : '',
+    src.align           ? `align-items: ${alignMap[src.align] || src.align};` : '',
+    src.justify         ? `justify-content: ${justifyMap[src.justify] || src.justify};` : '',
+    src.gap !== undefined       ? `gap: ${resolveSpace(src.gap)};` : '',
+  ].filter(Boolean).join(' ');
+}
+
+const rowGap     = resolveSpace(content.gap ?? 'lg');
+const rowPad     = resolveSpace(content.padding ?? '2xl');
+const rowMaxW    = content.max_width || '1366px';
+const rowAlign   = content.align || 'stretch';
+const wrapMob    = content.wrap_on_mobile !== false;
+const columns    = Array.isArray(content.columns) ? content.columns : [];
+
+// Give the component a unique id so we can emit a scoped mobile <style>
+// block without worrying about SSR cross-instance collisions.
+const uid = 'rc-' + Math.random().toString(36).slice(2, 10);
+
+// Build the mobile override CSS. For each column and each item within,
+// if a `mobile: { ... }` block exists, emit only the overridden props.
+const mobileRules: string[] = [];
+columns.forEach((col: any, ci: number) => {
+  if (col.mobile) {
+    const s = columnStyle(col, true);
+    if (s) mobileRules.push(`#${uid} [data-col="${ci}"] { ${s} }`);
+  }
+  (col.items || []).forEach((it: any, ii: number) => {
+    if (it.mobile) {
+      const s = itemStyle(it, true);
+      if (s) mobileRules.push(`#${uid} [data-col="${ci}"] [data-item="${ii}"] { ${s} }`);
+    }
+  });
+});
+const mobileCSS = mobileRules.length
+  ? `@media (max-width: 768px) { ${mobileRules.join(' ')} ${wrapMob ? `#${uid} .rc-row { flex-wrap: wrap; } #${uid} [data-col] { flex: 1 1 100% !important; max-width: 100% !important; }` : ''} }`
+  : '';
+---
+
+<section id={uid} data-nova-el="row-container" style={`padding: ${rowPad};`}>
+  <div
+    class="rc-row"
+    style={[
+      'display: flex;',
+      `gap: ${rowGap};`,
+      `align-items: ${rowAlign === 'stretch' ? 'stretch' : rowAlign === 'center' ? 'center' : rowAlign === 'end' ? 'flex-end' : 'flex-start'};`,
+      `max-width: ${rowMaxW}; margin: 0 auto;`,
+    ].join(' ')}
+  >
+    {columns.map((col: any, ci: number) => (
+      <div data-col={ci} style={columnStyle(col)}>
+        {(col.items || []).map((it: any, ii: number) => {
+          const html = String(it.content ?? '');
+          return (
+            <div data-item={ii} style={itemStyle(it)} set:html={html} />
+          );
+        })}
+      </div>
+    ))}
+  </div>
+</section>
+
+{mobileCSS && <style set:html={mobileCSS} />}
