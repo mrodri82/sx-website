@@ -25,6 +25,51 @@ def wp(method, path, body=None):
     with urllib.request.urlopen(req, data=data, context=ctx, timeout=60) as r:
         return json.loads(r.read())
 
+# Cache so we upload each remote asset at most once across the whole run.
+_upload_cache: dict[str, str] = {}
+_IMG_EXT_RE = re.compile(r'\.(png|jpg|jpeg|webp|gif)(\?|$)', re.I)
+
+def mirror_image(src_url: str) -> str:
+    """Mirror an sxtech.eu upload to sx.zds.es Media Library (idempotent via
+    slug lookup). Leaves non-sxtech URLs untouched. Non-image URLs are
+    returned verbatim."""
+    if not src_url or src_url in _upload_cache:
+        return _upload_cache.get(src_url, src_url)
+    if "sxtech.eu" not in src_url or not _IMG_EXT_RE.search(src_url):
+        return src_url
+
+    fname = src_url.rsplit('/', 1)[-1].split('?')[0]
+    slug = re.sub(r'[^a-z0-9-]+', '-', fname.rsplit('.', 1)[0].lower()).strip('-')
+
+    existing = wp("GET", f"/wp-json/wp/v2/media?slug={slug}&_fields=source_url")
+    if existing:
+        _upload_cache[src_url] = existing[0]["source_url"]
+        return _upload_cache[src_url]
+
+    print(f"    mirror {fname}")
+    try:
+        req = urllib.request.Request(src_url, headers={"User-Agent": "Mozilla/5.0 SX/Migrator"})
+        with urllib.request.urlopen(req, context=ctx, timeout=60) as r:
+            data = r.read()
+            ctype = r.headers.get("Content-Type", "image/png")
+    except Exception as e:
+        print(f"    fetch {src_url} failed: {e}")
+        return src_url
+
+    upload_req = urllib.request.Request(f"{DST}/wp-json/wp/v2/media", method="POST", data=data)
+    upload_req.add_header("Authorization", f"Basic {base64.b64encode(f'{USER}:{PW}'.encode()).decode()}")
+    upload_req.add_header("Content-Type", ctype)
+    upload_req.add_header("Content-Disposition", f'attachment; filename="{fname}"')
+    try:
+        with urllib.request.urlopen(upload_req, context=ctx, timeout=180) as r:
+            resp = json.loads(r.read())
+    except Exception as e:
+        print(f"    upload {fname} failed: {e}")
+        return src_url
+    new_url = resp.get("source_url") or src_url
+    _upload_cache[src_url] = new_url
+    return new_url
+
 POSTS = [
     # (sxtech_url, target_slug, title, date_label, category, hero_image, inline_image?)
     ("https://sxtech.eu/2026/04/19/marius-rohde-interview/",
@@ -40,6 +85,14 @@ POSTS = [
      "post-hacking-desire", "HACKING DESIRE", "Feb 24, 2026", "NEWS", "irma-1.png", None),
     ("https://sxtech.eu/2026/02/10/ambassador-program-live/",
      "post-ambassador-program-live", "AMBASSADOR PROGRAM LIVE", "Feb 10, 2026", "RECAP", "nonm-1.png", None),
+    # Hero images for these two weren't copied to sx.zds.es uploads — use
+    # the original sxtech.eu asset URL directly (detected by 'http' prefix).
+    ("https://sxtech.eu/2026/02/10/artists-apply-today/",
+     "post-artists-apply-today", "ARTISTS APPLY TODAY", "Feb 10, 2026", "NEWS",
+     "https://sxtech.eu/wp-content/uploads/2026/02/ph31.webp", None),
+    ("https://sxtech.eu/2026/02/10/sx-valentine-limited-offer/",
+     "post-sxma-awards-nominate", "SXMA AWARDS NOMINATE", "Feb 10, 2026", "NEWS",
+     "https://sxtech.eu/wp-content/uploads/2026/02/sxt.png", None),
 ]
 
 def inject_image_after_first_paragraph(body: str, image_url: str) -> str:
@@ -47,9 +100,10 @@ def inject_image_after_first_paragraph(body: str, image_url: str) -> str:
     that follows meaningful prose. Skips <p>s inside headings/meta blocks by
     only matching plain-text paragraphs long enough to be actual content."""
     if not image_url: return body
+    mirrored = mirror_image(image_url)
     figure = (
         f'<figure style="margin:32px 0;">'
-        f'<img src="{image_url}" alt="" loading="lazy" '
+        f'<img src="{mirrored}" alt="" loading="lazy" '
         f'style="width:100%;height:auto;display:block;"/>'
         f'</figure>'
     )
@@ -105,10 +159,26 @@ def extract_article_body(html: str) -> str:
         if open_div > 0:
             body = body[open_div:]
 
-    # Inline blog images are NOT mirrored to sx.zds.es — the scrape only
-    # copied the per-post featured image. Rewriting asset URLs to sx.zds.es
-    # resulted in 13 404s across 6 posts. Keep body images pointing at the
-    # original sxtech.eu source so they just load.
+    # Mirror every inline image from sxtech.eu into the sx.zds.es Media
+    # Library so posts become self-contained (idempotent via filename slug).
+    def _rewrite_img(m):
+        before, url, after = m.group(1), m.group(2), m.group(3)
+        return f'{before}{mirror_image(url)}{after}'
+    body = re.sub(
+        r'(<img[^>]+src=")([^"]+)(")',
+        _rewrite_img, body, flags=re.I)
+    # also handle srcset (comma-separated "url size, url size")
+    def _rewrite_srcset(m):
+        head = m.group(1)
+        parts = []
+        for entry in m.group(2).split(','):
+            entry = entry.strip()
+            if not entry: continue
+            segs = entry.split(' ', 1)
+            new_url = mirror_image(segs[0])
+            parts.append(new_url + (' ' + segs[1] if len(segs) > 1 else ''))
+        return f'{head}"{", ".join(parts)}"'
+    body = re.sub(r'(srcset=)"([^"]+)"', _rewrite_srcset, body, flags=re.I)
     # drop any remaining nav-menu / logo-heading widgets (safety net)
     body = re.sub(
         r'<div[^>]*elementor-widget-nav-menu[^>]*>.*?(?=<div[^>]*elementor-(widget|element)-)',
@@ -140,7 +210,11 @@ for (url, slug, title, date, cat, img, inline_img) in POSTS:
     body = inject_image_after_first_paragraph(body, inline_img)
     print(f"  body: {len(body)} chars")
 
-    hero_img = f"{DST}{UPL}/{img}"
+    # `img` may be a bare filename (already mirrored during the initial
+    # scrape; referenced under DST/UPL) or a fully-qualified sxtech.eu URL
+    # for posts added afterwards. In the URL case we mirror it now so every
+    # post ends up with its hero image hosted on sx.zds.es.
+    hero_img = mirror_image(img) if img.startswith("http") else f"{DST}{UPL}/{img}"
     # Hero = 70vh full-bleed image under transparent nav with the title
     # pinned to the bottom-left corner (sxtech.eu blog style). The meta line
     # (category · date) lives in ArticleContent right below, so we don't
