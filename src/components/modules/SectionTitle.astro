@@ -17,9 +17,10 @@ const size     = (content.size === 'lg' ? 'lg' : 'sm') as 'sm' | 'lg';
    - 'event':           Oswald 72px 600 yellow (e.g. "june 27-28 berlin") */
 const subStyle = content.subtitle_style || 'default';
 const subColor = content.subtitle_color || '';
+const layout   = (content.layout === 'row' ? 'row' : 'stack') as 'row' | 'stack';
 ---
 
-<section data-nova-el="section-title" class={`sx-st sx-st--${size} sx-st--sub-${subStyle}`}>
+<section data-nova-el="section-title" class={`sx-st sx-st--${size} sx-st--${layout} sx-st--sub-${subStyle}`}>
   <div class="sx-st-inner">
     {title && <h2 class="sx-st-title">{title}</h2>}
     {subtitle && <p class="sx-st-sub" style={subColor ? `color:${subColor}` : undefined}>{subtitle}</p>}
@@ -43,8 +44,16 @@ const subColor = content.subtitle_color || '';
   .sx-st--sm .sx-st-sub   { font-size: 42px; color: #A6A6A6; }
 
   .sx-st--lg { padding: 60px 50px; }
-  .sx-st--lg .sx-st-title { font-size: 180px; font-weight: 900; color: #FFFFFF; letter-spacing: -4px; }
+  .sx-st--lg .sx-st-title { font-size: 96px; font-weight: 900; color: #FFFFFF; letter-spacing: -3px; }
   .sx-st--lg .sx-st-sub   { font-size: 28px; font-family: 'Inter', sans-serif; font-weight: 500; color: #FFFFFF; }
+
+  /* layout='row': title left, subtitle right (for "THE B2B | JUNE 27-28 BERLIN") */
+  .sx-st--row .sx-st-inner {
+    display: flex; flex-direction: row; align-items: center; justify-content: space-between;
+    gap: 40px; flex-wrap: wrap;
+  }
+  .sx-st--row .sx-st-title { flex: 0 0 auto; margin-bottom: 0; }
+  .sx-st--row .sx-st-sub   { flex: 0 0 auto; margin-top: 0; }
 
   /* Event-style subtitle: Oswald 72px 600 yellow, stacked (e.g. "june 27-28\nberlin"). */
   .sx-st--sub-event .sx-st-sub {
@@ -56,10 +65,15 @@ const subColor = content.subtitle_color || '';
   @media (max-width: 1024px) {
     .sx-st--lg .sx-st-title { font-size: 120px; letter-spacing: -3px; }
   }
+  @media (max-width: 1024px) {
+    .sx-st--lg .sx-st-title { font-size: 72px; letter-spacing: -2px; }
+    .sx-st--sub-event .sx-st-sub { font-size: 48px; }
+    .sx-st--row .sx-st-inner { flex-direction: column; align-items: flex-start; gap: 8px; }
+  }
   @media (max-width: 768px) {
     .sx-st { padding: 30px 24px; }
     .sx-st--sm .sx-st-title, .sx-st--sm .sx-st-sub { font-size: 32px; }
-    .sx-st--lg .sx-st-title { font-size: 72px; letter-spacing: -2px; }
+    .sx-st--lg .sx-st-title { font-size: 56px; letter-spacing: -2px; }
     .sx-st--lg .sx-st-sub   { font-size: 16px; }
     .sx-st--sub-event .sx-st-sub { font-size: 40px; }
   }

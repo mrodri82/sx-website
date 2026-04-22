@@ -27,6 +27,7 @@ sections = [
             "subtitle": "Get access to SX Expo 2026 opportunities\nFANS AREA, brand collaborations,\nFREE TICKETS and VIP PERKS",
             "cta_text": "Register as a Creator", "cta_url": CREATOR_URL,
             "cta2_text": "Brand Ambassador program", "cta2_url": BRAND_URL,
+            "bg_image": f"{DST}{UPL}/backcre-1.png",
         },
     },
     {
@@ -42,11 +43,13 @@ sections = [
                     "title": "CREATOR",
                     "description": "Create content, Meet fans and enjoy free tickets",
                     "buttons": [{"label": "APPLY HERE", "href": CREATOR_URL}],
+                    "bg_image": f"{DST}{UPL}/creatorapply-1.png",
                 },
                 {
                     "title": "BRAND AMBASSADOR",
                     "description": "Represent the brand, affiliate and get VIP access",
                     "buttons": [{"label": "APPLY HERE", "href": BRAND_URL}],
+                    "bg_image": f"{DST}{UPL}/ba-1.png",
                 },
             ],
         },

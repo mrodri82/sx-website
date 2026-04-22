@@ -9,7 +9,8 @@
       "cta_text": "Register as a Creator",
       "cta_url": "https://wkf.ms/4qpG1Ks",
       "cta2_text": "Brand Ambassador program",
-      "cta2_url": "https://wkf.ms/49zQjCt"
+      "cta2_url": "https://wkf.ms/49zQjCt",
+      "bg_image": "https://sx.zds.es/wp-content/uploads/2026/04/backcre-1.png"
     }
   },
   {
@@ -36,7 +37,8 @@
               "label": "APPLY HERE",
               "href": "https://wkf.ms/4qpG1Ks"
             }
-          ]
+          ],
+          "bg_image": "https://sx.zds.es/wp-content/uploads/2026/04/creatorapply-1.png"
         },
         {
           "title": "BRAND AMBASSADOR",
@@ -46,7 +48,8 @@
               "label": "APPLY HERE",
               "href": "https://wkf.ms/49zQjCt"
             }
-          ]
+          ],
+          "bg_image": "https://sx.zds.es/wp-content/uploads/2026/04/ba-1.png"
         }
       ]
     }

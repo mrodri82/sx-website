@@ -153,6 +153,7 @@ sections = [
             "title": "THE B2B",
             "subtitle": "june 27-28\nberlin",
             "size": "lg",
+            "layout": "row",
             "subtitle_style": "event",
         },
     },

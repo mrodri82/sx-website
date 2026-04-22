@@ -10,7 +10,7 @@
  *   - card_bg: default #1a1a1a
  */
 interface Button { label: string; href: string; }
-interface Item { title: string; description?: string; buttons?: Button[]; }
+interface Item { title: string; description?: string; buttons?: Button[]; bg_image?: string; }
 interface Props { content: Record<string, any>; }
 const { content = {} } = Astro.props;
 const items: Item[] = Array.isArray(content.items) ? content.items : [];
@@ -22,7 +22,7 @@ const cardBg  = content.card_bg || '#1a1a1a';
   <div class="sx-fcards-inner">
     <div class="sx-fcards-grid">
       {items.map((it) => (
-        <article class="sx-fcard">
+        <article class={`sx-fcard${it.bg_image ? ' sx-fcard--bg' : ''}`} style={it.bg_image ? `--card-img:url('${it.bg_image}')` : ''}>
           <h3 class="sx-fcard-title">{it.title}</h3>
           {it.description && <div class="sx-fcard-desc" set:html={it.description} />}
           {Array.isArray(it.buttons) && it.buttons.length > 0 && (
@@ -58,7 +58,19 @@ const cardBg  = content.card_bg || '#1a1a1a';
     display: flex; flex-direction: column;
     gap: 20px;
     min-height: 320px;
+    position: relative; overflow: hidden; isolation: isolate;
   }
+  .sx-fcard--bg {
+    background-image: var(--card-img);
+    background-size: cover; background-position: center;
+    min-height: 420px;
+  }
+  /* Readability scrim over bg-image cards */
+  .sx-fcard--bg::before {
+    content: ""; position: absolute; inset: 0; z-index: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.2) 60%);
+  }
+  .sx-fcard--bg > * { position: relative; z-index: 1; }
   .sx-fcard-title {
     font-family: 'Oswald', sans-serif; font-weight: 600;
     font-size: 48px; line-height: 1;
