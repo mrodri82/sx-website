@@ -10,7 +10,8 @@ interface Props { content: Record<string, any>; }
 const { content = {} } = Astro.props;
 const title    = content.title    || '';
 const subtitle = content.subtitle || '';
-const size     = (content.size === 'lg' ? 'lg' : 'sm') as 'sm' | 'lg';
+const size     = (['sm','md','lg'].includes(content.size) ? content.size : 'sm') as 'sm'|'md'|'lg';
+const align    = (content.align === 'center' ? 'center' : 'start') as 'center'|'start';
 /* subtitle_style:
    - default (size=sm): Oswald 42px 600 grey
    - default (size=lg): Inter 28px 500 white
@@ -20,7 +21,7 @@ const subColor = content.subtitle_color || '';
 const layout   = (content.layout === 'row' ? 'row' : 'stack') as 'row' | 'stack';
 ---
 
-<section data-nova-el="section-title" class={`sx-st sx-st--${size} sx-st--${layout} sx-st--sub-${subStyle}`}>
+<section data-nova-el="section-title" class={`sx-st sx-st--${size} sx-st--${layout} sx-st--sub-${subStyle} sx-st--align-${align}`}>
   <div class="sx-st-inner">
     {title && <h2 class="sx-st-title">{title}</h2>}
     {subtitle && <p class="sx-st-sub" style={subColor ? `color:${subColor}` : undefined}>{subtitle}</p>}
@@ -43,9 +44,19 @@ const layout   = (content.layout === 'row' ? 'row' : 'stack') as 'row' | 'stack'
   .sx-st--sm .sx-st-title { font-size: 42px; font-weight: 600; color: #ecfd21; }
   .sx-st--sm .sx-st-sub   { font-size: 42px; color: #A6A6A6; }
 
+  /* md — used above sliders / tables (TOP VOICES, HOT TOPICS). Smaller + often centered. */
+  .sx-st--md { padding: 40px 50px 20px; }
+  .sx-st--md .sx-st-title { font-size: 80px; font-weight: 900; color: #FFFFFF; letter-spacing: -2px; line-height: 1; }
+  .sx-st--md .sx-st-sub   { font-size: 20px; font-family: 'Inter', sans-serif; font-weight: 500; color: #FFFFFF; }
+
+  /* lg — full-section headings (THE B2B, PROGRAM). 140px matches sxtech visual scale at 1440px. */
   .sx-st--lg { padding: 60px 50px; }
-  .sx-st--lg .sx-st-title { font-size: 96px; font-weight: 900; color: #FFFFFF; letter-spacing: -3px; }
+  .sx-st--lg .sx-st-title { font-size: 140px; font-weight: 900; color: #FFFFFF; letter-spacing: -4px; line-height: 1; }
   .sx-st--lg .sx-st-sub   { font-size: 28px; font-family: 'Inter', sans-serif; font-weight: 500; color: #FFFFFF; }
+
+  .sx-st--align-center .sx-st-inner,
+  .sx-st--align-center .sx-st-title,
+  .sx-st--align-center .sx-st-sub { text-align: center; }
 
   /* layout='row': title left, subtitle right (for "THE B2B | JUNE 27-28 BERLIN") */
   .sx-st--row .sx-st-inner {
@@ -66,13 +77,15 @@ const layout   = (content.layout === 'row' ? 'row' : 'stack') as 'row' | 'stack'
     .sx-st--lg .sx-st-title { font-size: 120px; letter-spacing: -3px; }
   }
   @media (max-width: 1024px) {
-    .sx-st--lg .sx-st-title { font-size: 72px; letter-spacing: -2px; }
+    .sx-st--lg .sx-st-title { font-size: 96px; letter-spacing: -3px; }
+    .sx-st--md .sx-st-title { font-size: 56px; letter-spacing: -1px; }
     .sx-st--sub-event .sx-st-sub { font-size: 48px; }
     .sx-st--row .sx-st-inner { flex-direction: column; align-items: flex-start; gap: 8px; }
   }
   @media (max-width: 768px) {
     .sx-st { padding: 30px 24px; }
     .sx-st--sm .sx-st-title, .sx-st--sm .sx-st-sub { font-size: 32px; }
+    .sx-st--md .sx-st-title { font-size: 44px; letter-spacing: -1px; }
     .sx-st--lg .sx-st-title { font-size: 56px; letter-spacing: -2px; }
     .sx-st--lg .sx-st-sub   { font-size: 16px; }
     .sx-st--sub-event .sx-st-sub { font-size: 40px; }

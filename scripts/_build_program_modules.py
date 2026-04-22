@@ -67,7 +67,7 @@ sections = [
     },
     {
         "id": -3, "type": "SectionTitle", "mode": "detached",
-        "data": {"title": "TOP VOICES", "size": "lg"},
+        "data": {"title": "TOP VOICES", "size": "md", "align": "center"},
     },
     {
         "id": -4, "type": "FestivalSlider", "mode": "detached",
@@ -85,7 +85,7 @@ sections = [
     },
     {
         "id": -5, "type": "SectionTitle", "mode": "detached",
-        "data": {"title": "HOT TOPICS & EXPERIENCES", "size": "lg"},
+        "data": {"title": "HOT TOPICS & EXPERIENCES", "size": "md", "align": "center"},
     },
     {
         "id": -6, "type": "ProgramTable", "mode": "detached",

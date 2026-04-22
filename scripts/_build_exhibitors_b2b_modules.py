@@ -90,7 +90,7 @@ sections = [
                 {
                     "title": "VENUE\nPLAN",
                     "description": "Where you stand matters.",
-                    "bg_image": f"{DST}{UPL}/1-1-1.png",
+                    "bg_image": f"{DST}{UPL}/Projekt-bez-nazwy-8.png",
                     "buttons": [
                         {"label": "VIRTUAL TOUR", "href": "https://tours.nexpics.com/visitberlin/magazin-der-heeresbaeckerei/"},
                         {"label": "MAPS",         "href": "https://www.google.com/maps/dir/?api=1&destination=Heeresb%C3%A4ckerei+Berlin+K%C3%B6penicker+Stra%C3%9Fe+16+Berlin"},
@@ -172,7 +172,7 @@ sections = [
     },
     {
         "id": -8, "type": "SectionTitle", "mode": "detached",
-        "data": {"title": "TOP VOICES", "size": "lg"},
+        "data": {"title": "TOP VOICES", "size": "md", "align": "center"},
     },
     {
         "id": -9, "type": "FestivalSlider", "mode": "detached",

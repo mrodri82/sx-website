@@ -80,7 +80,8 @@
     "mode": "detached",
     "data": {
       "title": "TOP VOICES",
-      "size": "lg"
+      "size": "md",
+      "align": "center"
     }
   },
   {
@@ -123,7 +124,8 @@
     "mode": "detached",
     "data": {
       "title": "HOT TOPICS & EXPERIENCES",
-      "size": "lg"
+      "size": "md",
+      "align": "center"
     }
   },
   {

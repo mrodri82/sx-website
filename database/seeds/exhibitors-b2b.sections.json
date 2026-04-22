@@ -77,7 +77,7 @@
         {
           "title": "VENUE\nPLAN",
           "description": "Where you stand matters.",
-          "bg_image": "https://sx.zds.es/wp-content/uploads/2026/04/1-1-1.png",
+          "bg_image": "https://sx.zds.es/wp-content/uploads/2026/04/Projekt-bez-nazwy-8.png",
           "buttons": [
             {
               "label": "VIRTUAL TOUR",
@@ -183,7 +183,8 @@
     "mode": "detached",
     "data": {
       "title": "TOP VOICES",
-      "size": "lg"
+      "size": "md",
+      "align": "center"
     }
   },
   {
