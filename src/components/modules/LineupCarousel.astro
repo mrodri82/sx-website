@@ -1,14 +1,12 @@
 ---
 /**
- * LineupCarousel — 5-card autoplay carousel (speaker/conversation style).
- * Each card = big portrait image + yellow info-bar with name + role beneath.
+ * LineupCarousel — infinite autoplay carousel (tall portrait cards, overlaid info).
  *
  * Fields:
- *   - heading:  "LINEUP", "FEATURED CONVERSATIONS", etc.
- *   - subtitle: small grey subtitle above heading area
+ *   - heading:  "LINEUP"
+ *   - subtitle: "WATCH WHAT UNFOLDS"
  *   - items:    Array<{ image, name, role, href? }>
- *   - slides_visible: default 5 (desktop), 2 (mobile)
- *   - autoplay_ms:    default 4000
+ *   - autoplay_ms: default 4000
  */
 interface Item { image: string; name: string; role?: string; href?: string; }
 interface Props { content: Record<string, any>; }
@@ -17,6 +15,15 @@ const heading  = content.heading  || 'LINEUP';
 const subtitle = content.subtitle || '';
 const items: Item[] = Array.isArray(content.items) ? content.items : [];
 const autoplayMs = Number(content.autoplay_ms) || 4000;
+
+/* Infinite loop: prepend last CLONE_COUNT items, append first CLONE_COUNT items.
+   Start index = CLONE_COUNT so the first *real* card is the left-most on load. */
+const CLONE = Math.min(4, items.length);
+const loopItems: Array<Item & { isClone?: boolean }> = [
+  ...items.slice(-CLONE).map(i => ({ ...i, isClone: true })),
+  ...items,
+  ...items.slice(0, CLONE).map(i => ({ ...i, isClone: true })),
+];
 ---
 
 <section data-nova-el="lineup-carousel" class="sx-lc">
@@ -26,34 +33,42 @@ const autoplayMs = Number(content.autoplay_ms) || 4000;
       {subtitle && <p class="sx-lc-sub">{subtitle}</p>}
     </header>
 
-    <div class="sx-lc-viewport">
-      <button class="sx-lc-nav sx-lc-prev" type="button" aria-label="Previous">←</button>
+    <div class="sx-lc-viewport" data-clone-count={CLONE} data-real-count={items.length}>
+      <button class="sx-lc-nav sx-lc-prev" type="button" aria-label="Previous">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+      </button>
       <div class="sx-lc-track" data-autoplay={autoplayMs}>
-        {items.map((it) => (
-          <article class="sx-lc-card">
+        {loopItems.map((it) => (
+          <article class={`sx-lc-card${it.isClone ? ' sx-lc-card--clone' : ''}`}>
             {it.href ? (
               <a class="sx-lc-imgwrap" href={it.href} target={it.href.startsWith('http') ? '_blank' : undefined} rel="noopener">
                 <img src={it.image} alt={it.name} loading="lazy" />
+                <div class="sx-lc-info">
+                  <div class="sx-lc-name">{it.name}</div>
+                  {it.role && <div class="sx-lc-role">{it.role}</div>}
+                </div>
               </a>
             ) : (
               <div class="sx-lc-imgwrap">
                 <img src={it.image} alt={it.name} loading="lazy" />
+                <div class="sx-lc-info">
+                  <div class="sx-lc-name">{it.name}</div>
+                  {it.role && <div class="sx-lc-role">{it.role}</div>}
+                </div>
               </div>
             )}
-            <div class="sx-lc-info">
-              <div class="sx-lc-name">{it.name}</div>
-              {it.role && <div class="sx-lc-role">{it.role}</div>}
-            </div>
           </article>
         ))}
       </div>
-      <button class="sx-lc-nav sx-lc-next" type="button" aria-label="Next">→</button>
+      <button class="sx-lc-nav sx-lc-next" type="button" aria-label="Next">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      </button>
     </div>
   </div>
 </section>
 
 <style>
-  /* Values extracted 1:1 from sxtech.eu post-17.css (elements d7018bb/f15ce6a/f499128/dad1b47) */
+  /* Values extracted 1:1 from sxtech.eu post-17.css (d7018bb/f15ce6a/f499128/dad1b47) */
   .sx-lc { background: #000; padding: 60px 50px 80px; color: #ecfd21; }
   .sx-lc-inner { max-width: 1600px; margin: 0 auto; }
   .sx-lc-head { margin-bottom: 32px; }
@@ -65,69 +80,69 @@ const autoplayMs = Number(content.autoplay_ms) || 4000;
   }
   .sx-lc-sub {
     font-family: 'Inter', sans-serif; font-size: 19px; font-weight: 400;
-    color: #D1D1D1;
-    margin: 0;
+    color: #D1D1D1; margin: 0;
   }
-  .sx-lc-viewport { position: relative; }
+
+  .sx-lc-viewport { position: relative; overflow: hidden; }
   .sx-lc-track {
-    display: flex; gap: 33px;
+    display: flex; gap: 14px;
     transition: transform .6s cubic-bezier(.4,0,.2,1);
     will-change: transform;
   }
+  .sx-lc-track.is-jumping { transition: none; }
+
   .sx-lc-card {
-    flex: 0 0 calc((100% - 3 * 33px) / 4);
+    flex: 0 0 calc((100% - 3 * 14px) / 4);
     min-width: 0;
-    display: flex; flex-direction: column;
-    transition: transform .3s ease;
+    display: block;
   }
+  /* Taller, narrower portrait (2:3 instead of 3:4) */
   .sx-lc-imgwrap {
-    display: block; aspect-ratio: 3 / 4;
-    overflow: hidden; background: #1a1a1a;
+    position: relative; display: block;
+    aspect-ratio: 2 / 3; overflow: hidden;
+    background: #1a1a1a; text-decoration: none; color: inherit;
   }
-  .sx-lc-imgwrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .sx-lc-imgwrap img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .4s ease; }
+  .sx-lc-imgwrap:hover img { transform: scale(1.03); }
+
+  /* Info bar sits ON the image, 80px from bottom (sxtech layout) */
   .sx-lc-info {
-    background: transparent; padding: 0;
-    transition: background .3s ease;
+    position: absolute; left: 0; right: 0; bottom: 80px;
+    background: #ecfd21; color: #000;
+    padding: 5px 20px;
   }
-  .sx-lc-card.is-active .sx-lc-info { background: #ecfd21; }
   .sx-lc-name {
     font-family: 'Oswald', sans-serif; font-weight: 700;
     font-size: 27px; line-height: 1.1;
-    text-transform: uppercase;
-    color: #ecfd21;
-    padding: 5px 20px 0;
+    text-transform: uppercase; color: #000;
   }
   .sx-lc-role {
-    font-family: 'Inter', sans-serif; font-size: 19px; font-weight: 400;
-    color: #D1D1D1;
-    padding: 0 20px 5px;
+    font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 500;
+    color: #000; margin-top: 2px;
   }
-  .sx-lc-card.is-active .sx-lc-name,
-  .sx-lc-card.is-active .sx-lc-role { color: #000; }
 
+  /* Thick, bold arrow buttons (outside the track) */
   .sx-lc-nav {
     position: absolute; top: 50%; transform: translateY(-50%);
     width: 44px; height: 44px; z-index: 5;
     background: transparent; border: 0; color: #ecfd21;
-    font-size: 28px; font-weight: 700; cursor: pointer; line-height: 1;
+    cursor: pointer; padding: 0;
     display: flex; align-items: center; justify-content: center;
-    transition: opacity .15s, color .15s;
+    transition: color .15s;
   }
   .sx-lc-nav:hover { color: #fff; }
-  .sx-lc-prev { left: -44px; }
-  .sx-lc-next { right: -44px; }
+  .sx-lc-prev { left: 8px; }
+  .sx-lc-next { right: 8px; }
 
   @media (max-width: 1200px) {
-    .sx-lc-card { flex: 0 0 calc((100% - 2 * 33px) / 3); }
+    .sx-lc-card { flex: 0 0 calc((100% - 2 * 14px) / 3); }
   }
   @media (max-width: 900px) {
     .sx-lc-card { flex: 0 0 calc((100% - 14px) / 2); }
-    .sx-lc-track { gap: 14px; }
-    .sx-lc-prev { left: 0; }
-    .sx-lc-next { right: 0; }
     .sx-lc { padding: 40px 24px 60px; }
-    .sx-lc-name { font-size: 23px; padding: 5px 14px 0; }
-    .sx-lc-role { font-size: 16px; padding: 0 14px 5px; }
+    .sx-lc-name { font-size: 22px; padding: 5px 14px 0; }
+    .sx-lc-role { font-size: 14px; padding: 0 14px 5px; }
+    .sx-lc-info { bottom: 40px; padding: 5px 14px; }
   }
 </style>
 
@@ -143,41 +158,47 @@ const autoplayMs = Number(content.autoplay_ms) || 4000;
       const next = root.querySelector<HTMLButtonElement>('.sx-lc-next');
       if (!track || cards.length === 0) return;
 
-      let index = 0;
-      const total = cards.length;
+      const clone = Number(root.dataset.cloneCount) || 0;
+      const real  = Number(root.dataset.realCount)  || cards.length;
       const intervalMs = Number(track.dataset.autoplay) || 4000;
 
-      function visible() {
-        const w = window.innerWidth;
-        if (w <= 900) return 2;
-        if (w <= 1200) return 3;
-        return 4;
+      /* Virtual index in the [clone .. clone+real-1] range. The track has
+         (clone + real + clone) items. When we hit a clone boundary we jump
+         back into the real window after the transition ends. */
+      let index = clone;
+
+      function gapPx() { return 14; }
+      function cardWidth() { return cards[0].getBoundingClientRect().width + gapPx(); }
+
+      function apply() {
+        track!.style.transform = `translateX(${-index * cardWidth()}px)`;
+      }
+      function jumpTo(i: number) {
+        track!.classList.add('is-jumping');
+        index = i;
+        apply();
+        /* Force reflow then drop the instant-class so the next move animates */
+        track!.getBoundingClientRect();
+        track!.classList.remove('is-jumping');
       }
 
-      function update() {
-        const v = visible();
-        const maxIdx = Math.max(0, total - v);
-        if (index > maxIdx) index = 0;
-        if (index < 0) index = maxIdx;
-        const gap = window.innerWidth <= 900 ? 14 : 33;
-        const cardW = cards[0].getBoundingClientRect().width + gap;
-        track!.style.transform = `translateX(${-index * cardW}px)`;
-        // "active" = the middle card of the visible window (index + floor(v/2))
-        cards.forEach(c => c.classList.remove('is-active'));
-        const activeIdx = index + Math.floor(v / 2);
-        if (cards[activeIdx]) cards[activeIdx].classList.add('is-active');
-      }
+      track.addEventListener('transitionend', () => {
+        if (index >= clone + real) jumpTo(index - real);
+        else if (index < clone)     jumpTo(index + real);
+      });
 
-      let timer = window.setInterval(() => { index++; update(); }, intervalMs);
-      function reset() { clearInterval(timer); timer = window.setInterval(() => { index++; update(); }, intervalMs); }
+      function step(dir: 1 | -1) { index += dir; apply(); }
 
-      prev?.addEventListener('click', () => { index--; update(); reset(); });
-      next?.addEventListener('click', () => { index++; update(); reset(); });
+      let timer = window.setInterval(() => step(1), intervalMs);
+      function reset() { clearInterval(timer); timer = window.setInterval(() => step(1), intervalMs); }
+
+      prev?.addEventListener('click', () => { step(-1); reset(); });
+      next?.addEventListener('click', () => { step(1);  reset(); });
       root.addEventListener('mouseenter', () => clearInterval(timer));
-      root.addEventListener('mouseleave', () => { reset(); });
-      window.addEventListener('resize', () => requestAnimationFrame(update));
+      root.addEventListener('mouseleave', () => reset());
+      window.addEventListener('resize', () => requestAnimationFrame(apply));
 
-      requestAnimationFrame(update);
+      requestAnimationFrame(apply);
     }
   })();
 </script>

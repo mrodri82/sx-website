@@ -21,7 +21,9 @@ const items: Item[] = Array.isArray(content.items) ? content.items : [];
       {items.map((it) => (
         <li class="sx-ill-item">
           <a href={it.href} target={it.href?.startsWith('http') ? '_blank' : undefined} rel="noopener">
-            <span class="sx-ill-icon" aria-hidden="true">↗</span>
+            <span class="sx-ill-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
+            </span>
             <span class="sx-ill-label" style={it.color ? `color:${it.color}` : undefined}>{it.label}</span>
           </a>
         </li>
@@ -31,17 +33,22 @@ const items: Item[] = Array.isArray(content.items) ? content.items : [];
 </section>
 
 <style>
-  /* Values extracted 1:1 from sxtech.eu post-17.css (elements 3c17c02/1b566a9). */
+  /* Values extracted 1:1 from sxtech.eu post-17.css (00957e6/894300d/e817453/3c17c02/1b566a9).
+     Parent container is flex-row with two 50% columns: heading left, list right. */
   .sx-ill { background: #000; padding: 80px 50px; }
-  .sx-ill-inner { max-width: 1366px; margin: 0 auto; text-align: start; }
+  .sx-ill-inner {
+    max-width: 1366px; margin: 0 auto;
+    display: flex; flex-direction: row; align-items: center; gap: 40px;
+  }
   .sx-ill-heading {
+    flex: 0 0 50%;
     font-family: 'Oswald', sans-serif; font-weight: 800;
     font-size: 156px; line-height: 1;
     letter-spacing: -6px; text-transform: uppercase;
-    color: #ecfd21; margin: 0 0 40px;
+    color: #ecfd21; margin: 0;
     white-space: pre-line;
   }
-  .sx-ill-list { list-style: none; padding: 0; margin: 0; }
+  .sx-ill-list { flex: 1 1 50%; list-style: none; padding: 0; margin: 0; }
   .sx-ill-item { margin: 0; padding-block: 11px; }
   .sx-ill-item a {
     display: inline-flex; align-items: center; gap: 14px;
@@ -51,11 +58,15 @@ const items: Item[] = Array.isArray(content.items) ? content.items : [];
     color: #fff; transition: color .3s;
   }
   .sx-ill-item a:hover { color: #ecfd21; }
-  .sx-ill-icon { color: #fff; font-size: 14px; line-height: 1; display: inline-block; transition: color .3s; }
+  .sx-ill-icon { color: #fff; line-height: 1; display: inline-flex; align-items: center; transition: color .3s; }
   .sx-ill-item a:hover .sx-ill-icon { color: #ecfd21; }
 
   @media (max-width: 1366px) { .sx-ill-heading { font-size: 138px; letter-spacing: -5px; } }
-  @media (max-width: 1024px) { .sx-ill-heading { font-size: 131px; letter-spacing: -4px; } }
+  @media (max-width: 1024px) {
+    .sx-ill-inner { flex-direction: column; align-items: flex-start; gap: 24px; }
+    .sx-ill-heading { flex: none; font-size: 131px; letter-spacing: -4px; }
+    .sx-ill-list { flex: none; width: 100%; }
+  }
   @media (max-width: 768px) {
     .sx-ill { padding: 40px 24px; }
     .sx-ill-heading { font-size: 65px; letter-spacing: -2px; }

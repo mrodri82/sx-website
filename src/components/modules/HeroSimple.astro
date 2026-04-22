@@ -79,8 +79,18 @@ const bgImage  = content.bg_image || '';
     .sx-hs-title { font-size: 131px; letter-spacing: -4px; }
   }
   @media (max-width: 768px) {
-    .sx-hs { padding: 40px 24px; min-height: 70vh; }
-    .sx-hs-title { font-size: 65px; letter-spacing: -2px; }
+    /* Mobile: drop the 88vh / flex-center anchor — when viewport is small the
+       content (title + subtitle + cta) would otherwise get centered and the
+       CTA collides with the subtitle. Use natural block flow with generous
+       bottom padding instead. */
+    .sx-hs {
+      padding: 40px 24px 60px;
+      min-height: 0;
+      display: block;
+    }
+    .sx-hs-inner { display: block; }
+    .sx-hs-title { font-size: 65px; letter-spacing: -2px; margin-bottom: 24px; }
+    .sx-hs-sub { margin-bottom: 32px; }
     .sx-hs-cta { font-size: 18px; padding: 20px 40px; }
   }
 </style>
