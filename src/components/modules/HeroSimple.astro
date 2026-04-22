@@ -53,11 +53,10 @@ const bgImage  = content.bg_image || '';
     color: #ecfd21; margin: 0 0 24px;
     white-space: pre-line;
   }
-  /* Subtitle values = computed style on sxtech.eu (not naive grep — the 23px
-     value in the CSS was overridden by a later @media cascade to 16px). */
+  /* Subtitle values = computed style on sxtech.eu at desktop width. */
   .sx-hs-sub {
-    font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 500;
-    line-height: 16px; height: 48px;
+    font-family: 'Inter', sans-serif; font-size: 21px; font-weight: 500;
+    line-height: 21px; height: 63px;
     color: #ecfd21; text-transform: uppercase;
     margin: 0 0 40px;
     white-space: pre-line;
@@ -90,7 +89,10 @@ const bgImage  = content.bg_image || '';
     }
     .sx-hs-inner { display: block; }
     .sx-hs-title { font-size: 65px; letter-spacing: -2px; margin-bottom: 24px; }
-    .sx-hs-sub { margin-bottom: 32px; }
+    .sx-hs-sub {
+      font-size: 16px; line-height: 16px; height: 48px;
+      margin-bottom: 32px;
+    }
     .sx-hs-cta { font-size: 18px; padding: 20px 40px; }
   }
 </style>
