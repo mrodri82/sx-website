@@ -1,0 +1,62 @@
+---
+/* Overlay — a background image/color with content layered on top, aligned
+   to one of 9 positions (top-left … bottom-right, center, etc). The
+   'height' prop takes a CSS value directly because viewport-relative
+   heights don't map cleanly to a token scale. */
+interface Props {
+  bg_image?: string;
+  bg_color?: 'black'|'white'|'brand'|'brand-alt'|'accent';
+  filter?: 'none'|'grayscale'|'darken';
+  height?: string;
+  valign?: 'start'|'center'|'end';
+  halign?: 'start'|'center'|'end';
+  padding?: '0'|'xs'|'sm'|'md'|'lg'|'xl'|'2xl'|'3xl'|'4xl';
+  fullBleed?: boolean;
+}
+const {
+  bg_image,
+  bg_color = 'black',
+  filter = 'none',
+  height = '70vh',
+  valign = 'center',
+  halign = 'start',
+  padding = '2xl',
+  fullBleed = false,
+} = Astro.props as Props;
+
+const justifyMap: Record<string,string> = { start:'flex-start', center:'center', end:'flex-end' };
+const alignMap:   Record<string,string> = { start:'flex-start', center:'center', end:'flex-end' };
+---
+
+<section
+  class:list={['t-overlay', fullBleed && 't-overlay--bleed']}
+  style={[
+    'position: relative; isolation: isolate; overflow: hidden; display: flex;',
+    `background-color: var(--t-color-${bg_color});`,
+    `min-height: ${height};`,
+    `justify-content: ${alignMap[halign]};`,
+    `align-items: ${justifyMap[valign]};`,
+    `padding: var(--t-space-${padding});`,
+  ].join(' ')}
+>
+  {bg_image && (
+    <div
+      style={[
+        'position: absolute; inset: 0; z-index: -1;',
+        `background-image: url('${bg_image}');`,
+        'background-size: cover; background-position: center;',
+        filter === 'grayscale' ? 'filter: grayscale(100%) contrast(1.05);' : '',
+      ].join(' ')}
+    />
+  )}
+  {filter === 'darken' && (
+    <div style="position: absolute; inset: 0; z-index: -1; background: rgba(0,0,0,.45);" />
+  )}
+  <div style="position: relative; z-index: 1; width: 100%;"><slot /></div>
+</section>
+
+<style>
+  .t-overlay--bleed {
+    margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); width: 100vw;
+  }
+</style>

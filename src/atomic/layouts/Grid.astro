@@ -1,0 +1,34 @@
+---
+/* Grid — columns that collapse at the given breakpoint. */
+interface Props {
+  columns?: 1|2|3|4;
+  columnsMobile?: 1|2;
+  gap?: '0'|'xs'|'sm'|'md'|'lg'|'xl'|'2xl';
+  padding?: '0'|'xs'|'sm'|'md'|'lg'|'xl'|'2xl'|'3xl';
+  maxWidth?: string;
+}
+const {
+  columns = 3,
+  columnsMobile = 1,
+  gap = 'lg',
+  padding,
+  maxWidth = '1366px',
+} = Astro.props as Props;
+---
+
+<div class="t-grid" style={[
+  `--t-grid-cols: ${columns};`,
+  `--t-grid-cols-m: ${columnsMobile};`,
+  `gap: var(--t-space-${gap});`,
+  padding ? `padding: var(--t-space-${padding});` : '',
+  `max-width: ${maxWidth}; margin: 0 auto;`,
+].join(' ')}>
+  <slot />
+</div>
+
+<style>
+  .t-grid { display: grid; grid-template-columns: repeat(var(--t-grid-cols), minmax(0,1fr)); }
+  @media (max-width: 768px) {
+    .t-grid { grid-template-columns: repeat(var(--t-grid-cols-m), minmax(0,1fr)); }
+  }
+</style>

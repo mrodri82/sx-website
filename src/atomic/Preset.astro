@@ -1,0 +1,46 @@
+---
+/* Preset renderer — takes a nested JSON node and recurses through atoms
+   and layouts. Everything on the page, no matter how complex, is built
+   from this one component applied to a single JSON tree. That JSON is
+   exactly what the Vision/AI step produces from a screenshot, and also
+   exactly what the editor manipulates.
+
+   Supported node types:
+     atoms:    text | button | image | spacer
+     layouts:  stack | overlay | grid
+
+   A node of type 'stack' | 'overlay' | 'grid' has a `children: Node[]`
+   array; atom nodes are leaves.
+*/
+
+import Text from './atoms/Text.astro';
+import Button from './atoms/Button.astro';
+import AImage from './atoms/Image.astro';
+import Stack from './layouts/Stack.astro';
+import Overlay from './layouts/Overlay.astro';
+import Grid from './layouts/Grid.astro';
+import Self from './Preset.astro';
+
+interface Node { type: string; children?: Node[]; [k: string]: any }
+interface Props { node: Node; }
+
+const { node } = Astro.props;
+const { type, children = [], ...props } = node || {};
+---
+
+{type === 'text'    && <Text  {...props} />}
+{type === 'button'  && <Button {...props} />}
+{type === 'image'   && <AImage {...props} />}
+{type === 'spacer'  && (
+  <div style={`height: var(--t-space-${props.size || 'md'}); width: 100%;`} />
+)}
+
+{type === 'stack' && (
+  <Stack {...props}>{children.map((c: Node) => <Self node={c} />)}</Stack>
+)}
+{type === 'grid' && (
+  <Grid {...props}>{children.map((c: Node) => <Self node={c} />)}</Grid>
+)}
+{type === 'overlay' && (
+  <Overlay {...props}>{children.map((c: Node) => <Self node={c} />)}</Overlay>
+)}

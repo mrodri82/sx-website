@@ -1,0 +1,63 @@
+---
+/* Button atom. Variants are token-driven; only the 4 below are allowed. */
+interface Props {
+  label: string;
+  href: string;
+  variant?: 'black'|'yellow'|'white'|'ghost';
+  size?: 'sm'|'md'|'lg';
+  uppercase?: boolean;
+  new_tab?: boolean;
+}
+const {
+  label, href,
+  variant = 'black',
+  size = 'md',
+  uppercase = true,
+  new_tab = false,
+} = Astro.props as Props;
+
+const bg =
+  variant === 'yellow' ? 'var(--t-color-brand)' :
+  variant === 'white'  ? 'var(--t-color-white)' :
+  variant === 'ghost'  ? 'transparent' :
+                         'var(--t-color-black)';
+
+const fg =
+  variant === 'yellow' ? 'var(--t-color-black)' :
+  variant === 'white'  ? 'var(--t-color-black)' :
+  variant === 'ghost'  ? 'var(--t-color-black)' :
+                         'var(--t-color-white)';
+
+const border =
+  variant === 'ghost'  ? 'var(--t-color-black)' :
+                         bg;
+
+const pad = {
+  sm: 'var(--t-space-sm) var(--t-space-md)',
+  md: 'var(--t-space-md) var(--t-space-lg)',
+  lg: 'var(--t-space-md) var(--t-space-xl)',
+}[size];
+const fs = { sm: 'var(--t-font-sm)', md: 'var(--t-font-md)', lg: 'var(--t-font-lg)' }[size];
+
+const style = [
+  'display: inline-flex; align-items: center; justify-content: center;',
+  'text-decoration: none; white-space: nowrap;',
+  'font-family: var(--t-font-sans); font-weight: var(--t-weight-semibold);',
+  'letter-spacing: 1px;',
+  uppercase ? 'text-transform: uppercase;' : '',
+  `padding: ${pad};`,
+  `font-size: ${fs};`,
+  `background: ${bg}; color: ${fg}; border: 1px solid ${border};`,
+  'transition: opacity .15s;',
+].filter(Boolean).join(' ');
+---
+
+<a
+  href={href}
+  target={new_tab || href?.startsWith('http') ? '_blank' : undefined}
+  rel={new_tab || href?.startsWith('http') ? 'noopener' : undefined}
+  style={style}
+  onmouseover="this.style.opacity='0.8'"
+  onmouseout="this.style.opacity='1'"
+  set:html={label}
+/>

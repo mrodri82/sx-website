@@ -1,0 +1,64 @@
+/* ─── DESIGN TOKENS ─────────────────────────────────────────────────
+   All atoms and layouts MUST reference these variables instead of
+   hardcoded values. Breakpoint overrides below rescale the biggest
+   spacing + type scales for mobile so the same JSON preset adapts
+   without needing a second mobile preset. */
+
+:root {
+  /* spacing scale (used for padding, gap, margin, size) */
+  --t-space-0:   0;
+  --t-space-xs:  4px;
+  --t-space-sm:  8px;
+  --t-space-md:  16px;
+  --t-space-lg:  24px;
+  --t-space-xl:  32px;
+  --t-space-2xl: 48px;
+  --t-space-3xl: 64px;
+  --t-space-4xl: 96px;
+
+  /* brand palette — no free colors allowed in atoms */
+  --t-color-brand:       #ecfd21;
+  --t-color-brand-alt:   #FF6600;
+  --t-color-black:       #000000;
+  --t-color-white:       #FFFFFF;
+  --t-color-muted:       #A6A6A6;
+  --t-color-muted-bg:    #D1D1D1;
+  --t-color-accent:      #FF3355;
+
+  /* font scale — fluid via clamp so desktop ↔ mobile is continuous */
+  --t-font-xs:   12px;
+  --t-font-sm:   14px;
+  --t-font-md:   clamp(15px, 1.1vw, 17px);
+  --t-font-lg:   clamp(18px, 1.4vw, 20px);
+  --t-font-xl:   clamp(22px, 2.0vw, 28px);
+  --t-font-2xl:  clamp(28px, 3.0vw, 44px);
+  --t-font-3xl:  clamp(40px, 5.0vw, 72px);
+  --t-font-4xl:  clamp(56px, 8.0vw, 120px);
+  --t-font-5xl:  clamp(72px, 10vw, 156px);
+
+  /* weights */
+  --t-weight-regular: 400;
+  --t-weight-medium:  500;
+  --t-weight-semibold: 600;
+  --t-weight-bold:    700;
+  --t-weight-heavy:   800;
+
+  /* radius + misc */
+  --t-radius-none: 0;
+  --t-radius-sm:   4px;
+  --t-radius-md:   12px;
+  --t-radius-lg:   24px;
+  --t-radius-full: 9999px;
+
+  --t-font-sans:    'Inter', sans-serif;
+  --t-font-display: 'Oswald', sans-serif;
+}
+
+/* Mobile scale-down: only the very large spacings need to compress —
+   the font scale already uses clamp and adapts automatically. */
+@media (max-width: 768px) {
+  :root {
+    --t-space-3xl: 40px;
+    --t-space-4xl: 56px;
+  }
+}

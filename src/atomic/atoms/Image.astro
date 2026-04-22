@@ -1,0 +1,30 @@
+---
+interface Props {
+  src: string;
+  alt?: string;
+  aspect?: '1/1'|'4/3'|'16/9'|'3/4'|'auto';
+  fit?: 'cover'|'contain';
+  filter?: 'none'|'grayscale';
+  radius?: 'none'|'sm'|'md'|'lg';
+  width?: string;
+}
+const {
+  src, alt = '',
+  aspect = 'auto',
+  fit = 'cover',
+  filter = 'none',
+  radius = 'none',
+  width = '100%',
+} = Astro.props as Props;
+
+const style = [
+  `width: ${width};`,
+  aspect !== 'auto' ? `aspect-ratio: ${aspect};` : '',
+  `object-fit: ${fit};`,
+  filter === 'grayscale' ? 'filter: grayscale(100%) contrast(1.05);' : '',
+  `border-radius: var(--t-radius-${radius});`,
+  'display: block;',
+].filter(Boolean).join(' ');
+---
+
+<img src={src} alt={alt} loading="lazy" style={style} />

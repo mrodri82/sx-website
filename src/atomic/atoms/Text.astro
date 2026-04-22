@@ -1,0 +1,39 @@
+---
+/* Text atom — every visible string in the system is rendered by this.
+   Size/color/weight/font all reference design tokens, never free values. */
+interface Props {
+  content: string;
+  size?: 'xs'|'sm'|'md'|'lg'|'xl'|'2xl'|'3xl'|'4xl'|'5xl';
+  color?: 'brand'|'brand-alt'|'black'|'white'|'muted'|'accent';
+  weight?: 'regular'|'medium'|'semibold'|'bold'|'heavy';
+  font?: 'sans'|'display';
+  align?: 'start'|'center'|'end';
+  uppercase?: boolean;
+  as?: 'div'|'p'|'h1'|'h2'|'h3'|'h4'|'span';
+  lineHeight?: string;
+}
+const {
+  content = '',
+  size = 'md',
+  color = 'black',
+  weight = 'regular',
+  font = 'sans',
+  align = 'start',
+  uppercase = false,
+  as: Tag = 'p',
+  lineHeight,
+} = Astro.props as Props;
+
+const style = [
+  `font-size: var(--t-font-${size});`,
+  `color: var(--t-color-${color});`,
+  `font-weight: var(--t-weight-${weight});`,
+  `font-family: var(--t-font-${font});`,
+  `text-align: ${align};`,
+  uppercase ? 'text-transform: uppercase;' : '',
+  lineHeight ? `line-height: ${lineHeight};` : 'line-height: 1.1;',
+  'margin: 0;',
+].filter(Boolean).join(' ');
+---
+
+<Tag style={style} set:html={content} />

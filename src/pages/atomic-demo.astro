@@ -1,0 +1,134 @@
+---
+/* Proof-of-concept: an entire page built from a JSON preset tree,
+   rendered through a single recursive Preset renderer. No bespoke
+   astro files per section. Shape is what an AI vision-to-JSON step
+   would produce from a screenshot. */
+import '@/atomic/tokens.css';
+import Layout from '@/layouts/Layout.astro';
+import Preset from '@/atomic/Preset.astro';
+import Navigation from '@/components/Navigation.astro';
+import Footer from '@/components/Footer.astro';
+
+const page = [
+  // ── Blog Hero (sxtech-style: 70vh bg image, title bottom-left) ──
+  {
+    type: 'overlay',
+    bg_image: 'https://sx.zds.es/wp-content/uploads/2026/04/7w-1.png',
+    height: '70vh',
+    valign: 'end',
+    halign: 'start',
+    padding: '2xl',
+    fullBleed: true,
+    children: [
+      {
+        type: 'stack', direction: 'vertical', gap: 'sm', align: 'start',
+        children: [
+          { type: 'text', content: 'MARIUS ROHDE',
+            size: '5xl', color: 'brand', weight: 'heavy', font: 'display',
+            uppercase: true, as: 'h1' },
+          { type: 'text', content: 'INTERVIEW',
+            size: '5xl', color: 'brand', weight: 'heavy', font: 'display',
+            uppercase: true, as: 'h1' },
+        ],
+      },
+    ],
+  },
+
+  // ── Meta line ──
+  {
+    type: 'stack', direction: 'horizontal', gap: 'md', align: 'center',
+    padding: '2xl',
+    children: [
+      { type: 'text', content: 'NEWS', size: 'sm', color: 'brand',
+        weight: 'bold', uppercase: true },
+      { type: 'text', content: '· APR 19, 2026', size: 'sm', color: 'muted',
+        uppercase: true },
+    ],
+  },
+
+  // ── Berlin 2026 venue banner (4-corner text, grayscale bg) ──
+  {
+    type: 'overlay',
+    bg_image: 'https://sxtech.eu/wp-content/uploads/2026/03/cc.png',
+    filter: 'grayscale',
+    height: '520px',
+    valign: 'start', halign: 'start',
+    padding: '0',
+    fullBleed: true,
+    children: [
+      {
+        type: 'stack', direction: 'vertical', gap: '0',
+        padding: 'xl',
+        children: [
+          { type: 'text', content: 'BERLIN 2026',
+            size: '3xl', color: 'brand', weight: 'heavy', font: 'display',
+            uppercase: true },
+          { type: 'text', content: 'JUNE 26-28',
+            size: '3xl', color: 'brand', weight: 'heavy', font: 'display',
+            uppercase: true },
+        ],
+      },
+    ],
+  },
+
+  // ── CTA row: 2 buttons centered inside container, white section ──
+  {
+    type: 'stack', direction: 'horizontal', gap: 'md', align: 'center',
+    justify: 'center', paddingY: '2xl', paddingX: 'lg', wrap: true,
+    children: [
+      { type: 'button', label: 'BECOME AN EXHIBITOR', href: '/exhibitors-b2b',
+        variant: 'black', size: 'lg' },
+      { type: 'button', label: 'BECOME A SPONSOR', href: 'mailto:info@sxtech.eu',
+        variant: 'yellow', size: 'lg' },
+    ],
+  },
+
+  // ── Feature 3-up (cards rendered as nested stacks) ──
+  {
+    type: 'grid', columns: 3, columnsMobile: 1, gap: 'lg', padding: '2xl',
+    children: [
+      {
+        type: 'stack', direction: 'vertical', gap: 'md', padding: 'lg',
+        children: [
+          { type: 'image', src: 'https://sx.zds.es/wp-content/uploads/2026/04/tlo-2-1.png',
+            aspect: '1/1' },
+          { type: 'text', content: 'SXMAwards', size: '2xl',
+            weight: 'heavy', font: 'display', color: 'black', uppercase: true },
+          { type: 'text', content: 'Sex Marketing Awards · 26.6.26 · RSVP only.',
+            size: 'md', color: 'black' },
+        ],
+      },
+      {
+        type: 'stack', direction: 'vertical', gap: 'md', padding: 'lg',
+        children: [
+          { type: 'image', src: 'https://sx.zds.es/wp-content/uploads/2026/04/backg-2-1.png',
+            aspect: '1/1' },
+          { type: 'text', content: 'RED MOON PARTY', size: '2xl',
+            weight: 'heavy', font: 'display', color: 'black', uppercase: true },
+          { type: 'text', content: 'Afterparty · 28.6.26 · 21:30.',
+            size: 'md', color: 'black' },
+        ],
+      },
+      {
+        type: 'stack', direction: 'vertical', gap: 'md', padding: 'lg',
+        children: [
+          { type: 'image', src: 'https://sx.zds.es/wp-content/uploads/2026/04/cc-1.png',
+            aspect: '1/1' },
+          { type: 'text', content: 'SX FESTIVAL', size: '2xl',
+            weight: 'heavy', font: 'display', color: 'black', uppercase: true },
+          { type: 'text', content: '27-28.6.26 · 11:00-20:30.',
+            size: 'md', color: 'black' },
+        ],
+      },
+    ],
+  },
+];
+---
+
+<Layout title="Atomic Demo">
+  <Navigation />
+  <main style="background: white; padding-top: 98px;">
+    {page.map((node) => <Preset node={node} />)}
+  </main>
+  <Footer />
+</Layout>
