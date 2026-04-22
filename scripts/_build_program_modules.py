@@ -124,32 +124,18 @@ sections = [
         },
     },
     {
-        "id": -5, "type": "SectionTitle", "mode": "detached",
-        "data": {"title": "TOP VOICES", "size": "md", "align": "center", "theme": "light"},
-    },
-    {
-        "id": -6, "type": "FestivalSlider", "mode": "detached",
+        "id": -5, "type": "TopVoices", "mode": "detached",
         "data": {
-            "autoplay_ms": 4000,
+            "heading": "TOP VOICES",
             "theme": "light",
-            "items": [
-                {"thumb": f"{DST}{UPL}/kylie-1.png", "large": f"{DST}{UPL}/kyli2-1.png"},
-                {"thumb": f"{DST}{UPL}/bp-1.png",    "large": f"{DST}{UPL}/bp2-1.png"},
-                {"thumb": f"{DST}{UPL}/kris2-1.png", "large": f"{DST}{UPL}/kris3-1.png"},
-                {"thumb": f"{DST}{UPL}/mik3-1.png",  "large": f"{DST}{UPL}/mik4-1.png"},
-                {"thumb": f"{DST}{UPL}/moon1-1.png", "large": f"{DST}{UPL}/moon2-1.png"},
-                {"thumb": f"{DST}{UPL}/muse1-1.png", "large": f"{DST}{UPL}/muse2-1.png"},
+            "voices": [
+                {"thumb": f"{DST}{UPL}/kylie-1.png", "large": f"{DST}{UPL}/kyli2-1.png", "alt": "Kylie"},
+                {"thumb": f"{DST}{UPL}/bp-1.png",    "large": f"{DST}{UPL}/bp2-1.png",   "alt": "BP"},
+                {"thumb": f"{DST}{UPL}/kris2-1.png", "large": f"{DST}{UPL}/kris3-1.png", "alt": "Kris"},
+                {"thumb": f"{DST}{UPL}/mik3-1.png",  "large": f"{DST}{UPL}/mik4-1.png",  "alt": "Mik"},
+                {"thumb": f"{DST}{UPL}/moon1-1.png", "large": f"{DST}{UPL}/moon2-1.png", "alt": "Moon"},
+                {"thumb": f"{DST}{UPL}/muse1-1.png", "large": f"{DST}{UPL}/muse2-1.png", "alt": "Muse"},
             ],
-        },
-    },
-    {
-        "id": -7, "type": "Ticker", "mode": "detached",
-        "data": {
-            "text": "FULL PROGRAM COMING SOON!",
-            "separator": " • ",
-            "speed_sec": 30,
-            "theme": "yellow",
-            "repeat": 6,
         },
     },
     {
@@ -190,6 +176,17 @@ sections = [
             ],
         },
     },
+    # --- Ticker moved to just UNDER the hot-topics table ---
+    {
+        "id": -7, "type": "Ticker", "mode": "detached",
+        "data": {
+            "text": "FULL PROGRAM COMING SOON!",
+            "separator": " • ",
+            "speed_sec": 30,
+            "theme": "yellow",
+            "repeat": 6,
+        },
+    },
     # --- Exhibit / Sponsor buttons row ---
     {
         "id": -10, "type": "IconLinkList", "mode": "detached",
@@ -202,15 +199,17 @@ sections = [
             ],
         },
     },
-    # --- Berlin 2026 address block ---
+    # --- Berlin 2026 venue banner with text pinned to each corner ---
     {
-        "id": -11, "type": "ImageBlock", "mode": "detached",
+        "id": -11, "type": "LocationBanner", "mode": "detached",
         "data": {
-            "image": f"{DST}{UPL}/tlo-2-1.png",
-            "title": "BERLIN 2026",
-            "subtitle": "STATION Berlin · Luckenwalder Str. 4-6 · 10963 Berlin",
-            "theme": "light",
-            "align": "center",
+            "bg_image": f"{DST}{UPL}/tlo-2-1.png",
+            "height": "560px",
+            "color": "#ecfd21",
+            "bw": True,
+            "top_left":     {"lines": ["BERLIN 2026", "JUNE 26-28"], "size": "xl"},
+            "bottom_left":  {"lines": ["sxfestival", "expo", "berlin"], "size": "sm"},
+            "bottom_right": {"lines": ["Heeresbäckerei Berlin", "Köpenicker Straße 16, Berlin"], "size": "md"},
         },
     },
 ]

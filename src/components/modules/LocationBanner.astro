@@ -1,0 +1,100 @@
+---
+/**
+ * LocationBanner — wide black-and-white venue photo with up to 4 yellow
+ * text blocks pinned to the four corners. Used at the bottom of sxtech
+ * /program for the Berlin 2026 / Heeresbäckerei address reveal.
+ *
+ * Fields:
+ *   - bg_image: venue photo (ideally monochrome)
+ *   - top_left, top_right, bottom_left, bottom_right: each either a string
+ *     or an object { lines: string[], size?: 'xl'|'md'|'sm' }
+ *   - height: CSS value, default '560px'
+ *   - color:  text color, default '#ecfd21'
+ *   - bw:     true to grayscale the bg, default true
+ */
+type Corner = string | { lines?: string[]; size?: string };
+interface Props { content: Record<string, any>; }
+const { content = {} } = Astro.props;
+
+const bg      = content.bg_image || '';
+const height  = content.height   || '560px';
+const color   = content.color    || '#ecfd21';
+const bw      = content.bw !== false;
+
+function normalize(c: Corner | undefined): { lines: string[]; size: string } | null {
+  if (!c) return null;
+  if (typeof c === 'string') return { lines: c.split('\n'), size: 'md' };
+  if (!c.lines || c.lines.length === 0) return null;
+  return { lines: c.lines, size: c.size || 'md' };
+}
+const tl = normalize(content.top_left);
+const tr = normalize(content.top_right);
+const bl = normalize(content.bottom_left);
+const br = normalize(content.bottom_right);
+
+const style = `--lb-h:${height};--lb-c:${color};${bg ? `--lb-img:url('${bg}');` : ''}`;
+---
+
+<section
+  data-nova-el="location-banner"
+  class={`sx-lb${bw ? ' sx-lb--bw' : ''}`}
+  style={style}
+>
+  <div class="sx-lb-img"></div>
+  {tl && (
+    <div class={`sx-lb-text sx-lb-text--tl sx-lb-text--${tl.size}`}>
+      {tl.lines.map((l) => <div>{l}</div>)}
+    </div>
+  )}
+  {tr && (
+    <div class={`sx-lb-text sx-lb-text--tr sx-lb-text--${tr.size}`}>
+      {tr.lines.map((l) => <div>{l}</div>)}
+    </div>
+  )}
+  {bl && (
+    <div class={`sx-lb-text sx-lb-text--bl sx-lb-text--${bl.size}`}>
+      {bl.lines.map((l) => <div>{l}</div>)}
+    </div>
+  )}
+  {br && (
+    <div class={`sx-lb-text sx-lb-text--br sx-lb-text--${br.size}`}>
+      {br.lines.map((l) => <div>{l}</div>)}
+    </div>
+  )}
+</section>
+
+<style>
+  .sx-lb {
+    position: relative; width: 100%;
+    height: var(--lb-h, 560px);
+    overflow: hidden; background: #000;
+    isolation: isolate;
+  }
+  .sx-lb-img {
+    position: absolute; inset: 0; z-index: 0;
+    background-image: var(--lb-img);
+    background-size: cover; background-position: center;
+  }
+  .sx-lb--bw .sx-lb-img { filter: grayscale(100%) contrast(1.05); }
+
+  .sx-lb-text {
+    position: absolute; z-index: 1;
+    color: var(--lb-c, #ecfd21);
+    font-family: 'Oswald', sans-serif; font-weight: 800;
+    line-height: .95; text-transform: uppercase;
+    padding: 28px 40px;
+  }
+  .sx-lb-text--xl { font-size: clamp(56px, 8vw, 120px); }
+  .sx-lb-text--md { font-size: clamp(22px, 2.4vw, 34px); }
+  .sx-lb-text--sm { font-size: clamp(14px, 1.4vw, 20px); }
+
+  .sx-lb-text--tl { top: 0; left: 0; }
+  .sx-lb-text--tr { top: 0; right: 0; text-align: right; }
+  .sx-lb-text--bl { bottom: 0; left: 0; }
+  .sx-lb-text--br { bottom: 0; right: 0; text-align: right; }
+
+  @media (max-width: 768px) {
+    .sx-lb { height: auto; min-height: 320px; }
+    .sx-lb-text { padding: 16px 20px; }
+  }
+</style>

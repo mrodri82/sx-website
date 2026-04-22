@@ -31,18 +31,25 @@ const defaultVoices: Voice[] = [
   { large: '/media/voices/muse2.webp',  thumb: '/media/voices/muse1.webp',  alt: 'Muse' },
 ];
 const voices: Voice[] = (content.voices as Voice[]) || defaultVoices;
+const theme = (content.theme === 'light' ? 'light' : 'dark') as 'light'|'dark';
+/* Triple the list so the active slide always has filler thumbs on both
+   sides. The script starts at real-length and silently jumps back to the
+   middle copy when we reach either edge — seamless infinite loop. */
+const real = voices.length;
+const startActive = real + Math.floor(real / 2);
+const tripled: Voice[] = real > 0 ? [...voices, ...voices, ...voices] : [];
 ---
 
-<section data-nova-el="top-voices" class="sx-voices bg-black py-16">
+<section data-nova-el="top-voices" class={`sx-voices sx-voices--${theme}`}>
   <div class="sx-voices-head">
     <h2 class="sx-voices-title">{heading}</h2>
   </div>
 
-  <div class="festival-slider">
+  <div class="festival-slider" data-real-count={real}>
     <div class="slider-window">
       <div class="slider-track">
-        {voices.map((v, i) => (
-          <div class={`slide ${i === 3 ? 'active' : ''}`} data-idx={i}>
+        {tripled.map((v, i) => (
+          <div class={`slide ${i === startActive ? 'active' : ''}`} data-idx={i}>
             <img class="thumb" src={v.thumb} alt={v.alt || ''} loading="lazy" />
             <img class="large" src={v.large} alt={v.alt || ''} loading="lazy" />
           </div>
@@ -56,6 +63,12 @@ const voices: Voice[] = (content.voices as Voice[]) || defaultVoices;
 </section>
 
 <style is:global>
+  .sx-voices { background:#000; padding:64px 0; }
+  .sx-voices--light { background:#FFFFFF; }
+  .sx-voices--light .sx-voices-title { color:#000; }
+  .sx-voices--light .progress-bar { background:#ddd; }
+  .sx-voices--light .progress { background:#000; }
+  .sx-voices--light .nav { background:#000; color:#fff; }
   .sx-voices-head { max-width:1366px; margin:0 auto 24px; padding:0 24px; text-align:center; box-sizing:border-box; width:100%; }
   .sx-voices-title {
     font-family:'Oswald','Inter',sans-serif;
@@ -69,6 +82,7 @@ const voices: Voice[] = (content.voices as Voice[]) || defaultVoices;
   .festival-slider { max-width:1366px; margin:0 auto; padding:0 24px; box-sizing:border-box; width:100%; }
   .slider-window { position:relative; overflow:hidden; height:530px; }
   .slider-track { display:flex; align-items:center; transition:transform .6s ease; }
+  .slider-track.is-jumping { transition:none; }
   .slide {
     flex:0 0 134px; height:490px; margin:0 10px;
     overflow:hidden; position:relative;
@@ -121,8 +135,9 @@ const voices: Voice[] = (content.voices as Voice[]) || defaultVoices;
       const progress = root.querySelector<HTMLElement>('.progress');
       if (!track || !slides.length || !prevBtn || !nextBtn) return;
 
+      const real = Number(root.dataset.realCount) || Math.max(1, Math.floor(slides.length / 3));
       let index = slides.findIndex(s => s.classList.contains('active'));
-      if (index < 0) index = 0;
+      if (index < 0) index = real;
 
       function sizes() {
         // Mirror CSS: mobile breakpoint at 900px. Narrow = flex-basis of
@@ -147,11 +162,31 @@ const voices: Voice[] = (content.voices as Voice[]) || defaultVoices;
         offset += WIDE / 2; // reach center of active
         const translateX = winW / 2 - offset;
         track!.style.transform = `translateX(${translateX}px)`;
-        if (progress) progress.style.width = `${((index + 1) / slides.length) * 100}%`;
+        if (progress) {
+          /* progress reflects the logical position inside the real cycle,
+             so it doesn't reset when the carousel silently wraps */
+          const logical = ((index - real) % real + real) % real;
+          progress.style.width = `${((logical + 1) / real) * 100}%`;
+        }
       }
 
-      prevBtn.addEventListener('click', () => { index = (index - 1 + slides.length) % slides.length; update(); });
-      nextBtn.addEventListener('click', () => { index = (index + 1) % slides.length; update(); });
+      function jumpTo(i: number) {
+        track!.classList.add('is-jumping');
+        index = i;
+        update();
+        track!.getBoundingClientRect();
+        track!.classList.remove('is-jumping');
+      }
+      track.addEventListener('transitionend', () => {
+        /* once the transition finishes in the "edge" copies, silently jump
+           back to the equivalent index in the middle copy so the user
+           never sees the wraparound */
+        if (index >= real * 2)      jumpTo(index - real);
+        else if (index < real)      jumpTo(index + real);
+      });
+
+      prevBtn.addEventListener('click', () => { index -= 1; update(); });
+      nextBtn.addEventListener('click', () => { index += 1; update(); });
       slides.forEach((s, i) => s.addEventListener('click', () => { index = i; update(); }));
 
       // Auto-advance every 5s
