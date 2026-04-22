@@ -1,0 +1,95 @@
+---
+/**
+ * FeatureCards — grid of cards (default 2 columns). Each card has title,
+ * rich-text description, and N buttons (label + href). Used on
+ * exhibitors-b2b for "EXPO BOOKING / SPONSORSHIP / BUSINESS / VENUE".
+ *
+ * Fields:
+ *   - items: Array<{ title, description (html), buttons: [{label, href}] }>
+ *   - columns: default 2
+ *   - card_bg: default #1a1a1a
+ */
+interface Button { label: string; href: string; }
+interface Item { title: string; description?: string; buttons?: Button[]; }
+interface Props { content: Record<string, any>; }
+const { content = {} } = Astro.props;
+const items: Item[] = Array.isArray(content.items) ? content.items : [];
+const columns = Number(content.columns) || 2;
+const cardBg  = content.card_bg || '#1a1a1a';
+---
+
+<section data-nova-el="feature-cards" class="sx-fcards" style={`--card-bg:${cardBg};--cols:${columns}`}>
+  <div class="sx-fcards-inner">
+    <div class="sx-fcards-grid">
+      {items.map((it) => (
+        <article class="sx-fcard">
+          <h3 class="sx-fcard-title">{it.title}</h3>
+          {it.description && <div class="sx-fcard-desc" set:html={it.description} />}
+          {Array.isArray(it.buttons) && it.buttons.length > 0 && (
+            <div class="sx-fcard-btns">
+              {it.buttons.map((b) => (
+                <a class="sx-fcard-btn" href={b.href} target={b.href?.startsWith('http') ? '_blank' : undefined} rel="noopener">
+                  <span class="sx-fcard-btn-label">{b.label}</span>
+                  <span class="sx-fcard-btn-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
+                  </span>
+                </a>
+              ))}
+            </div>
+          )}
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  /* Card title values from sxtech.eu post-19.css: Oswald 48px 600 #FFFFFF. */
+  .sx-fcards { background: #000; padding: 40px 50px; }
+  .sx-fcards-inner { max-width: 1366px; margin: 0 auto; }
+  .sx-fcards-grid {
+    display: grid;
+    grid-template-columns: repeat(var(--cols, 2), 1fr);
+    gap: 20px;
+  }
+  .sx-fcard {
+    background: var(--card-bg, #1a1a1a);
+    padding: 40px;
+    display: flex; flex-direction: column;
+    gap: 20px;
+    min-height: 320px;
+  }
+  .sx-fcard-title {
+    font-family: 'Oswald', sans-serif; font-weight: 600;
+    font-size: 48px; line-height: 1;
+    color: #FFFFFF; margin: 0;
+    text-transform: uppercase;
+    white-space: pre-line;
+  }
+  .sx-fcard-desc {
+    font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 400;
+    line-height: 1.4; color: #FFFFFF;
+  }
+  .sx-fcard-desc p { margin: 0 0 4px; }
+  .sx-fcard-btns {
+    display: flex; flex-wrap: wrap; gap: 12px; margin-top: auto;
+  }
+  .sx-fcard-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 20px;
+    border: 1px solid #ecfd21;
+    background: transparent; color: #ecfd21;
+    font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500;
+    text-transform: uppercase; text-decoration: none;
+    transition: background .15s, color .15s;
+  }
+  .sx-fcard-btn:hover { background: #ecfd21; color: #000; }
+  .sx-fcard-btn-icon { display: inline-flex; align-items: center; }
+
+  @media (max-width: 900px) {
+    .sx-fcards-grid { grid-template-columns: 1fr; }
+    .sx-fcards { padding: 30px 24px; }
+    .sx-fcard { padding: 28px; min-height: 0; }
+    .sx-fcard-title { font-size: 36px; }
+  }
+</style>

@@ -1,0 +1,98 @@
+---
+/**
+ * PricingTiers — 3-column sponsorship tier cards. Each tier has a name,
+ * price, bullet-list of features, and a CTA. Accent color shifts per tier
+ * (grey → white → yellow to signal tier progression).
+ *
+ * Fields:
+ *   - items: Array<{ name, price, features: string[], cta_label, cta_href, accent? }>
+ */
+interface Item {
+  name: string; price: string; features?: string[];
+  cta_label?: string; cta_href?: string; accent?: string;
+}
+interface Props { content: Record<string, any>; }
+const { content = {} } = Astro.props;
+const items: Item[] = Array.isArray(content.items) ? content.items : [];
+---
+
+<section data-nova-el="pricing-tiers" class="sx-pt">
+  <div class="sx-pt-inner">
+    <div class="sx-pt-grid">
+      {items.map((it) => {
+        const accent = it.accent || '#FFFFFF';
+        return (
+          <article class="sx-pt-card" style={`--accent:${accent}`}>
+            <header class="sx-pt-head">
+              <div class="sx-pt-name">{it.name}</div>
+              <div class="sx-pt-price">{it.price}</div>
+            </header>
+            {Array.isArray(it.features) && it.features.length > 0 && (
+              <ul class="sx-pt-features">
+                {it.features.map((f) => (
+                  <li><span class="sx-pt-dot" aria-hidden="true"></span><span>{f}</span></li>
+                ))}
+              </ul>
+            )}
+            {it.cta_label && it.cta_href && (
+              <a class="sx-pt-cta" href={it.cta_href} target={it.cta_href.startsWith('http') ? '_blank' : undefined} rel="noopener">{it.cta_label}</a>
+            )}
+          </article>
+        );
+      })}
+    </div>
+  </div>
+</section>
+
+<style>
+  /* Values from sxtech.eu post-19.css:
+     name (ac1bbd2/8acf709/43c5183): Oswald 37px 600 uppercase, accent-colored.
+     price (4913b6a/9f4fd5d/da72ed0): Inter 300 accent-colored. */
+  .sx-pt { background: #000; padding: 60px 50px 80px; }
+  .sx-pt-inner { max-width: 1366px; margin: 0 auto; }
+  .sx-pt-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+  }
+  .sx-pt-card {
+    background: #1a1a1a; padding: 40px;
+    display: flex; flex-direction: column; gap: 28px;
+    border-top: 3px solid var(--accent, #FFFFFF);
+  }
+  .sx-pt-head { color: var(--accent, #FFFFFF); }
+  .sx-pt-name {
+    font-family: 'Oswald', sans-serif; font-weight: 600;
+    font-size: 37px; line-height: 1;
+    text-transform: uppercase; color: inherit;
+  }
+  .sx-pt-price {
+    font-family: 'Inter', sans-serif; font-size: 64px; font-weight: 300;
+    line-height: 1; margin-top: 12px; color: inherit;
+  }
+  .sx-pt-features { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+  .sx-pt-features li {
+    font-family: 'Inter', sans-serif; font-size: 15px; line-height: 1.4;
+    color: #fff; display: flex; align-items: flex-start; gap: 10px;
+  }
+  .sx-pt-dot {
+    flex: 0 0 8px; width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent, #FFFFFF); margin-top: 7px;
+  }
+  .sx-pt-cta {
+    display: inline-block; text-align: center;
+    padding: 16px 24px;
+    font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500;
+    text-transform: uppercase; text-decoration: none;
+    background: var(--accent, #FFFFFF); color: #000;
+    margin-top: auto;
+    transition: opacity .15s;
+  }
+  .sx-pt-cta:hover { opacity: .85; }
+
+  @media (max-width: 900px) {
+    .sx-pt-grid { grid-template-columns: 1fr; }
+    .sx-pt { padding: 40px 24px 60px; }
+    .sx-pt-card { padding: 28px; }
+    .sx-pt-name { font-size: 28px; }
+    .sx-pt-price { font-size: 48px; }
+  }
+</style>

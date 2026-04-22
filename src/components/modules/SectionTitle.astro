@@ -1,0 +1,52 @@
+---
+/**
+ * SectionTitle — simple heading block, optionally with subtitle underneath.
+ * Two size variants (via content.size):
+ *   - 'sm' (default): Oswald 42px 600 uppercase yellow (e.g. "All the Things You Can't Skip")
+ *   - 'lg': Oswald ~180px 900 uppercase white (e.g. "PROGRAM", "TOP VOICES")
+ * Optional subtitle color override via content.subtitle_color.
+ */
+interface Props { content: Record<string, any>; }
+const { content = {} } = Astro.props;
+const title    = content.title    || '';
+const subtitle = content.subtitle || '';
+const size     = (content.size === 'lg' ? 'lg' : 'sm') as 'sm' | 'lg';
+const subColor = content.subtitle_color || (size === 'lg' ? '#FFFFFF' : '#A6A6A6');
+---
+
+<section data-nova-el="section-title" class={`sx-st sx-st--${size}`}>
+  <div class="sx-st-inner">
+    {title && <h2 class="sx-st-title">{title}</h2>}
+    {subtitle && <p class="sx-st-sub" style={`color:${subColor}`}>{subtitle}</p>}
+  </div>
+</section>
+
+<style>
+  /* Values from sxtech.eu post-19.css: 0140824/d7f9bc6 (sm) + 6481459/def8cbe (lg). */
+  .sx-st { background: #000; padding: 40px 50px; }
+  .sx-st-inner { max-width: 1366px; margin: 0 auto; }
+  .sx-st-title {
+    font-family: 'Oswald', sans-serif; margin: 0;
+    text-transform: uppercase; line-height: 1;
+  }
+  .sx-st-sub {
+    font-family: 'Oswald', sans-serif; margin: 8px 0 0;
+    text-transform: uppercase; line-height: 1; font-weight: 600;
+  }
+
+  .sx-st--sm .sx-st-title { font-size: 42px; font-weight: 600; color: #ecfd21; }
+  .sx-st--sm .sx-st-sub   { font-size: 42px; }
+
+  .sx-st--lg .sx-st-title { font-size: 180px; font-weight: 900; color: #FFFFFF; letter-spacing: -4px; }
+  .sx-st--lg .sx-st-sub   { font-size: 28px; font-family: 'Inter', sans-serif; font-weight: 500; }
+
+  @media (max-width: 1024px) {
+    .sx-st--lg .sx-st-title { font-size: 120px; letter-spacing: -3px; }
+  }
+  @media (max-width: 768px) {
+    .sx-st { padding: 30px 24px; }
+    .sx-st--sm .sx-st-title, .sx-st--sm .sx-st-sub { font-size: 32px; }
+    .sx-st--lg .sx-st-title { font-size: 72px; letter-spacing: -2px; }
+    .sx-st--lg .sx-st-sub   { font-size: 16px; }
+  }
+</style>
