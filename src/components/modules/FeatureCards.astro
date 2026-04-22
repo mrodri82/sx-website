@@ -33,15 +33,17 @@ const layout = (content.layout === 'overlay' ? 'overlay' : 'standard') as 'overl
           return (
             <article class={`sx-fcard sx-fcard--overlay${hasBg ? ' sx-fcard--bg' : ''}`} style={hasBg ? `--card-img:url('${it.bg_image}')` : ''}>
               <div class="sx-fcard-media">
-                {primary && (
-                  <a class="sx-fcard-apply" href={primary.href} target={primary.href?.startsWith('http') ? '_blank' : undefined} rel="noopener">
-                    {primary.label}
-                    <svg class="sx-fcard-apply-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
-                  </a>
-                )}
-                <h3 class="sx-fcard-title">{it.title}</h3>
+                <div class="sx-fcard-ov-text">
+                  {primary && (
+                    <a class="sx-fcard-apply" href={primary.href} target={primary.href?.startsWith('http') ? '_blank' : undefined} rel="noopener">
+                      {primary.label}
+                      <svg class="sx-fcard-apply-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+                    </a>
+                  )}
+                  <h3 class="sx-fcard-title">{it.title}</h3>
+                </div>
+                {it.description && <div class="sx-fcard-desc" set:html={it.description} />}
               </div>
-              {it.description && <div class="sx-fcard-desc" set:html={it.description} />}
             </article>
           );
         }
@@ -136,7 +138,7 @@ const layout = (content.layout === 'overlay' ? 'overlay' : 'standard') as 'overl
 
   .sx-fcard-media {
     position: relative;
-    aspect-ratio: 16 / 9;
+    aspect-ratio: 4 / 3; /* taller than 16:9, matches sxtech card proportion */
     overflow: hidden;
     background-image: var(--card-img);
     background-size: cover;
@@ -148,8 +150,12 @@ const layout = (content.layout === 'overlay' ? 'overlay' : 'standard') as 'overl
     pointer-events: none;
   }
 
+  /* Apply-link + title stacked, sitting just above the thin white desc band */
+  .sx-fcard-ov-text {
+    position: absolute; left: 28px; right: 28px; bottom: 92px; z-index: 2;
+    display: flex; flex-direction: column; align-items: flex-start; gap: 6px;
+  }
   .sx-fcard-apply {
-    position: absolute; top: 24px; left: 28px; z-index: 2;
     display: inline-flex; align-items: center; gap: 6px;
     color: #ecfd21; text-decoration: none;
     font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 500;
@@ -160,7 +166,6 @@ const layout = (content.layout === 'overlay' ? 'overlay' : 'standard') as 'overl
   .sx-fcard-apply-icon { display: inline-flex; align-items: center; }
 
   .sx-fcard--overlay .sx-fcard-title {
-    position: absolute; left: 28px; right: 28px; bottom: 24px; z-index: 2;
     color: #ecfd21 !important;
     font-family: 'Oswald', sans-serif; font-weight: 900;
     font-size: 56px; line-height: 1;
@@ -168,10 +173,12 @@ const layout = (content.layout === 'overlay' ? 'overlay' : 'standard') as 'overl
     margin: 0;
   }
 
+  /* Thin white band overlay, 30px from card bottom, padded 20px L/R */
   .sx-fcard--overlay .sx-fcard-desc {
+    position: absolute; left: 20px; right: 20px; bottom: 30px; z-index: 2;
     background: #FFFFFF; color: #000;
-    padding: 16px 28px;
-    font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500;
+    padding: 8px 20px;
+    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500;
     line-height: 1.3; text-transform: uppercase;
   }
   .sx-fcard--overlay .sx-fcard-desc p { margin: 0; }
@@ -181,8 +188,9 @@ const layout = (content.layout === 'overlay' ? 'overlay' : 'standard') as 'overl
     .sx-fcards { padding: 30px 24px; }
     .sx-fcard { padding: 28px; min-height: 0; }
     .sx-fcard-title { font-size: 36px; }
-    .sx-fcard--overlay .sx-fcard-title { font-size: 36px; left: 20px; right: 20px; bottom: 18px; }
-    .sx-fcard-apply { top: 18px; left: 20px; }
+    .sx-fcard--overlay .sx-fcard-title { font-size: 36px; }
+    .sx-fcard-ov-text { left: 20px; right: 20px; bottom: 80px; }
+    .sx-fcard--overlay .sx-fcard-desc { bottom: 20px; padding: 8px 16px; font-size: 12px; }
     .sx-fcard--overlay { padding: 0; }
   }
 </style>
