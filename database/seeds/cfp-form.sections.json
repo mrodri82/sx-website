@@ -1,0 +1,23 @@
+[
+  {
+    "id": -1,
+    "type": "HeroSimple",
+    "mode": "detached",
+    "data": {
+      "title": "SPEAKERS\nCFP",
+      "subtitle": "Call for Papers — SX Festival & Expo 2026\nShare your voice on stage.",
+      "cta_text": "APPLY NOW",
+      "cta_url": "https://sxtech.eu/cfp-form/"
+    }
+  },
+  {
+    "id": -2,
+    "type": "SectionTitle",
+    "mode": "detached",
+    "data": {
+      "title": "What we're looking for",
+      "subtitle": "Keynotes, panels, workshops and performances around sex tech, pleasure, kink, marketing, AI, payments, media, regulation — if your topic pushes the industry forward, we want to hear it.",
+      "size": "sm"
+    }
+  }
+]
