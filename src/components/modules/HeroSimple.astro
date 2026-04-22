@@ -43,7 +43,7 @@ const bgImage  = content.bg_image || '';
   .sx-hs-bg {
     position: absolute; inset: 0; z-index: 0;
     background-image: var(--hs-bg); background-size: cover; background-position: center;
-    opacity: 0.3; pointer-events: none;
+    pointer-events: none;
   }
   .sx-hs-inner { position: relative; z-index: 1; max-width: 1366px; width: 100%; margin: 0 auto; text-align: start; }
   .sx-hs-title {
@@ -53,8 +53,11 @@ const bgImage  = content.bg_image || '';
     color: #ecfd21; margin: 0 0 24px;
     white-space: pre-line;
   }
+  /* Subtitle values = computed style on sxtech.eu (not naive grep — the 23px
+     value in the CSS was overridden by a later @media cascade to 16px). */
   .sx-hs-sub {
-    font-family: 'Inter', sans-serif; font-size: 23px; font-weight: 500;
+    font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 500;
+    line-height: 16px; height: 48px;
     color: #ecfd21; text-transform: uppercase;
     margin: 0 0 40px;
     white-space: pre-line;
@@ -74,12 +77,10 @@ const bgImage  = content.bg_image || '';
   }
   @media (max-width: 1024px) {
     .sx-hs-title { font-size: 131px; letter-spacing: -4px; }
-    .sx-hs-sub { font-size: 21px; }
   }
   @media (max-width: 768px) {
     .sx-hs { padding: 40px 24px; min-height: 70vh; }
     .sx-hs-title { font-size: 65px; letter-spacing: -2px; }
-    .sx-hs-sub { font-size: 16px; }
     .sx-hs-cta { font-size: 18px; padding: 20px 40px; }
   }
 </style>
