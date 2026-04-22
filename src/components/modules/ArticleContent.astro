@@ -1,0 +1,95 @@
+---
+/**
+ * ArticleContent — long-form blog article body. Renders a hero image, a
+ * small category+date line, then the raw HTML body (from a migrated
+ * sxtech post) inside prose-styled wrapper.
+ *
+ * Fields:
+ *   - hero_image (optional): big image above the article body
+ *   - category:   e.g. "NEWS" / "RECAP"
+ *   - date:       "Apr 19, 2026"
+ *   - html:       the article body HTML (sanitized)
+ */
+interface Props { content: Record<string, any>; }
+const { content = {} } = Astro.props;
+const heroImage = content.hero_image || '';
+const category = content.category || '';
+const date = content.date || '';
+const html = content.html || '';
+---
+
+<article data-nova-el="article-content" class="sx-ac">
+  <div class="sx-ac-inner">
+    {heroImage && (
+      <div class="sx-ac-hero">
+        <img src={heroImage} alt="" loading="lazy" />
+      </div>
+    )}
+    {(category || date) && (
+      <div class="sx-ac-meta">
+        {category && <span class="sx-ac-cat">{category}</span>}
+        {category && date && <span class="sx-ac-dot">·</span>}
+        {date && <time>{date}</time>}
+      </div>
+    )}
+    {html && <div class="sx-ac-body" set:html={html} />}
+  </div>
+</article>
+
+<style is:global>
+  /* Scoped prose reset for migrated sxtech HTML. */
+  .sx-ac { background: #000; padding: 40px 50px 100px; color: #fff; }
+  .sx-ac-inner { max-width: 820px; margin: 0 auto; }
+
+  .sx-ac-hero { margin: 0 0 32px; aspect-ratio: 16 / 9; overflow: hidden; }
+  .sx-ac-hero img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  .sx-ac-meta {
+    display: flex; align-items: center; gap: 10px;
+    font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500;
+    color: #A6A6A6; text-transform: uppercase; letter-spacing: 1px;
+    margin: 0 0 24px;
+  }
+  .sx-ac-cat { color: #ecfd21; font-weight: 700; }
+  .sx-ac-dot { color: #A6A6A6; }
+
+  .sx-ac-body {
+    font-family: 'Inter', sans-serif; font-size: 17px; font-weight: 400;
+    line-height: 1.7; color: #E5E5E5;
+  }
+  .sx-ac-body h1, .sx-ac-body h2, .sx-ac-body h3 {
+    font-family: 'Oswald', sans-serif; color: #ecfd21;
+    margin: 40px 0 16px; line-height: 1.2; text-transform: uppercase;
+  }
+  .sx-ac-body h1 { font-size: 36px; }
+  .sx-ac-body h2 { font-size: 28px; }
+  .sx-ac-body h3 { font-size: 22px; }
+  .sx-ac-body p { margin: 0 0 18px; }
+  .sx-ac-body a { color: #ecfd21; text-decoration: underline; text-underline-offset: 3px; }
+  .sx-ac-body a:hover { color: #fff; }
+  .sx-ac-body img, .sx-ac-body figure img {
+    max-width: 100%; height: auto; display: block;
+    margin: 24px auto; border-radius: 0;
+  }
+  .sx-ac-body ul, .sx-ac-body ol { margin: 0 0 18px 20px; padding: 0; }
+  .sx-ac-body li { margin: 0 0 6px; }
+  .sx-ac-body blockquote {
+    border-left: 3px solid #ecfd21; padding: 8px 0 8px 20px;
+    margin: 24px 0; font-style: italic; color: #E5E5E5;
+  }
+  .sx-ac-body strong, .sx-ac-body b { color: #fff; font-weight: 600; }
+  .sx-ac-body iframe, .sx-ac-body video { max-width: 100%; }
+
+  /* Strip elementor wrappers that may still leak through from the scrape */
+  .sx-ac-body .elementor-widget-container,
+  .sx-ac-body .elementor-widget,
+  .sx-ac-body .elementor-element { display: block; }
+  .sx-ac-body .elementor-button { display: inline-block; margin-top: 8px; }
+
+  @media (max-width: 768px) {
+    .sx-ac { padding: 30px 24px 60px; }
+    .sx-ac-body { font-size: 16px; }
+    .sx-ac-body h1 { font-size: 30px; }
+    .sx-ac-body h2 { font-size: 24px; }
+  }
+</style>
