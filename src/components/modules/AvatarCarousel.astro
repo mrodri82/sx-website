@@ -1,0 +1,138 @@
+---
+/**
+ * AvatarCarousel — small square avatars with name + role label, infinite loop.
+ * Used on creators page. Each slide = square image + name + "creator" label.
+ * Direction can be 'ltr' (default) or 'rtl' — for two carousels rotating in
+ * opposite directions on the same page.
+ *
+ * Fields:
+ *   - items: Array<{ image, name, role, href? }>
+ *   - direction: 'ltr' | 'rtl' (default 'ltr')
+ *   - autoplay_ms: default 2000
+ */
+interface Item { image: string; name: string; role?: string; href?: string; }
+interface Props { content: Record<string, any>; }
+const { content = {} } = Astro.props;
+const items: Item[] = Array.isArray(content.items) ? content.items : [];
+const direction = (content.direction === 'rtl' ? 'rtl' : 'ltr') as 'ltr' | 'rtl';
+const autoplayMs = Number(content.autoplay_ms) || 2000;
+
+const CLONE = Math.min(5, items.length);
+const loopItems: Array<Item & { isClone?: boolean }> = [
+  ...items.slice(-CLONE).map(i => ({ ...i, isClone: true })),
+  ...items,
+  ...items.slice(0, CLONE).map(i => ({ ...i, isClone: true })),
+];
+---
+
+<section data-nova-el="avatar-carousel" class="sx-ac">
+  <div class="sx-ac-outer" data-clone-count={CLONE} data-real-count={items.length} data-direction={direction}>
+    <div class="sx-ac-viewport">
+      <div class="sx-ac-track" data-autoplay={autoplayMs}>
+        {loopItems.map((it) => (
+          <article class="sx-ac-card">
+            {it.href ? (
+              <a class="sx-ac-imgwrap" href={it.href} target={it.href.startsWith('http') ? '_blank' : undefined} rel="noopener">
+                <img src={it.image} alt={it.name} loading="lazy" />
+              </a>
+            ) : (
+              <div class="sx-ac-imgwrap">
+                <img src={it.image} alt={it.name} loading="lazy" />
+              </div>
+            )}
+            <h3 class="sx-ac-name">{it.name}</h3>
+            {it.role && <p class="sx-ac-role">{it.role}</p>}
+          </article>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .sx-ac { background: #000; padding: 20px 50px 40px; }
+  .sx-ac-outer { position: relative; max-width: 1600px; margin: 0 auto; }
+  .sx-ac-viewport { overflow: hidden; }
+  .sx-ac-track {
+    display: flex; gap: 29px;
+    transition: transform .6s cubic-bezier(.4,0,.2,1);
+    will-change: transform;
+  }
+  .sx-ac-track.is-jumping { transition: none; }
+
+  .sx-ac-card {
+    flex: 0 0 calc((100% - 4 * 29px) / 5);
+    min-width: 0;
+    display: flex; flex-direction: column; align-items: center; text-align: center;
+  }
+  .sx-ac-imgwrap {
+    display: block; width: 223px; max-width: 100%;
+    aspect-ratio: 1; overflow: hidden;
+    background: #1a1a1a; text-decoration: none;
+  }
+  .sx-ac-imgwrap img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .4s ease; }
+  .sx-ac-imgwrap:hover img { transform: scale(1.04); }
+  .sx-ac-name {
+    font-family: 'Oswald', sans-serif; font-weight: 700;
+    font-size: 22px; line-height: 1.1;
+    text-transform: uppercase; color: #ecfd21;
+    margin: 14px 0 4px;
+  }
+  .sx-ac-role {
+    font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 400;
+    color: #A6A6A6; text-transform: uppercase; margin: 0;
+  }
+
+  @media (max-width: 1200px) {
+    .sx-ac-card { flex: 0 0 calc((100% - 2 * 20px) / 3); }
+    .sx-ac-track { gap: 20px; }
+  }
+  @media (max-width: 768px) {
+    .sx-ac-card { flex: 0 0 calc((100% - 10px) / 2); }
+    .sx-ac-track { gap: 10px; }
+    .sx-ac { padding: 20px 24px 40px; }
+  }
+</style>
+
+<script>
+  (function () {
+    const roots = document.querySelectorAll<HTMLElement>('.sx-ac-outer');
+    roots.forEach(setup);
+    function setup(root: HTMLElement) {
+      const track = root.querySelector<HTMLElement>('.sx-ac-track');
+      const cards = Array.from(root.querySelectorAll<HTMLElement>('.sx-ac-card'));
+      if (!track || cards.length === 0) return;
+
+      const clone = Number(root.dataset.cloneCount) || 0;
+      const real  = Number(root.dataset.realCount)  || cards.length;
+      const dir   = root.dataset.direction === 'rtl' ? -1 : 1;
+      const intervalMs = Number(track.dataset.autoplay) || 2000;
+
+      let index = clone;
+      function gapPx() {
+        const w = window.innerWidth;
+        if (w <= 768) return 10;
+        if (w <= 1200) return 20;
+        return 29;
+      }
+      function cardWidth() { return cards[0].getBoundingClientRect().width + gapPx(); }
+      function apply() { track!.style.transform = `translateX(${-index * cardWidth()}px)`; }
+      function jumpTo(i: number) {
+        track!.classList.add('is-jumping');
+        index = i; apply();
+        track!.getBoundingClientRect();
+        track!.classList.remove('is-jumping');
+      }
+      track.addEventListener('transitionend', () => {
+        if (index >= clone + real) jumpTo(index - real);
+        else if (index < clone)     jumpTo(index + real);
+      });
+      function step() { index += dir; apply(); }
+      let timer = window.setInterval(step, intervalMs);
+      root.addEventListener('mouseenter', () => clearInterval(timer));
+      root.addEventListener('mouseleave', () => { timer = window.setInterval(step, intervalMs); });
+      window.addEventListener('resize', () => requestAnimationFrame(apply));
+      requestAnimationFrame(apply);
+    }
+  })();
+</script>

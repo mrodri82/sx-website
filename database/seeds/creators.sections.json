@@ -1,0 +1,157 @@
+[
+  {
+    "id": -1,
+    "type": "HeroSimple",
+    "mode": "detached",
+    "data": {
+      "title": "join our\ncommunity",
+      "subtitle": "Get access to SX Expo 2026 opportunities\nFANS AREA, brand collaborations,\nFREE TICKETS and VIP PERKS",
+      "cta_text": "Register as a Creator",
+      "cta_url": "https://wkf.ms/4qpG1Ks",
+      "cta2_text": "Brand Ambassador program",
+      "cta2_url": "https://wkf.ms/49zQjCt"
+    }
+  },
+  {
+    "id": -2,
+    "type": "SectionTitle",
+    "mode": "detached",
+    "data": {
+      "title": "Choose Your Path",
+      "size": "sm"
+    }
+  },
+  {
+    "id": -3,
+    "type": "FeatureCards",
+    "mode": "detached",
+    "data": {
+      "columns": 2,
+      "items": [
+        {
+          "title": "CREATOR",
+          "description": "Create content, Meet fans and enjoy free tickets",
+          "buttons": [
+            {
+              "label": "APPLY HERE",
+              "href": "https://wkf.ms/4qpG1Ks"
+            }
+          ]
+        },
+        {
+          "title": "BRAND AMBASSADOR",
+          "description": "Represent the brand, affiliate and get VIP access",
+          "buttons": [
+            {
+              "label": "APPLY HERE",
+              "href": "https://wkf.ms/49zQjCt"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": -4,
+    "type": "SectionTitle",
+    "mode": "detached",
+    "data": {
+      "title": "Our Top Creators This Month",
+      "size": "sm"
+    }
+  },
+  {
+    "id": -5,
+    "type": "AvatarCarousel",
+    "mode": "detached",
+    "data": {
+      "direction": "ltr",
+      "autoplay_ms": 2500,
+      "items": [
+        {
+          "image": "https://sx.zds.es/wp-content/uploads/2026/04/PH12-1.png",
+          "name": "TRIXIE FOX",
+          "role": "creator",
+          "href": "https://www.instagram.com/miss.trixiefox/"
+        },
+        {
+          "image": "https://sx.zds.es/wp-content/uploads/2026/04/Missm-1.png",
+          "name": "MISS MASOCHIST",
+          "role": "creator",
+          "href": "https://www.instagram.com/miss_masochist_/"
+        },
+        {
+          "image": "https://sx.zds.es/wp-content/uploads/2026/04/cv-1.png",
+          "name": "CAROLINA VINCENT",
+          "role": "creator",
+          "href": "https://www.instagram.com/carrovinc/"
+        },
+        {
+          "image": "https://sx.zds.es/wp-content/uploads/2026/04/PH11-1.png",
+          "name": "HAYLEY QUINN",
+          "role": "creator",
+          "href": "https://www.instagram.com/hayleyrowson/"
+        },
+        {
+          "image": "https://sx.zds.es/wp-content/uploads/2026/04/mm-2.png",
+          "name": "MARIUS ROHDE",
+          "role": "fetish creator",
+          "href": "https://www.instagram.com/diesermarius/"
+        },
+        {
+          "image": "https://sx.zds.es/wp-content/uploads/2026/04/mm-1-1.png",
+          "name": "MARINA VALMONT",
+          "role": "creator",
+          "href": "https://www.instagram.com/marinavalmont/"
+        }
+      ]
+    }
+  },
+  {
+    "id": -6,
+    "type": "AvatarCarousel",
+    "mode": "detached",
+    "data": {
+      "direction": "rtl",
+      "autoplay_ms": 2500,
+      "items": [
+        {
+          "image": "https://sx.zds.es/wp-content/uploads/2026/04/1-4.png",
+          "name": "GODESS KINX",
+          "role": "creator",
+          "href": "https://x.com/GoddessKinx"
+        },
+        {
+          "image": "https://sx.zds.es/wp-content/uploads/2026/04/2-1.png",
+          "name": "ECCY",
+          "role": "creator",
+          "href": "https://www.instagram.com/chaosgoblin3.0/"
+        },
+        {
+          "image": "https://sx.zds.es/wp-content/uploads/2026/04/3-1.png",
+          "name": "DOMINA LAVEAU",
+          "role": "creator",
+          "href": "https://www.instagram.com/dominalaveau/"
+        },
+        {
+          "image": "https://sx.zds.es/wp-content/uploads/2026/04/4-1.png",
+          "name": "PIXIE SIN",
+          "role": "creator",
+          "href": "https://www.instagram.com/sinnerpixie/"
+        },
+        {
+          "image": "https://sx.zds.es/wp-content/uploads/2026/04/5-1.png",
+          "name": "DOMINATRIX RIN",
+          "role": "creator",
+          "href": "https://x.com/sfdomme"
+        },
+        {
+          "image": "https://sx.zds.es/wp-content/uploads/2026/04/6-1.png",
+          "name": "IVINITTY",
+          "role": "creator",
+          "href": "https://www.instagram.com/ivinitty"
+        }
+      ]
+    }
+  }
+]
