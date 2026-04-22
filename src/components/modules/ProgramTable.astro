@@ -11,13 +11,14 @@ interface Row { icon?: string; theme: string; voices: string; track: string; sta
 interface Props { content: Record<string, any>; }
 const { content = {} } = Astro.props;
 const rows: Row[] = Array.isArray(content.items) ? content.items : [];
+const theme = (content.theme === 'light' ? 'light' : 'dark') as 'light'|'dark';
 const labels = Object.assign(
   { theme: 'Theme', voices: 'Voices', track: 'Track', stage: 'Stage & Date' },
   content.labels || {}
 );
 ---
 
-<section data-nova-el="program-table" class="sx-tb">
+<section data-nova-el="program-table" class={`sx-tb sx-tb--${theme}`}>
   <div class="sx-tb-inner">
     <div class="sx-tb-row sx-tb-head">
       <div class="sx-tb-cell sx-tb-icon"></div>
@@ -43,6 +44,10 @@ const labels = Object.assign(
 <style>
   /* Table cells Inter 20px 400 white (headers 20px 600-700 center). */
   .sx-tb { background: #000; padding: 20px 50px 60px; }
+  .sx-tb--light { background: #FFFFFF; }
+  .sx-tb--light .sx-tb-cell { color: #000; }
+  .sx-tb--light .sx-tb-row { border-bottom-color: rgba(0,0,0,0.12); }
+  .sx-tb--light .sx-tb-head { border-bottom-color: rgba(0,0,0,0.3); }
   .sx-tb-inner { max-width: 1366px; margin: 0 auto; }
 
   .sx-tb-row {

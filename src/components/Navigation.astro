@@ -13,7 +13,7 @@
  *   'transparent' (default) — overlay, fades on scroll
  *   'solid'                 — permanent black bg (for inner pages)
  */
-interface Props { variant?: 'transparent' | 'solid'; }
+interface Props { variant?: 'transparent' | 'solid' | 'light'; }
 const { variant = 'transparent' } = Astro.props;
 
 const current = Astro.url.pathname.replace(/\/$/, '') || '/';
@@ -28,7 +28,7 @@ const isActive = (href: string) => current === href || current.startsWith(href +
 ---
 
 <header
-  class={`sx-nav fixed top-0 left-0 right-0 z-50 h-[98px] ${variant === 'solid' ? 'bg-black' : 'bg-transparent'}`}
+  class={`sx-nav fixed top-0 left-0 right-0 z-50 h-[98px] ${variant === 'solid' ? 'bg-black' : variant === 'light' ? 'bg-white' : 'bg-transparent'} ${variant === 'light' ? 'sx-nav--light' : ''}`}
   data-sx-nav
   data-variant={variant}
 >
@@ -138,6 +138,13 @@ const isActive = (href: string) => current === href || current.startsWith(href +
   @media (max-width: 768px) {
     .sx-nav-inner { padding-left: 30px !important; padding-right: 16px !important; }
   }
+
+  /* Light variant — used on /program: white bg, black logo + black menu items */
+  .sx-nav--light .sx-nav-logo { color: #000 !important; }
+  .sx-nav--light .sx-menu-item { color: #000 !important; }
+  .sx-nav--light .sx-menu-item:hover { background: #000; color: #ecfd21 !important; }
+  .sx-nav--light .sx-menu-item--active { background: #000; color: #ecfd21 !important; }
+  .sx-nav--light .sx-tickets { color: #000 !important; }
 </style>
 
 <script>

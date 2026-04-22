@@ -27,6 +27,9 @@ const bgImage  = content.bg_image || '';
 const videoUrl = content.video_url || '';
 const poster   = content.poster_url || '';
 const chips: Array<{label: string; href?: string}> = Array.isArray(content.chips) ? content.chips : [];
+const minHeight = content.min_height || '';
+const theme = (content.theme === 'light' ? 'light' : 'dark') as 'light'|'dark';
+const align = (content.align === 'center' ? 'center' : 'start') as 'center'|'start';
 /* cta2_variant: 'ghost' (default, yellow border + transparent) | 'solid' (yellow fill)
    | 'white' (white fill + white border). cta2_ghost=false kept as legacy shortcut. */
 const cta2Variant = (content.cta2_variant as string)
@@ -37,8 +40,8 @@ const hasMedia = !!(videoUrl || bgImage);
 
 <section
   data-nova-el="hero-simple"
-  class={`sx-hs ${hasMedia ? 'sx-hs--overlay' : ''}`}
-  style={bgImage ? `--hs-bg:url('${bgImage}')` : ''}
+  class={`sx-hs sx-hs--${theme} sx-hs--align-${align} ${hasMedia ? 'sx-hs--overlay' : ''}`}
+  style={`${bgImage ? `--hs-bg:url('${bgImage}');` : ''}${minHeight ? `min-height:${minHeight};` : ''}`}
 >
   {videoUrl && (
     <video class="sx-hs-video" autoplay muted loop playsinline preload="metadata" poster={poster || undefined}>
@@ -70,7 +73,7 @@ const hasMedia = !!(videoUrl || bgImage);
 </section>
 
 <style>
-  /* Values from sxtech.eu post-17.css / post-19.css. */
+  /* Values from sxtech.eu post-17.css / post-19.css / post-23.css. */
   .sx-hs {
     background: #000; color: #ecfd21;
     padding: 50px; margin-top: 98px;
@@ -78,6 +81,14 @@ const hasMedia = !!(videoUrl || bgImage);
     display: flex; flex-direction: column; justify-content: center; align-items: flex-start;
     position: relative; isolation: isolate; overflow: hidden;
   }
+  /* Light theme (program page) — white bg, black text, centered defaults */
+  .sx-hs--light { background: #FFFFFF; color: #000; }
+  .sx-hs--light .sx-hs-title { color: #000; }
+  .sx-hs--light .sx-hs-sub   { color: #000; }
+  .sx-hs--align-center { align-items: center; text-align: center; }
+  .sx-hs--align-center .sx-hs-inner { text-align: center; }
+  .sx-hs--align-center .sx-hs-ctas,
+  .sx-hs--align-center .sx-hs-chips { justify-content: center; }
   /* With media BG: hero extends to top (transparent nav overlays it). */
   .sx-hs--overlay { margin-top: 0; padding: 140px 50px 50px; min-height: 100vh; }
 

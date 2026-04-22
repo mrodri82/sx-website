@@ -162,6 +162,7 @@ const description = seoDescription || undefined;
     if (!first) return 'solid';
     /* sections are transformed via getPageSections: section.type -> component,
        section.data -> content. Match on the resolved names. */
+    if (first.content?.theme === 'light') return 'light';
     if (first.component === 'HeroVideo') return 'transparent';
     if (first.component === 'HeroSimple' && (first.content?.video_url || first.content?.bg_image)) return 'transparent';
     return 'solid';

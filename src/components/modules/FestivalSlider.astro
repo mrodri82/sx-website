@@ -14,9 +14,10 @@ interface Props { content: Record<string, any>; }
 const { content = {} } = Astro.props;
 const items: Item[] = Array.isArray(content.items) ? content.items : [];
 const autoplayMs = Number(content.autoplay_ms) || 4000;
+const theme = (content.theme === 'light' ? 'light' : 'dark') as 'light'|'dark';
 ---
 
-<section data-nova-el="festival-slider" class="sx-fs">
+<section data-nova-el="festival-slider" class={`sx-fs sx-fs--${theme}`}>
   <div class="sx-fs-outer">
     <div class="sx-fs-window">
       <div class="sx-fs-track" data-autoplay={autoplayMs}>
@@ -37,6 +38,9 @@ const autoplayMs = Number(content.autoplay_ms) || 4000;
 <style>
   /* 1:1 from sxtech .festival-slider inline CSS (element 74143e0). */
   .sx-fs { background: #000; padding: 40px 50px 60px; }
+  .sx-fs--light { background: #FFFFFF; }
+  .sx-fs--light .sx-fs-progress { background: #ddd; }
+  .sx-fs--light .sx-fs-progress-fill { background: #000; }
   .sx-fs-outer { max-width: 1240px; margin: 0 auto; }
 
   .sx-fs-window { overflow: hidden; height: 490px; position: relative; }

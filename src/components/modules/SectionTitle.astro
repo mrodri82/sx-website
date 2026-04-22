@@ -19,9 +19,10 @@ const align    = (content.align === 'center' ? 'center' : 'start') as 'center'|'
 const subStyle = content.subtitle_style || 'default';
 const subColor = content.subtitle_color || '';
 const layout   = (content.layout === 'row' ? 'row' : 'stack') as 'row' | 'stack';
+const theme    = (content.theme === 'light' ? 'light' : 'dark') as 'light'|'dark';
 ---
 
-<section data-nova-el="section-title" class={`sx-st sx-st--${size} sx-st--${layout} sx-st--sub-${subStyle} sx-st--align-${align}`}>
+<section data-nova-el="section-title" class={`sx-st sx-st--${size} sx-st--${layout} sx-st--sub-${subStyle} sx-st--align-${align} sx-st--${theme}`}>
   <div class="sx-st-inner">
     {title && <h2 class="sx-st-title">{title}</h2>}
     {subtitle && <p class="sx-st-sub" style={subColor ? `color:${subColor}` : undefined}>{subtitle}</p>}
@@ -31,6 +32,9 @@ const layout   = (content.layout === 'row' ? 'row' : 'stack') as 'row' | 'stack'
 <style>
   /* Values from sxtech.eu post-19.css: 0140824/d7f9bc6 (sm) + 6481459/def8cbe (lg). */
   .sx-st { background: #000; padding: 40px 50px; }
+  .sx-st--light { background: #FFFFFF; }
+  .sx-st--light .sx-st-title,
+  .sx-st--light .sx-st-sub { color: #000 !important; }
   .sx-st-inner { max-width: 1366px; margin: 0 auto; }
   .sx-st-title {
     font-family: 'Oswald', sans-serif; margin: 0;

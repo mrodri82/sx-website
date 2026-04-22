@@ -5,6 +5,9 @@
     "mode": "detached",
     "data": {
       "title": "THE PROGRAM",
+      "theme": "light",
+      "align": "center",
+      "min_height": "48vh",
       "chips": [
         {
           "label": "26.6.26"
@@ -29,6 +32,7 @@
     "mode": "detached",
     "data": {
       "columns": 3,
+      "theme": "light",
       "items": [
         {
           "title": "SXMAwards",
@@ -81,7 +85,8 @@
     "data": {
       "title": "TOP VOICES",
       "size": "md",
-      "align": "center"
+      "align": "center",
+      "theme": "light"
     }
   },
   {
@@ -90,6 +95,7 @@
     "mode": "detached",
     "data": {
       "autoplay_ms": 4000,
+      "theme": "light",
       "items": [
         {
           "thumb": "https://sx.zds.es/wp-content/uploads/2026/04/kylie-1.png",
@@ -125,7 +131,8 @@
     "data": {
       "title": "HOT TOPICS & EXPERIENCES",
       "size": "md",
-      "align": "center"
+      "align": "center",
+      "theme": "light"
     }
   },
   {
@@ -133,6 +140,7 @@
     "type": "ProgramTable",
     "mode": "detached",
     "data": {
+      "theme": "light",
       "labels": {
         "theme": "Theme",
         "voices": "Voices",

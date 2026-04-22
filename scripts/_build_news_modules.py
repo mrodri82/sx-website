@@ -22,6 +22,7 @@ sections = [
         "data": {
             "title": "HOT NEWS",
             "subtitle": "Partner with SX EXPO 2026 and be part of something\nextraordinary.",
+            "min_height": "48vh",
             "cta_text": "JOIN OUR NEWSLETTER",
             "cta_url":  "https://sxtech.us20.list-manage.com/subscribe?u=3e8fe16cc99a204f2cded972c&id=b03816ab1d",
             "cta2_text": "MEDIA APPLY",

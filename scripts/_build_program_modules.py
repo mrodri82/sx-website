@@ -1,4 +1,6 @@
-"""Build program page as native Astro modules."""
+"""Build program page — LIGHT theme (white bg, black text, centered).
+Matches sxtech /program layout where hero is white with black title + centered,
+nav logo black."""
 import base64, json, ssl, urllib.request
 from pathlib import Path
 
@@ -21,6 +23,9 @@ sections = [
         "id": -1, "type": "HeroSimple", "mode": "detached",
         "data": {
             "title": "THE PROGRAM",
+            "theme": "light",
+            "align": "center",
+            "min_height": "48vh",
             "chips": [
                 {"label": "26.6.26"},
                 {"label": "27.6.26"},
@@ -35,6 +40,7 @@ sections = [
         "id": -2, "type": "FeatureCards", "mode": "detached",
         "data": {
             "columns": 3,
+            "theme": "light",
             "items": [
                 {
                     "title": "SXMAwards",
@@ -67,12 +73,13 @@ sections = [
     },
     {
         "id": -3, "type": "SectionTitle", "mode": "detached",
-        "data": {"title": "TOP VOICES", "size": "md", "align": "center"},
+        "data": {"title": "TOP VOICES", "size": "md", "align": "center", "theme": "light"},
     },
     {
         "id": -4, "type": "FestivalSlider", "mode": "detached",
         "data": {
             "autoplay_ms": 4000,
+            "theme": "light",
             "items": [
                 {"thumb": f"{DST}{UPL}/kylie-1.png", "large": f"{DST}{UPL}/kyli2-1.png"},
                 {"thumb": f"{DST}{UPL}/bp-1.png",    "large": f"{DST}{UPL}/bp2-1.png"},
@@ -85,11 +92,12 @@ sections = [
     },
     {
         "id": -5, "type": "SectionTitle", "mode": "detached",
-        "data": {"title": "HOT TOPICS & EXPERIENCES", "size": "md", "align": "center"},
+        "data": {"title": "HOT TOPICS & EXPERIENCES", "size": "md", "align": "center", "theme": "light"},
     },
     {
         "id": -6, "type": "ProgramTable", "mode": "detached",
         "data": {
+            "theme": "light",
             "labels": {"theme": "Theme", "voices": "Voices", "track": " ", "stage": "Stage & Date"},
             "items": [
                 {"icon": f"{DST}{UPL}/kylie-1.png",

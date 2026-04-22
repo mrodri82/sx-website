@@ -21,9 +21,10 @@ const cardBg  = content.card_bg || '#1a1a1a';
    - 'overlay': apply-link top-left, yellow title bottom-left (on image),
      description on white strip under image (sxtech creators "Choose Your Path") */
 const layout = (content.layout === 'overlay' ? 'overlay' : 'standard') as 'overlay'|'standard';
+const theme = (content.theme === 'light' ? 'light' : 'dark') as 'light'|'dark';
 ---
 
-<section data-nova-el="feature-cards" class={`sx-fcards sx-fcards--${layout}`} style={`--card-bg:${cardBg};--cols:${columns}`}>
+<section data-nova-el="feature-cards" class={`sx-fcards sx-fcards--${layout} sx-fcards--${theme}`} style={`--card-bg:${cardBg};--cols:${columns}`}>
   <div class="sx-fcards-inner">
     <div class="sx-fcards-grid">
       {items.map((it) => {
@@ -73,6 +74,7 @@ const layout = (content.layout === 'overlay' ? 'overlay' : 'standard') as 'overl
 <style>
   /* Card title values from sxtech.eu post-19.css: Oswald 48px 600 #FFFFFF. */
   .sx-fcards { background: #000; padding: 40px 50px; }
+  .sx-fcards--light { background: #FFFFFF; }
   .sx-fcards-inner { max-width: 1366px; margin: 0 auto; }
   .sx-fcards-grid {
     display: grid;

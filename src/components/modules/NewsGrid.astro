@@ -23,7 +23,7 @@ const columns = Number(content.columns) || 3;
       {items.map((it) => (
         <article class="sx-ng-card">
           {it.href ? (
-            <a class="sx-ng-imgwrap" href={it.href} target={it.href?.startsWith('http') ? '_blank' : undefined} rel="noopener">
+            <a class="sx-ng-imgwrap" href={it.href}>
               <img src={it.image} alt={it.title} loading="lazy" />
             </a>
           ) : (
@@ -31,7 +31,7 @@ const columns = Number(content.columns) || 3;
           )}
           {it.category && <div class="sx-ng-cat">{it.category}</div>}
           <h3 class="sx-ng-title">
-            {it.href ? <a href={it.href} target="_blank" rel="noopener">{it.title}</a> : it.title}
+            {it.href ? <a href={it.href}>{it.title}</a> : it.title}
           </h3>
           {it.description && <p class="sx-ng-desc">{it.description}</p>}
           {it.date && <time class="sx-ng-date">{it.date}</time>}
