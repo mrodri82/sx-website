@@ -1592,9 +1592,13 @@ const advancedJSON = JSON.stringify(ADVANCED_FIELDS);
       }
     });
 
-    // Toolbar logout
-    document.getElementById('nova-logout-btn')?.addEventListener('click', () => {
-      document.cookie = 'nova_token=; path=/; max-age=0';
+    // Toolbar logout. nova_session is HttpOnly — it can only be cleared
+    // server-side via Set-Cookie, so we POST /api/auth/logout and wait for
+    // the response (which destroys the session and clears the cookie)
+    // before redirecting. Otherwise the next request re-authenticates
+    // from the still-valid cookie and the editor "logs itself back in".
+    document.getElementById('nova-logout-btn')?.addEventListener('click', async () => {
+      try { await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }); } catch {}
       window.location.href = '/admin/login';
     });
 
