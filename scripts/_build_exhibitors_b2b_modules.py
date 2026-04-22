@@ -155,7 +155,7 @@ sections = [
     {
         "id": -6, "type": "SectionTitle", "mode": "detached",
         "data": {
-            "title": "THE B2B",
+            "title": "THE B2B\nPROGRAM",
             "subtitle": "june 27-28\nberlin",
             "size": "lg",
             "layout": "row",
@@ -165,7 +165,6 @@ sections = [
     {
         "id": -7, "type": "SectionTitle", "mode": "detached",
         "data": {
-            "title": "PROGRAM",
             "subtitle": "2 days in Berlin packed with a high-impact program. Bringing together industry leaders and important topics and talks in the industry",
             "size": "lg",
         },

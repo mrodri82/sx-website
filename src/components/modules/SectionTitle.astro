@@ -35,6 +35,7 @@ const layout   = (content.layout === 'row' ? 'row' : 'stack') as 'row' | 'stack'
   .sx-st-title {
     font-family: 'Oswald', sans-serif; margin: 0;
     text-transform: uppercase; line-height: 1;
+    white-space: pre-line;
   }
   .sx-st-sub {
     font-family: 'Oswald', sans-serif; margin: 8px 0 0;
@@ -58,10 +59,11 @@ const layout   = (content.layout === 'row' ? 'row' : 'stack') as 'row' | 'stack'
   .sx-st--align-center .sx-st-title,
   .sx-st--align-center .sx-st-sub { text-align: center; }
 
-  /* layout='row': title left, subtitle right (for "THE B2B | JUNE 27-28 BERLIN") */
+  /* layout='row': title col1 + subtitle col2, top-aligned, natural gap (no space-between).
+     Example: "THE B2B\nPROGRAM" left, "JUNE 27-28\nBERLIN" right, columns sit next to each other. */
   .sx-st--row .sx-st-inner {
-    display: flex; flex-direction: row; align-items: center; justify-content: space-between;
-    gap: 40px; flex-wrap: wrap;
+    display: flex; flex-direction: row; align-items: flex-start;
+    gap: 60px; flex-wrap: wrap;
   }
   .sx-st--row .sx-st-title { flex: 0 0 auto; margin-bottom: 0; }
   .sx-st--row .sx-st-sub   { flex: 0 0 auto; margin-top: 0; }
@@ -73,14 +75,14 @@ const layout   = (content.layout === 'row' ? 'row' : 'stack') as 'row' | 'stack'
     white-space: pre-line; line-height: .95; margin-top: 16px;
   }
 
-  @media (max-width: 1024px) {
-    .sx-st--lg .sx-st-title { font-size: 120px; letter-spacing: -3px; }
+  @media (max-width: 1200px) {
+    .sx-st--lg .sx-st-title { font-size: 110px; letter-spacing: -3px; }
   }
   @media (max-width: 1024px) {
-    .sx-st--lg .sx-st-title { font-size: 96px; letter-spacing: -3px; }
+    .sx-st--lg .sx-st-title { font-size: 88px; letter-spacing: -3px; }
     .sx-st--md .sx-st-title { font-size: 56px; letter-spacing: -1px; }
-    .sx-st--sub-event .sx-st-sub { font-size: 48px; }
-    .sx-st--row .sx-st-inner { flex-direction: column; align-items: flex-start; gap: 8px; }
+    .sx-st--sub-event .sx-st-sub { font-size: 56px; }
+    .sx-st--row .sx-st-inner { flex-direction: column; align-items: flex-start; gap: 12px; }
   }
   @media (max-width: 768px) {
     .sx-st { padding: 30px 24px; }
