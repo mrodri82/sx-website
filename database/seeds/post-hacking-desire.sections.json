@@ -5,9 +5,10 @@
     "mode": "detached",
     "data": {
       "title": "HACKING DESIRE",
-      "subtitle": "NEWS · Feb 24, 2026",
       "bg_image": "https://sx.zds.es/wp-content/uploads/2026/04/irma-1.png",
-      "align": "start"
+      "align": "start",
+      "valign": "end",
+      "min_height": "70vh"
     }
   },
   {

@@ -145,6 +145,14 @@ const isActive = (href: string) => current === href || current.startsWith(href +
   .sx-nav--light .sx-menu-item:hover { background: #000; color: #ecfd21 !important; }
   .sx-nav--light .sx-menu-item--active { background: #000; color: #ecfd21 !important; }
   .sx-nav--light .sx-tickets { color: #000 !important; }
+
+  /* The mobile menu overlay is always black. Force menu items inside it to
+     stay white regardless of nav theme — otherwise on the light /program
+     nav the black menu items become invisible on the black overlay. */
+  #sx-mobile-menu .sx-menu-item { color: #fff !important; }
+  #sx-mobile-menu .sx-menu-item--active { background: #ecfd21; color: #000 !important; }
+  #sx-mobile-menu .sx-menu-item:hover { background: #ecfd21; color: #000 !important; }
+  #sx-mobile-menu .sx-tickets { color: #ecfd21 !important; }
 </style>
 
 <script>

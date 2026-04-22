@@ -5,9 +5,10 @@
     "mode": "detached",
     "data": {
       "title": "AMBASSADOR PROGRAM LIVE",
-      "subtitle": "RECAP · Feb 10, 2026",
       "bg_image": "https://sx.zds.es/wp-content/uploads/2026/04/nonm-1.png",
-      "align": "start"
+      "align": "start",
+      "valign": "end",
+      "min_height": "70vh"
     }
   },
   {

@@ -5,9 +5,10 @@
     "mode": "detached",
     "data": {
       "title": "SX FESTIVAL ARTIST GRANT",
-      "subtitle": "NEWS · Apr 19, 2026",
       "bg_image": "https://sx.zds.es/wp-content/uploads/2026/04/4w-1.png",
-      "align": "start"
+      "align": "start",
+      "valign": "end",
+      "min_height": "70vh"
     }
   },
   {

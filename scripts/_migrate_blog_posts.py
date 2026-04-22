@@ -105,8 +105,10 @@ def extract_article_body(html: str) -> str:
         if open_div > 0:
             body = body[open_div:]
 
-    # rewrite sxtech.eu asset URLs to sx.zds.es
-    body = body.replace("https://sxtech.eu/wp-content/uploads", f"{DST}/wp-content/uploads")
+    # Inline blog images are NOT mirrored to sx.zds.es — the scrape only
+    # copied the per-post featured image. Rewriting asset URLs to sx.zds.es
+    # resulted in 13 404s across 6 posts. Keep body images pointing at the
+    # original sxtech.eu source so they just load.
     # drop any remaining nav-menu / logo-heading widgets (safety net)
     body = re.sub(
         r'<div[^>]*elementor-widget-nav-menu[^>]*>.*?(?=<div[^>]*elementor-(widget|element)-)',

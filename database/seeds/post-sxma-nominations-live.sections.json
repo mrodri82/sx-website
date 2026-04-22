@@ -5,9 +5,10 @@
     "mode": "detached",
     "data": {
       "title": "SXMA NOMINATIONS LIVE",
-      "subtitle": "NEWS · Mar 26, 2026",
       "bg_image": "https://sx.zds.es/wp-content/uploads/2026/04/nowlive-1.png",
-      "align": "start"
+      "align": "start",
+      "valign": "end",
+      "min_height": "70vh"
     }
   },
   {
