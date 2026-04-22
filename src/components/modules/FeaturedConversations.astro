@@ -1,0 +1,160 @@
+---
+/**
+ * FeaturedConversations — interview-style carousel. Similar shape to LineupCarousel
+ * but each card has a small "INTERVIEW" / "COMING SOON" label above the name.
+ *
+ * Fields:
+ *   - heading:  "FEATURED CONVERSATIONS"
+ *   - subtitle: "VOICES OF SX FESTIVAL & SX EXPO"
+ *   - items:    Array<{ image, label, name, href? }>
+ *   - autoplay_ms: default 5000
+ */
+interface Item { image: string; label: string; name: string; href?: string; }
+interface Props { content: Record<string, any>; }
+const { content = {} } = Astro.props;
+const heading  = content.heading  || 'FEATURED CONVERSATIONS';
+const subtitle = content.subtitle || '';
+const items: Item[] = Array.isArray(content.items) ? content.items : [];
+const autoplayMs = Number(content.autoplay_ms) || 5000;
+---
+
+<section data-nova-el="featured-conversations" class="sx-fc">
+  <div class="sx-fc-inner">
+    <header class="sx-fc-head">
+      <h2 class="sx-fc-title">{heading}</h2>
+      {subtitle && <p class="sx-fc-sub">{subtitle}</p>}
+    </header>
+
+    <div class="sx-fc-viewport">
+      <button class="sx-fc-nav sx-fc-prev" type="button" aria-label="Previous">←</button>
+      <div class="sx-fc-track" data-autoplay={autoplayMs}>
+        {items.map((it) => (
+          <article class="sx-fc-card">
+            {it.href ? (
+              <a class="sx-fc-imgwrap" href={it.href} target={it.href.startsWith('http') ? '_blank' : undefined} rel="noopener">
+                <img src={it.image} alt={it.name} loading="lazy" />
+                <div class="sx-fc-meta">
+                  <div class="sx-fc-label">{it.label}</div>
+                  <div class="sx-fc-name">{it.name}</div>
+                </div>
+              </a>
+            ) : (
+              <div class="sx-fc-imgwrap">
+                <img src={it.image} alt={it.name} loading="lazy" />
+                <div class="sx-fc-meta">
+                  <div class="sx-fc-label">{it.label}</div>
+                  <div class="sx-fc-name">{it.name}</div>
+                </div>
+              </div>
+            )}
+          </article>
+        ))}
+      </div>
+      <button class="sx-fc-nav sx-fc-next" type="button" aria-label="Next">→</button>
+    </div>
+  </div>
+</section>
+
+<style>
+  .sx-fc { background: #000; padding: 60px 50px 80px; color: #ecfd21; }
+  .sx-fc-inner { max-width: 1600px; margin: 0 auto; }
+  .sx-fc-head { margin-bottom: 32px; }
+  .sx-fc-title {
+    font-family: 'Oswald', sans-serif; font-weight: 800;
+    font-size: clamp(48px, 6vw, 96px); line-height: 1;
+    letter-spacing: -0.02em; text-transform: uppercase;
+    color: #ecfd21; margin: 0 0 4px;
+  }
+  .sx-fc-sub {
+    font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 400;
+    color: #D1D1D1; text-transform: uppercase; letter-spacing: 0.5px;
+    margin: 0;
+  }
+
+  .sx-fc-viewport { position: relative; }
+  .sx-fc-track {
+    display: flex; gap: 14px;
+    transition: transform .6s cubic-bezier(.4,0,.2,1);
+    will-change: transform;
+  }
+  .sx-fc-card {
+    flex: 0 0 calc((100% - 3 * 14px) / 4);
+    min-width: 0;
+  }
+  .sx-fc-imgwrap, .sx-fc-imgwrap:link {
+    position: relative; display: block;
+    aspect-ratio: 4 / 5; overflow: hidden;
+    text-decoration: none; color: inherit;
+    background: #1a1a1a;
+  }
+  .sx-fc-imgwrap img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .4s ease; }
+  .sx-fc-imgwrap:hover img { transform: scale(1.04); }
+  .sx-fc-meta {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    padding: 16px;
+    background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 100%);
+  }
+  .sx-fc-label {
+    font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700;
+    color: #ecfd21; text-transform: uppercase; letter-spacing: 1.5px;
+    margin-bottom: 4px;
+  }
+  .sx-fc-name {
+    font-family: 'Oswald', sans-serif; font-weight: 800;
+    font-size: 22px; line-height: 1.1; text-transform: uppercase;
+    color: #fff;
+  }
+
+  .sx-fc-nav {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    width: 44px; height: 44px; z-index: 5;
+    background: transparent; border: 0; color: #ecfd21;
+    font-size: 28px; font-weight: 700; cursor: pointer; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+    transition: color .15s;
+  }
+  .sx-fc-nav:hover { color: #fff; }
+  .sx-fc-prev { left: -44px; }
+  .sx-fc-next { right: -44px; }
+
+  @media (max-width: 900px) {
+    .sx-fc-card { flex: 0 0 calc((100% - 14px) / 2); }
+    .sx-fc-prev { left: 0; }
+    .sx-fc-next { right: 0; }
+    .sx-fc { padding: 40px 24px 60px; }
+  }
+</style>
+
+<script>
+  (function () {
+    const els = document.querySelectorAll<HTMLElement>('.sx-fc-viewport');
+    els.forEach(setup);
+    function setup(root: HTMLElement) {
+      const track = root.querySelector<HTMLElement>('.sx-fc-track');
+      const cards = Array.from(root.querySelectorAll<HTMLElement>('.sx-fc-card'));
+      const prev = root.querySelector<HTMLButtonElement>('.sx-fc-prev');
+      const next = root.querySelector<HTMLButtonElement>('.sx-fc-next');
+      if (!track || cards.length === 0) return;
+      let index = 0;
+      const total = cards.length;
+      const intervalMs = Number(track.dataset.autoplay) || 5000;
+      function visible() { return window.innerWidth <= 900 ? 2 : 4; }
+      function update() {
+        const v = visible();
+        const maxIdx = Math.max(0, total - v);
+        if (index > maxIdx) index = 0;
+        if (index < 0) index = maxIdx;
+        const cardW = cards[0].getBoundingClientRect().width + 14;
+        track!.style.transform = `translateX(${-index * cardW}px)`;
+      }
+      let timer = window.setInterval(() => { index++; update(); }, intervalMs);
+      function reset() { clearInterval(timer); timer = window.setInterval(() => { index++; update(); }, intervalMs); }
+      prev?.addEventListener('click', () => { index--; update(); reset(); });
+      next?.addEventListener('click', () => { index++; update(); reset(); });
+      root.addEventListener('mouseenter', () => clearInterval(timer));
+      root.addEventListener('mouseleave', reset);
+      window.addEventListener('resize', () => requestAnimationFrame(update));
+      requestAnimationFrame(update);
+    }
+  })();
+</script>
