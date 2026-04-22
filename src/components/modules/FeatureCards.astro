@@ -16,29 +16,54 @@ const { content = {} } = Astro.props;
 const items: Item[] = Array.isArray(content.items) ? content.items : [];
 const columns = Number(content.columns) || 2;
 const cardBg  = content.card_bg || '#1a1a1a';
+/* layout:
+   - 'standard' (default): title top, description body, buttons bottom
+   - 'overlay': apply-link top-left, yellow title bottom-left (on image),
+     description on white strip under image (sxtech creators "Choose Your Path") */
+const layout = (content.layout === 'overlay' ? 'overlay' : 'standard') as 'overlay'|'standard';
 ---
 
-<section data-nova-el="feature-cards" class="sx-fcards" style={`--card-bg:${cardBg};--cols:${columns}`}>
+<section data-nova-el="feature-cards" class={`sx-fcards sx-fcards--${layout}`} style={`--card-bg:${cardBg};--cols:${columns}`}>
   <div class="sx-fcards-inner">
     <div class="sx-fcards-grid">
-      {items.map((it) => (
-        <article class={`sx-fcard${it.bg_image ? ' sx-fcard--bg' : ''}`} style={it.bg_image ? `--card-img:url('${it.bg_image}')` : ''}>
-          <h3 class="sx-fcard-title">{it.title}</h3>
-          {it.description && <div class="sx-fcard-desc" set:html={it.description} />}
-          {Array.isArray(it.buttons) && it.buttons.length > 0 && (
-            <div class="sx-fcard-btns">
-              {it.buttons.map((b) => (
-                <a class="sx-fcard-btn" href={b.href} target={b.href?.startsWith('http') ? '_blank' : undefined} rel="noopener">
-                  <span class="sx-fcard-btn-label">{b.label}</span>
-                  <span class="sx-fcard-btn-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
-                  </span>
-                </a>
-              ))}
-            </div>
-          )}
-        </article>
-      ))}
+      {items.map((it) => {
+        const hasBg = !!it.bg_image;
+        const primary = (it.buttons && it.buttons[0]) || null;
+        if (layout === 'overlay') {
+          return (
+            <article class={`sx-fcard sx-fcard--overlay${hasBg ? ' sx-fcard--bg' : ''}`} style={hasBg ? `--card-img:url('${it.bg_image}')` : ''}>
+              <div class="sx-fcard-media">
+                {primary && (
+                  <a class="sx-fcard-apply" href={primary.href} target={primary.href?.startsWith('http') ? '_blank' : undefined} rel="noopener">
+                    {primary.label}
+                    <svg class="sx-fcard-apply-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+                  </a>
+                )}
+                <h3 class="sx-fcard-title">{it.title}</h3>
+              </div>
+              {it.description && <div class="sx-fcard-desc" set:html={it.description} />}
+            </article>
+          );
+        }
+        return (
+          <article class={`sx-fcard${hasBg ? ' sx-fcard--bg' : ''}`} style={hasBg ? `--card-img:url('${it.bg_image}')` : ''}>
+            <h3 class="sx-fcard-title">{it.title}</h3>
+            {it.description && <div class="sx-fcard-desc" set:html={it.description} />}
+            {Array.isArray(it.buttons) && it.buttons.length > 0 && (
+              <div class="sx-fcard-btns">
+                {it.buttons.map((b) => (
+                  <a class="sx-fcard-btn" href={b.href} target={b.href?.startsWith('http') ? '_blank' : undefined} rel="noopener">
+                    <span class="sx-fcard-btn-label">{b.label}</span>
+                    <span class="sx-fcard-btn-icon" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+                    </span>
+                  </a>
+                ))}
+              </div>
+            )}
+          </article>
+        );
+      })}
     </div>
   </div>
 </section>
@@ -99,10 +124,65 @@ const cardBg  = content.card_bg || '#1a1a1a';
   .sx-fcard-btn:hover { background: #ecfd21; color: #000; }
   .sx-fcard-btn-icon { display: inline-flex; align-items: center; }
 
+  /* layout='overlay' — sxtech creators "Choose Your Path":
+     image with apply-link top-left and big yellow title bottom-left,
+     description below the image on a white strip. */
+  .sx-fcard--overlay {
+    padding: 0; background: transparent;
+    display: flex; flex-direction: column;
+    min-height: 0;
+  }
+  .sx-fcard--overlay::before { content: none; }
+
+  .sx-fcard-media {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background-image: var(--card-img);
+    background-size: cover;
+    background-position: center top; /* keep the face / top of subject visible */
+  }
+  .sx-fcard-media::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.1) 40%, rgba(0,0,0,0) 70%);
+    pointer-events: none;
+  }
+
+  .sx-fcard-apply {
+    position: absolute; top: 24px; left: 28px; z-index: 2;
+    display: inline-flex; align-items: center; gap: 6px;
+    color: #ecfd21; text-decoration: none;
+    font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    transition: opacity .15s;
+  }
+  .sx-fcard-apply:hover { opacity: .8; }
+  .sx-fcard-apply-icon { display: inline-flex; align-items: center; }
+
+  .sx-fcard--overlay .sx-fcard-title {
+    position: absolute; left: 28px; right: 28px; bottom: 24px; z-index: 2;
+    color: #ecfd21 !important;
+    font-family: 'Oswald', sans-serif; font-weight: 900;
+    font-size: 56px; line-height: 1;
+    text-transform: uppercase;
+    margin: 0;
+  }
+
+  .sx-fcard--overlay .sx-fcard-desc {
+    background: #FFFFFF; color: #000;
+    padding: 16px 28px;
+    font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500;
+    line-height: 1.3; text-transform: uppercase;
+  }
+  .sx-fcard--overlay .sx-fcard-desc p { margin: 0; }
+
   @media (max-width: 900px) {
     .sx-fcards-grid { grid-template-columns: 1fr; }
     .sx-fcards { padding: 30px 24px; }
     .sx-fcard { padding: 28px; min-height: 0; }
     .sx-fcard-title { font-size: 36px; }
+    .sx-fcard--overlay .sx-fcard-title { font-size: 36px; left: 20px; right: 20px; bottom: 18px; }
+    .sx-fcard-apply { top: 18px; left: 20px; }
+    .sx-fcard--overlay { padding: 0; }
   }
 </style>

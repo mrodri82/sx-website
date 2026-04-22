@@ -6,10 +6,11 @@
     "data": {
       "title": "join our\ncommunity",
       "subtitle": "Get access to SX Expo 2026 opportunities\nFANS AREA, brand collaborations,\nFREE TICKETS and VIP PERKS",
-      "cta_text": "Register as a Creator",
+      "cta_text": "Register as\na Creator",
       "cta_url": "https://wkf.ms/4qpG1Ks",
-      "cta2_text": "Brand Ambassador program",
+      "cta2_text": "Brand Ambassador\nprogram",
       "cta2_url": "https://wkf.ms/49zQjCt",
+      "cta2_ghost": false,
       "bg_image": "https://sx.zds.es/wp-content/uploads/2026/04/backcre-1.png"
     }
   },
@@ -28,6 +29,7 @@
     "mode": "detached",
     "data": {
       "columns": 2,
+      "layout": "overlay",
       "items": [
         {
           "title": "CREATOR",

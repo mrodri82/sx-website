@@ -27,6 +27,7 @@ const bgImage  = content.bg_image || '';
 const videoUrl = content.video_url || '';
 const poster   = content.poster_url || '';
 const chips: Array<{label: string; href?: string}> = Array.isArray(content.chips) ? content.chips : [];
+const cta2Ghost = content.cta2_ghost !== false;
 
 const hasMedia = !!(videoUrl || bgImage);
 ---
@@ -59,7 +60,7 @@ const hasMedia = !!(videoUrl || bgImage);
     {(ctaText || cta2Text) && (
       <div class="sx-hs-ctas">
         {ctaText  && <a href={ctaUrl}  class="sx-hs-cta">{ctaText}</a>}
-        {cta2Text && <a href={cta2Url} class="sx-hs-cta sx-hs-cta--ghost">{cta2Text}</a>}
+        {cta2Text && <a href={cta2Url} class={`sx-hs-cta${cta2Ghost ? ' sx-hs-cta--ghost' : ''}`}>{cta2Text}</a>}
       </div>
     )}
   </div>
@@ -126,6 +127,7 @@ const hasMedia = !!(videoUrl || bgImage);
     padding: 25px 50px;
     font-family: 'Inter', sans-serif; font-size: 28px; font-weight: 500;
     border: 1px solid #ecfd21;
+    white-space: pre-line; text-align: center; line-height: 1.1;
     transition: background .15s, color .15s, border-color .15s;
   }
   .sx-hs-cta:hover { background: transparent; color: #ecfd21; border-color: #FFFFFF; }
