@@ -7,6 +7,12 @@ import { site } from '@/config/site';
 const WP_CMS_URL = site.cmsUrl;
 
 const token = Astro.url.searchParams.get('token');
+/* Only allow redirects back into /admin/* so this endpoint can't be abused
+   as an open-redirect off-site. */
+const requestedRedirect = Astro.url.searchParams.get('redirect') || '';
+const safeRedirect = requestedRedirect.startsWith('/admin/')
+  ? requestedRedirect
+  : '/admin/live/homepage';
 
 if (!token) {
   return Astro.redirect('/admin/login');
@@ -44,7 +50,7 @@ const cookie = sessionCookie(sessionToken);
 return new Response(null, {
   status: 302,
   headers: {
-    Location: '/admin/live/homepage',
+    Location: safeRedirect,
     'Set-Cookie': cookie,
   },
 });

@@ -156,60 +156,43 @@
   },
   {
     "id": -5,
-    "type": "SectionTitle",
+    "type": "TopVoices",
     "mode": "detached",
     "data": {
-      "title": "TOP VOICES",
-      "size": "md",
-      "align": "center",
-      "theme": "light"
-    }
-  },
-  {
-    "id": -6,
-    "type": "FestivalSlider",
-    "mode": "detached",
-    "data": {
-      "autoplay_ms": 4000,
+      "heading": "TOP VOICES",
       "theme": "light",
-      "items": [
+      "voices": [
         {
           "thumb": "https://sx.zds.es/wp-content/uploads/2026/04/kylie-1.png",
-          "large": "https://sx.zds.es/wp-content/uploads/2026/04/kyli2-1.png"
+          "large": "https://sx.zds.es/wp-content/uploads/2026/04/kyli2-1.png",
+          "alt": "Kylie"
         },
         {
           "thumb": "https://sx.zds.es/wp-content/uploads/2026/04/bp-1.png",
-          "large": "https://sx.zds.es/wp-content/uploads/2026/04/bp2-1.png"
+          "large": "https://sx.zds.es/wp-content/uploads/2026/04/bp2-1.png",
+          "alt": "BP"
         },
         {
           "thumb": "https://sx.zds.es/wp-content/uploads/2026/04/kris2-1.png",
-          "large": "https://sx.zds.es/wp-content/uploads/2026/04/kris3-1.png"
+          "large": "https://sx.zds.es/wp-content/uploads/2026/04/kris3-1.png",
+          "alt": "Kris"
         },
         {
           "thumb": "https://sx.zds.es/wp-content/uploads/2026/04/mik3-1.png",
-          "large": "https://sx.zds.es/wp-content/uploads/2026/04/mik4-1.png"
+          "large": "https://sx.zds.es/wp-content/uploads/2026/04/mik4-1.png",
+          "alt": "Mik"
         },
         {
           "thumb": "https://sx.zds.es/wp-content/uploads/2026/04/moon1-1.png",
-          "large": "https://sx.zds.es/wp-content/uploads/2026/04/moon2-1.png"
+          "large": "https://sx.zds.es/wp-content/uploads/2026/04/moon2-1.png",
+          "alt": "Moon"
         },
         {
           "thumb": "https://sx.zds.es/wp-content/uploads/2026/04/muse1-1.png",
-          "large": "https://sx.zds.es/wp-content/uploads/2026/04/muse2-1.png"
+          "large": "https://sx.zds.es/wp-content/uploads/2026/04/muse2-1.png",
+          "alt": "Muse"
         }
       ]
-    }
-  },
-  {
-    "id": -7,
-    "type": "Ticker",
-    "mode": "detached",
-    "data": {
-      "text": "FULL PROGRAM COMING SOON!",
-      "separator": " • ",
-      "speed_sec": 30,
-      "theme": "yellow",
-      "repeat": 6
     }
   },
   {
@@ -275,6 +258,18 @@
     }
   },
   {
+    "id": -7,
+    "type": "Ticker",
+    "mode": "detached",
+    "data": {
+      "text": "FULL PROGRAM COMING SOON!",
+      "separator": " • ",
+      "speed_sec": 30,
+      "theme": "yellow",
+      "repeat": 6
+    }
+  },
+  {
     "id": -10,
     "type": "IconLinkList",
     "mode": "detached",
@@ -295,14 +290,35 @@
   },
   {
     "id": -11,
-    "type": "ImageBlock",
+    "type": "LocationBanner",
     "mode": "detached",
     "data": {
-      "image": "https://sx.zds.es/wp-content/uploads/2026/04/tlo-2-1.png",
-      "title": "BERLIN 2026",
-      "subtitle": "STATION Berlin · Luckenwalder Str. 4-6 · 10963 Berlin",
-      "theme": "light",
-      "align": "center"
+      "bg_image": "https://sx.zds.es/wp-content/uploads/2026/04/tlo-2-1.png",
+      "height": "560px",
+      "color": "#ecfd21",
+      "bw": true,
+      "top_left": {
+        "lines": [
+          "BERLIN 2026",
+          "JUNE 26-28"
+        ],
+        "size": "xl"
+      },
+      "bottom_left": {
+        "lines": [
+          "sxfestival",
+          "expo",
+          "berlin"
+        ],
+        "size": "sm"
+      },
+      "bottom_right": {
+        "lines": [
+          "Heeresbäckerei Berlin",
+          "Köpenicker Straße 16, Berlin"
+        ],
+        "size": "md"
+      }
     }
   }
 ]
