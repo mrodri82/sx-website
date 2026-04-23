@@ -119,6 +119,14 @@ const hasMedia = !!(videoUrl || bgImage);
     background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0) 40%);
     pointer-events: none;
   }
+  /* Blog-hero style (valign=end): full-height multiply overlay matching
+     sxtech's Elementor "background-overlay" — top #000 → bottom #585858
+     blended via multiply so the photo underneath still reads but sits
+     behind a uniform dimming. Replaces the bottom-up fade default. */
+  .sx-hs--overlay.sx-hs--valign-end .sx-hs-gradient {
+    background: linear-gradient(180deg, #000000 0%, #585858 100%);
+    mix-blend-mode: multiply;
+  }
   .sx-hs-inner { position: relative; z-index: 2; max-width: 1366px; width: 100%; margin: 0 auto; text-align: start; }
 
   .sx-hs-title {
@@ -128,6 +136,9 @@ const hasMedia = !!(videoUrl || bgImage);
     color: #ecfd21; margin: 0 0 24px;
     white-space: pre-line;
   }
+  /* Blog-style hero — smaller headline than the big landing-page heroes.
+     sxtech renders blog post titles at 81 px on a 1920 viewport. */
+  .sx-hs--overlay.sx-hs--valign-end .sx-hs-title { font-size: 81px; letter-spacing: -3px; }
   .sx-hs-sub {
     font-family: 'Inter', sans-serif; font-size: 21px; font-weight: 500;
     line-height: 21px;
