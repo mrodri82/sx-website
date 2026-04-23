@@ -67,10 +67,12 @@ const style = `--lb-h:${height};--lb-c:${color};${bg ? `--lb-img:url('${bg}');` 
 <style>
   /* sxtech wraps this banner in an e-con-boxed (max-width container).
      Outer section mirrors the site-wide 1366px container + 50px side
-     padding — no full-bleed anymore. */
+     padding — no full-bleed anymore. Black outer matches the banner's
+     own black matte; without it the /program (light) page leaks white
+     into the padding strip around the image. */
   .sx-lb-outer {
     padding: 40px 50px;
-    background: transparent;
+    background: #000;
   }
   .sx-lb {
     position: relative;
