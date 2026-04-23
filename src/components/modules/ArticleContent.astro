@@ -1,38 +1,100 @@
 ---
 /**
- * ArticleContent — long-form blog article body. The hero image is now
- * rendered by a preceding HeroSimple (bg_image = featured image, full-bleed
- * under transparent nav), so this module is just category/date meta + prose.
+ * ArticleContent — long-form blog article body. Hero + featured image
+ * come from a preceding HeroSimple. This module is now the article shell:
+ * a 1366px container (matching the hero container) split into a prose
+ * column on the left and a sticky sidebar on the right on desktop. The
+ * sidebar defaults to Newsletter + Ticket CTA cards so no blog page is
+ * ever blank on the right half. On <1024px the sidebar stacks below.
  *
  * Fields:
- *   - category:   e.g. "NEWS" / "RECAP"
- *   - date:       "Apr 19, 2026"
- *   - html:       the article body HTML (sanitized)
+ *   - category, date, html     — article body
+ *   - sidebar_enabled (bool, default true)
+ *   - sidebar_items (optional) — array of { kind, title, description,
+ *                                 cta_label, cta_url, date? }
+ *     kinds: 'newsletter', 'ticket', 'plain'
  */
+interface SidebarItem {
+  kind?: 'newsletter'|'ticket'|'plain';
+  title: string;
+  description?: string;
+  cta_label?: string;
+  cta_url?: string;
+  date?: string;
+}
 interface Props { content: Record<string, any>; }
 const { content = {} } = Astro.props;
 const category = content.category || '';
 const date = content.date || '';
 const html = content.html || '';
+const sidebarEnabled = content.sidebar_enabled !== false;
+
+const DEFAULT_SIDEBAR: SidebarItem[] = [
+  {
+    kind: 'newsletter',
+    title: 'Join our Newsletter',
+    description: 'Get the latest SX Festival & Expo news straight to your inbox.',
+    cta_label: 'SIGN UP',
+    cta_url: 'https://sxtech.us20.list-manage.com/subscribe?u=3e8fe16cc99a204f2cded972c&id=b03816ab1d',
+  },
+  {
+    kind: 'ticket',
+    title: 'Get your Ticket',
+    description: 'Berlin · 26-28 June 2026',
+    cta_label: 'BUY TICKET',
+    cta_url: 'https://www.eventbrite.ie/e/sx-festival-sx-expo-2026-berlin-tickets-1550925051579',
+  },
+];
+const sidebarItems: SidebarItem[] = Array.isArray(content.sidebar_items) && content.sidebar_items.length > 0
+  ? content.sidebar_items
+  : DEFAULT_SIDEBAR;
 ---
 
-<article data-nova-el="article-content" class="sx-ac">
+<article data-nova-el="article-content" class={`sx-ac${sidebarEnabled ? ' sx-ac--with-sidebar' : ''}`}>
   <div class="sx-ac-inner">
-    {(category || date) && (
-      <div class="sx-ac-meta">
-        {category && <span class="sx-ac-cat">{category}</span>}
-        {category && date && <span class="sx-ac-dot">·</span>}
-        {date && <time>{date}</time>}
-      </div>
+    <div class="sx-ac-main">
+      {(category || date) && (
+        <div class="sx-ac-meta">
+          {category && <span class="sx-ac-cat">{category}</span>}
+          {category && date && <span class="sx-ac-dot">·</span>}
+          {date && <time>{date}</time>}
+        </div>
+      )}
+      {html && <div class="sx-ac-body" set:html={html} />}
+    </div>
+
+    {sidebarEnabled && (
+      <aside class="sx-ac-side">
+        {sidebarItems.map((item) => (
+          <div class={`sx-ac-card sx-ac-card--${item.kind || 'plain'}`}>
+            <h3 class="sx-ac-card-title">{item.title}</h3>
+            {item.description && <p class="sx-ac-card-desc">{item.description}</p>}
+            {item.cta_label && item.cta_url && (
+              <a class="sx-ac-card-cta" href={item.cta_url}
+                 target={item.cta_url.startsWith('http') ? '_blank' : undefined}
+                 rel="noopener">{item.cta_label}</a>
+            )}
+          </div>
+        ))}
+      </aside>
     )}
-    {html && <div class="sx-ac-body" set:html={html} />}
   </div>
 </article>
 
 <style is:global>
-  /* Scoped prose reset for migrated sxtech HTML. */
-  .sx-ac { background: #000; padding: 60px 50px 100px; color: #fff; }
-  .sx-ac-inner { max-width: 820px; margin: 0 auto; }
+  /* Hero and article share the same 1366 container + 50px side padding so
+     the H1 above and the prose below sit on the same X-axis. */
+  .sx-ac { background: #000; padding: 48px 50px 100px; color: #fff; }
+  .sx-ac-inner { max-width: 1366px; margin: 0 auto; }
+
+  .sx-ac--with-sidebar .sx-ac-inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 64px;
+    align-items: start;
+  }
+
+  .sx-ac-main { min-width: 0; }
 
   .sx-ac-meta {
     display: flex; align-items: center; gap: 10px;
@@ -46,6 +108,7 @@ const html = content.html || '';
   .sx-ac-body {
     font-family: 'Inter', sans-serif; font-size: 17px; font-weight: 400;
     line-height: 1.7; color: #E5E5E5;
+    max-width: 720px;
   }
   .sx-ac-body h1, .sx-ac-body h2, .sx-ac-body h3 {
     font-family: 'Oswald', sans-serif; color: #ecfd21;
@@ -69,13 +132,65 @@ const html = content.html || '';
   }
   .sx-ac-body strong, .sx-ac-body b { color: #fff; font-weight: 600; }
   .sx-ac-body iframe, .sx-ac-body video { max-width: 100%; }
-
-  /* Strip elementor wrappers that may still leak through from the scrape */
   .sx-ac-body .elementor-widget-container,
   .sx-ac-body .elementor-widget,
   .sx-ac-body .elementor-element { display: block; }
   .sx-ac-body .elementor-button { display: inline-block; margin-top: 8px; }
 
+  /* Sidebar — sticks below the nav at 120px on desktop */
+  .sx-ac-side {
+    position: sticky; top: 120px; align-self: start;
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .sx-ac-card {
+    padding: 24px;
+    background: #0f0f0f;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .sx-ac-card--newsletter { background: #000; border-color: #ecfd21; }
+  .sx-ac-card--ticket {
+    background: #ecfd21; color: #000; border-color: #ecfd21;
+  }
+  .sx-ac-card-title {
+    font-family: 'Oswald', sans-serif; font-weight: 700;
+    font-size: 26px; line-height: 1.1;
+    text-transform: uppercase; margin: 0 0 10px; color: inherit;
+  }
+  .sx-ac-card--newsletter .sx-ac-card-title { color: #ecfd21; }
+  .sx-ac-card-desc {
+    font-family: 'Inter', sans-serif; font-size: 14px;
+    line-height: 1.5; margin: 0 0 16px; color: inherit; opacity: 0.85;
+  }
+  .sx-ac-card-cta {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 100%; padding: 12px 20px;
+    font-family: 'Inter', sans-serif; font-weight: 600; font-size: 14px;
+    letter-spacing: 1px; text-transform: uppercase;
+    text-decoration: none; border: 1px solid currentColor;
+    transition: opacity .15s, background .15s, color .15s;
+  }
+  .sx-ac-card--newsletter .sx-ac-card-cta {
+    background: #ecfd21; color: #000; border-color: #ecfd21;
+  }
+  .sx-ac-card--newsletter .sx-ac-card-cta:hover {
+    background: transparent; color: #ecfd21;
+  }
+  .sx-ac-card--ticket .sx-ac-card-cta {
+    background: #000; color: #ecfd21; border-color: #000;
+  }
+  .sx-ac-card--ticket .sx-ac-card-cta:hover { opacity: 0.85; }
+  .sx-ac-card--plain .sx-ac-card-cta {
+    background: transparent; color: #ecfd21; border-color: #ecfd21;
+  }
+  .sx-ac-card--plain .sx-ac-card-cta:hover { background: #ecfd21; color: #000; }
+
+  @media (max-width: 1024px) {
+    .sx-ac--with-sidebar .sx-ac-inner {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 40px;
+    }
+    .sx-ac-side { position: static; top: auto; }
+  }
   @media (max-width: 768px) {
     .sx-ac { padding: 30px 24px 60px; }
     .sx-ac-body { font-size: 16px; }
