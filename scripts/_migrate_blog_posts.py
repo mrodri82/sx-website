@@ -210,7 +210,52 @@ def extract_article_body(html: str) -> str:
     body = re.sub(
         r'<div[^>]*elementor-widget-nav-menu[^>]*>.*?(?=<div[^>]*elementor-(widget|element)-)',
         '', body, flags=re.S|re.I)
+
+    # Strip elementor-button widgets whose label is a Newsletter or Ticket
+    # CTA — those now live in the article sidebar, so keeping them at the
+    # end of the body would be redundant. Depth-walk closes the widget's
+    # matching </div> before chopping.
+    body = _strip_widgets_with_labels(body, [
+        'newsletter', 'ticket', 'join our', 'get your ticket'
+    ])
     return body.strip()
+
+def _strip_widgets_with_labels(body: str, needles: list[str]) -> str:
+    """Remove any <div ...elementor-widget-button...>…</div> block whose
+    inner text contains one of `needles` (case-insensitive). Uses a div
+    depth counter so nested Elementor DOM is handled correctly."""
+    needles_lc = [n.lower() for n in needles]
+    out = []
+    cursor = 0
+    start_re = re.compile(r'<div[^>]*elementor-widget-button[^>]*>', re.I)
+    div_re   = re.compile(r'<(/?)div\b[^>]*>', re.I)
+    while True:
+        m = start_re.search(body, cursor)
+        if not m:
+            break
+        pos = m.end()
+        depth = 1
+        end_pos = len(body)
+        while pos < len(body):
+            mm = div_re.search(body, pos)
+            if not mm: break
+            if mm.group(1) == '/':
+                depth -= 1
+                if depth == 0:
+                    end_pos = mm.end()
+                    break
+            else:
+                depth += 1
+            pos = mm.end()
+        block = body[m.start():end_pos]
+        text = re.sub(r'<[^>]+>', ' ', block).lower()
+        if any(n in text for n in needles_lc):
+            out.append(body[cursor:m.start()])
+        else:
+            out.append(body[cursor:end_pos])
+        cursor = end_pos
+    out.append(body[cursor:])
+    return ''.join(out)
 
 def upsert_page(slug: str, title: str, sections: list) -> int:
     existing = wp("GET", f"/wp-json/wp/v2/pages?slug={slug}&_fields=id")
