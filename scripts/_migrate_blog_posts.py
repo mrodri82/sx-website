@@ -218,7 +218,26 @@ def extract_article_body(html: str) -> str:
     body = _strip_widgets_with_labels(body, [
         'newsletter', 'ticket', 'join our', 'get your ticket'
     ])
+
+    # The text-editor trim earlier chopped opening <div>s from outer
+    # elementor wrappers but left their matching </div>s dangling at the
+    # end. That imbalance later escapes the article's main column and
+    # breaks the sidebar grid. Rebalance by dropping the trailing
+    # orphaned </div>s.
+    body = _rebalance_divs(body)
     return body.strip()
+
+def _rebalance_divs(html: str) -> str:
+    opens  = len(re.findall(r'<div\b', html, flags=re.I))
+    closes = len(re.findall(r'</div\s*>', html, flags=re.I))
+    overage = closes - opens
+    while overage > 0:
+        idx = html.rfind('</div>')
+        if idx < 0:
+            break
+        html = html[:idx] + html[idx+6:]
+        overage -= 1
+    return html
 
 def _strip_widgets_with_labels(body: str, needles: list[str]) -> str:
     """Remove any <div ...elementor-widget-button...>…</div> block whose
