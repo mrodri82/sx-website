@@ -72,8 +72,14 @@ def mirror_image(src_url: str) -> str:
 
 POSTS = [
     # (sxtech_url, target_slug, title, date_label, category, hero_image, inline_image?)
+    # Hero was the compressed 7w-1.png (47 KB). Switched to the uncompressed
+    # 2312-1.png original (1 MB) — same motif, proper resolution. The inline
+    # after-intro image becomes Projekt-bez-nazwy-2.png which was previously
+    # the hero placeholder. mirror_image() will fetch both from sxtech.eu
+    # and re-upload to sx.zds.es Media Library.
     ("https://sxtech.eu/2026/04/19/marius-rohde-interview/",
-     "post-marius-rohde-interview", "Marius Rohde INTERVIEW", "Apr 19, 2026", "NEWS", "7w-1.png",
+     "post-marius-rohde-interview", "Marius Rohde INTERVIEW", "Apr 19, 2026", "NEWS",
+     "https://sxtech.eu/wp-content/uploads/2026/04/2312-1.png",
      "https://sxtech.eu/wp-content/uploads/2026/04/Projekt-bez-nazwy-2.png"),
     ("https://sxtech.eu/2026/04/19/sx-festival-artist-grant/",
      "post-sx-festival-artist-grant", "SX FESTIVAL ARTIST GRANT", "Apr 19, 2026", "NEWS", "4w-1.png", None),
