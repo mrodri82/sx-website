@@ -98,8 +98,10 @@ const posterUrl = (content.poster_url as string) || '';
 </section>
 
 <style is:global>
-  /* Shared content container — caps max content width on wide screens */
-  .sx-hero-inner { max-width:1600px; margin:0 auto; padding:140px 10px 50px 50px; box-sizing:border-box; width:100%; }
+  /* Shared content container — matches sxtech.eu 1366px cap. Previously
+     1600px, which made the homepage render ~10% wider than the reference
+     site on 1920px monitors. */
+  .sx-hero-inner { max-width:1366px; margin:0 auto; padding:140px 10px 50px 50px; box-sizing:border-box; width:100%; }
   .sx-hero-badge {
     font-family:'Inter', sans-serif;
     font-size:23px; font-weight:500; line-height:1;
@@ -111,7 +113,10 @@ const posterUrl = (content.poster_url as string) || '';
   .sx-hero-word {
     font-family:'Oswald','Inter',sans-serif;
     font-weight:800;
-    font-size:clamp(56px, 15vw, 245px);
+    /* sxtech.eu computed 174px on 1920 viewport; clamp scales down for
+       smaller screens and caps at the reference value. 245px cap was
+       ~41% larger than the reference. */
+    font-size:clamp(56px, 11vw, 174px);
     line-height:0.9;
     letter-spacing:-0.035em;
     text-transform:uppercase;
