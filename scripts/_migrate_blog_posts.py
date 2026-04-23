@@ -228,16 +228,40 @@ def extract_article_body(html: str) -> str:
     return body.strip()
 
 def _rebalance_divs(html: str) -> str:
-    opens  = len(re.findall(r'<div\b', html, flags=re.I))
-    closes = len(re.findall(r'</div\s*>', html, flags=re.I))
-    overage = closes - opens
-    while overage > 0:
-        idx = html.rfind('</div>')
-        if idx < 0:
-            break
-        html = html[:idx] + html[idx+6:]
-        overage -= 1
-    return html
+    """Make every <div>/</div> pair in `html` balanced.
+
+    The body extractor starts at the first text-editor widget, so the
+    opening <div>s of its outer Elementor containers are missing — but
+    their matching </div>s remain, scattered through the body. A trailing
+    trim isn't enough: those orphan closes end up in the MIDDLE of the
+    body and, once injected into <div class="sx-ac-body">, close the
+    body and .sx-ac-main too early, dropping the rest of the content into
+    the sidebar grid column.
+
+    Walk the string, drop each </div> that would take depth below zero,
+    then append closing </div>s for any opens still unclosed at the end.
+    """
+    tag_re = re.compile(r'<(/)?div\b[^>]*>', re.I)
+    depth = 0
+    out = []
+    cursor = 0
+    for m in tag_re.finditer(html):
+        out.append(html[cursor:m.start()])
+        cursor = m.end()
+        if m.group(1):  # closing
+            if depth == 0:
+                # orphan close — skip it (don't append)
+                continue
+            depth -= 1
+            out.append(m.group(0))
+        else:
+            depth += 1
+            out.append(m.group(0))
+    out.append(html[cursor:])
+    result = ''.join(out)
+    # Any remaining unclosed opens get their matching </div> appended.
+    result += '</div>' * depth
+    return result
 
 def _strip_widgets_with_labels(body: str, needles: list[str]) -> str:
     """Remove any <div ...elementor-widget-button...>…</div> block whose
