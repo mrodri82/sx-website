@@ -144,6 +144,45 @@ def inject_image_after_first_paragraph(body: str, image_url: str) -> str:
 
 ELEMENTOR_POST_RE = re.compile(r'<div[^>]*data-elementor-type="wp-post"[^>]*>', re.I)
 
+def extract_hero_bg(html: str) -> str:
+    """Find the post's real hero background-image URL. sxtech stores it in
+    the generated post-{ID}.css; the hero container has `min-height:7Xvh` +
+    `flex-direction:column` + a `background-image:url(...)` rule on the
+    same class. Return the URL or '' if nothing found."""
+    # The page references multiple post-{ID}.css files; post-4.css is the
+    # shared kit and won't have the hero selector. We want the file whose
+    # ID matches this post's body class (`elementor-{ID}`). Grab all and
+    # pick the one matching the largest post class on the page.
+    post_classes = {int(c) for c in re.findall(r'elementor-(\d{3,})(?![-\w])', html)}
+    css_links = re.findall(
+        r'href=[\'"]([^\'"]*elementor/css/post-(\d+)\.css[^\'"]*)[\'"]', html)
+    if not css_links:
+        return ""
+    match = next((u for u, i in css_links if int(i) in post_classes), None)
+    css_url = (match or css_links[-1][0]).replace('&#038;', '&')
+    try:
+        css = fetch_text(css_url)
+    except Exception:
+        return ""
+    # Pair the hero container's --min-height:70vh/78vh... rule with the same
+    # element's background-image rule. The hero is the first full-viewport
+    # container that has an actual bg image (not the tiny logo containers).
+    hero_ids: list[str] = []
+    for m in re.finditer(
+            r'\.elementor-element-([a-f0-9]+)\{[^}]*--min-height:(\d+)vh',
+            css):
+        vh = int(m.group(2))
+        if vh >= 60:
+            hero_ids.append(m.group(1))
+    for elid in hero_ids:
+        bg = re.search(
+            r'\.elementor-element-' + elid +
+            r'[^{]*\{[^}]*background-image:url\([\'"]?([^\'")]+)',
+            css)
+        if bg:
+            return bg.group(1)
+    return ""
+
 def extract_article_body(html: str) -> str:
     """sxtech posts are full Elementor-rendered pages. The article body lives
     inside <div data-elementor-type="wp-post">. Extract that block via div
@@ -325,11 +364,18 @@ for (url, slug, title, date, cat, img, inline_img) in POSTS:
     body = inject_image_after_first_paragraph(body, inline_img)
     print(f"  body: {len(body)} chars")
 
-    # `img` may be a bare filename (already mirrored during the initial
-    # scrape; referenced under DST/UPL) or a fully-qualified sxtech.eu URL
-    # for posts added afterwards. In the URL case we mirror it now so every
-    # post ends up with its hero image hosted on sx.zds.es.
-    hero_img = mirror_image(img) if img.startswith("http") else f"{DST}{UPL}/{img}"
+    # Scrape the REAL hero image from the post's generated Elementor CSS —
+    # sxtech puts the background on `.elementor-element-{id}` where the
+    # container also sets `--min-height:70vh` (or similar). Our previously
+    # hand-picked filenames were guesses that often missed. If scraping
+    # fails, fall back to the hand-picked `img` value.
+    scraped_hero = extract_hero_bg(html)
+    if scraped_hero:
+        print(f"  hero (scraped): {scraped_hero}")
+        hero_img = mirror_image(scraped_hero)
+    else:
+        hero_img = mirror_image(img) if img.startswith("http") else f"{DST}{UPL}/{img}"
+        print(f"  hero (fallback): {hero_img}")
     # Hero = 70vh full-bleed image under transparent nav with the title
     # pinned to the bottom-left corner (sxtech.eu blog style). The meta line
     # (category · date) lives in ArticleContent right below, so we don't

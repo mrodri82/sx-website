@@ -139,20 +139,33 @@ const sidebarItems: SidebarItem[] = Array.isArray(content.sidebar_items) && cont
   .sx-ac-body .elementor-widget,
   .sx-ac-body .elementor-element { display: block; }
   .sx-ac-body .elementor-button { display: inline-block; margin-top: 8px; }
-  /* Elementor flex containers — e-flex means the original layout was a
-     row/column flex. Without this override, our blanket `elementor-element
-     { display: block }` collapses 3-image rows into vertical stacks that
-     look like sidebar thumbnails. */
+  /* Elementor flex containers — Elementor wraps images (and most grouping
+     elements) in `.e-flex.e-con-boxed > .e-con-inner > .e-flex.e-child`.
+     Without elementor.css we need to re-create the row layout ourselves:
+     any e-con-inner or e-flex holding peers becomes a wrapping flex row
+     (row-direction, otherwise children stack vertically). */
+  .sx-ac-body .e-con-inner,
   .sx-ac-body .e-flex,
   .sx-ac-body .elementor-element.e-flex {
-    display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: flex-start;
   }
-  .sx-ac-body .e-con-inner { display: contents; }
-  .sx-ac-body .e-flex > .elementor-widget-image,
+  .sx-ac-body .e-con-inner > .elementor-element,
   .sx-ac-body .e-flex > .elementor-element {
-    flex: 1 1 auto; min-width: 0;
+    flex: 1 1 0; min-width: 0;
   }
+  /* Image widgets fill their column; their img stretches to the widget. */
+  .sx-ac-body .elementor-widget-image { display: block; }
   .sx-ac-body .elementor-widget-image img { width: 100%; height: auto; }
+  /* Text-editor widgets (first paragraph, description blocks) should span
+     the full row, not shrink to flex-basis 0. */
+  .sx-ac-body .e-con-inner > .elementor-widget-text-editor,
+  .sx-ac-body .e-flex > .elementor-widget-text-editor {
+    flex: 1 1 100%;
+  }
 
   /* Sidebar — sticks below the nav at 120px on desktop */
   .sx-ac-side {
