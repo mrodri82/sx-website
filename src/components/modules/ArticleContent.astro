@@ -139,6 +139,20 @@ const sidebarItems: SidebarItem[] = Array.isArray(content.sidebar_items) && cont
   .sx-ac-body .elementor-widget,
   .sx-ac-body .elementor-element { display: block; }
   .sx-ac-body .elementor-button { display: inline-block; margin-top: 8px; }
+  /* Elementor flex containers — e-flex means the original layout was a
+     row/column flex. Without this override, our blanket `elementor-element
+     { display: block }` collapses 3-image rows into vertical stacks that
+     look like sidebar thumbnails. */
+  .sx-ac-body .e-flex,
+  .sx-ac-body .elementor-element.e-flex {
+    display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start;
+  }
+  .sx-ac-body .e-con-inner { display: contents; }
+  .sx-ac-body .e-flex > .elementor-widget-image,
+  .sx-ac-body .e-flex > .elementor-element {
+    flex: 1 1 auto; min-width: 0;
+  }
+  .sx-ac-body .elementor-widget-image img { width: 100%; height: auto; }
 
   /* Sidebar — sticks below the nav at 120px on desktop */
   .sx-ac-side {
