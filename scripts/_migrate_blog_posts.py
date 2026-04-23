@@ -2,8 +2,16 @@
 matching WP pages on sx.zds.es with slug /post-<slug>, body rendered via a
 new ArticleContent Astro module. Finally rewrites the /news NewsGrid links
 from sxtech.eu URLs to our internal /post-<slug> URLs."""
-import base64, hashlib, json, re, ssl, urllib.parse, urllib.request
+import base64, hashlib, io, json, re, ssl, urllib.parse, urllib.request
 from pathlib import Path
+from PIL import Image
+
+# Hero photos at full-resolution often weigh 1-2 MB raw. Resizing anything
+# wider than this keeps retina-quality on a 1920 monitor while cutting
+# several hundred KB. WebP at 85 % is visually lossless for photos and
+# typically lands 60-80 % smaller than the source PNG.
+MAX_W = 2560
+WEBP_QUALITY = 85
 
 DST = "https://sx.zds.es"
 USER = "manuel"
@@ -46,25 +54,42 @@ def mirror_image(src_url: str) -> str:
         _upload_cache[src_url] = existing[0]["source_url"]
         return _upload_cache[src_url]
 
-    print(f"    mirror {fname}")
     try:
         req = urllib.request.Request(src_url, headers={"User-Agent": "Mozilla/5.0 SX/Migrator"})
         with urllib.request.urlopen(req, context=ctx, timeout=60) as r:
             data = r.read()
-            ctype = r.headers.get("Content-Type", "image/png")
     except Exception as e:
         print(f"    fetch {src_url} failed: {e}")
         return src_url
 
-    upload_req = urllib.request.Request(f"{DST}/wp-json/wp/v2/media", method="POST", data=data)
+    raw_size = len(data)
+    webp_bytes: bytes
+    out_fname = fname
+    try:
+        img = Image.open(io.BytesIO(data))
+        if img.width > MAX_W:
+            ratio = MAX_W / img.width
+            img = img.resize((MAX_W, int(img.height * ratio)), Image.Resampling.LANCZOS)
+        buf = io.BytesIO()
+        img.save(buf, format='WEBP', quality=WEBP_QUALITY, method=6)
+        webp_bytes = buf.getvalue()
+        out_fname = fname.rsplit('.', 1)[0] + '.webp'
+    except Exception as e:
+        print(f"    recompress failed ({e}); uploading raw")
+        webp_bytes = data
+
+    saved_pct = 100 - (len(webp_bytes) * 100 / max(raw_size, 1))
+    print(f"    mirror {fname} -> {out_fname}  ({raw_size//1024}KB -> {len(webp_bytes)//1024}KB, -{saved_pct:.0f}%)")
+
+    upload_req = urllib.request.Request(f"{DST}/wp-json/wp/v2/media", method="POST", data=webp_bytes)
     upload_req.add_header("Authorization", f"Basic {base64.b64encode(f'{USER}:{PW}'.encode()).decode()}")
-    upload_req.add_header("Content-Type", ctype)
-    upload_req.add_header("Content-Disposition", f'attachment; filename="{fname}"')
+    upload_req.add_header("Content-Type", 'image/webp' if out_fname.endswith('.webp') else 'image/png')
+    upload_req.add_header("Content-Disposition", f'attachment; filename="{out_fname}"')
     try:
         with urllib.request.urlopen(upload_req, context=ctx, timeout=180) as r:
             resp = json.loads(r.read())
     except Exception as e:
-        print(f"    upload {fname} failed: {e}")
+        print(f"    upload {out_fname} failed: {e}")
         return src_url
     new_url = resp.get("source_url") or src_url
     _upload_cache[src_url] = new_url
