@@ -108,7 +108,10 @@ const sidebarItems: SidebarItem[] = Array.isArray(content.sidebar_items) && cont
   .sx-ac-body {
     font-family: 'Inter', sans-serif; font-size: 17px; font-weight: 400;
     line-height: 1.7; color: #E5E5E5;
-    max-width: 720px;
+    /* Body fills the whole main column — the grid (main : 1fr, sidebar:
+       320px, gap: 64px) already gives a comfortable reading measure. Capping
+       at 720 left a big dead band between the prose and the sidebar. */
+    max-width: 100%;
   }
   .sx-ac-body h1, .sx-ac-body h2, .sx-ac-body h3 {
     font-family: 'Oswald', sans-serif; color: #ecfd21;
