@@ -97,32 +97,28 @@ def mirror_image(src_url: str) -> str:
 
 POSTS = [
     # (sxtech_url, target_slug, title, date_label, category, hero_image, inline_image?)
-    # Hero was the compressed 7w-1.png (47 KB). Switched to the uncompressed
-    # 2312-1.png original (1 MB) — same motif, proper resolution. The inline
-    # after-intro image becomes Projekt-bez-nazwy-2.png which was previously
-    # the hero placeholder. mirror_image() will fetch both from sxtech.eu
-    # and re-upload to sx.zds.es Media Library.
+    # Titles carry an explicit \n so the blog hero renders them on two lines
+    # (white-space: pre-line in the CSS). sxtech puts the subject on line 1
+    # and the type/section ("INTERVIEW", "PROGRAM"…) on line 2.
     ("https://sxtech.eu/2026/04/19/marius-rohde-interview/",
-     "post-marius-rohde-interview", "Marius Rohde INTERVIEW", "Apr 19, 2026", "NEWS",
+     "post-marius-rohde-interview", "Marius Rohde\nINTERVIEW", "Apr 19, 2026", "NEWS",
      "https://sxtech.eu/wp-content/uploads/2026/04/2312-1.png",
      "https://sxtech.eu/wp-content/uploads/2026/04/Projekt-bez-nazwy-2.png"),
     ("https://sxtech.eu/2026/04/19/sx-festival-artist-grant/",
-     "post-sx-festival-artist-grant", "SX FESTIVAL ARTIST GRANT", "Apr 19, 2026", "NEWS", "4w-1.png", None),
+     "post-sx-festival-artist-grant", "SX FESTIVAL\nARTIST GRANT", "Apr 19, 2026", "NEWS", "4w-1.png", None),
     ("https://sxtech.eu/2026/04/19/sxma-vote-04-08-05-08/",
-     "post-sxma-vote-04-08-05-08", "SXMA VOTE 04.08-05.08", "Apr 19, 2026", "NEWS", "1-3-2.png", None),
+     "post-sxma-vote-04-08-05-08", "SXMA VOTE\n04.08-05.08", "Apr 19, 2026", "NEWS", "1-3-2.png", None),
     ("https://sxtech.eu/2026/03/26/sxma-nominations-live/",
-     "post-sxma-nominations-live", "SXMA NOMINATIONS LIVE", "Mar 26, 2026", "NEWS", "nowlive-1.png", None),
+     "post-sxma-nominations-live", "SXMA NOMINATIONS\nLIVE", "Mar 26, 2026", "NEWS", "nowlive-1.png", None),
     ("https://sxtech.eu/2026/02/24/hacking-desire/",
-     "post-hacking-desire", "HACKING DESIRE", "Feb 24, 2026", "NEWS", "irma-1.png", None),
+     "post-hacking-desire", "HACKING\nDESIRE", "Feb 24, 2026", "NEWS", "irma-1.png", None),
     ("https://sxtech.eu/2026/02/10/ambassador-program-live/",
-     "post-ambassador-program-live", "AMBASSADOR PROGRAM LIVE", "Feb 10, 2026", "RECAP", "nonm-1.png", None),
-    # Hero images for these two weren't copied to sx.zds.es uploads — use
-    # the original sxtech.eu asset URL directly (detected by 'http' prefix).
+     "post-ambassador-program-live", "AMBASSADOR\nPROGRAM LIVE", "Feb 10, 2026", "RECAP", "nonm-1.png", None),
     ("https://sxtech.eu/2026/02/10/artists-apply-today/",
-     "post-artists-apply-today", "ARTISTS APPLY TODAY", "Feb 10, 2026", "NEWS",
+     "post-artists-apply-today", "ARTISTS APPLY\nTODAY", "Feb 10, 2026", "NEWS",
      "https://sxtech.eu/wp-content/uploads/2026/02/ph31.webp", None),
     ("https://sxtech.eu/2026/02/10/sx-valentine-limited-offer/",
-     "post-sxma-awards-nominate", "SXMA AWARDS NOMINATE", "Feb 10, 2026", "NEWS",
+     "post-sxma-awards-nominate", "SXMA AWARDS\nNOMINATE", "Feb 10, 2026", "NEWS",
      "https://sxtech.eu/wp-content/uploads/2026/02/sxt.png", None),
 ]
 

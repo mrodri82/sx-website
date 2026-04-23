@@ -122,10 +122,12 @@ const hasMedia = !!(videoUrl || bgImage);
   /* Blog-hero style (valign=end): full-height multiply overlay matching
      sxtech's Elementor "background-overlay" — top #000 → bottom #585858
      blended via multiply so the photo underneath still reads but sits
-     behind a uniform dimming. Replaces the bottom-up fade default. */
+     behind a uniform dimming. Opacity halved so the image keeps its
+     natural contrast; full multiply was far too dark. */
   .sx-hs--overlay.sx-hs--valign-end .sx-hs-gradient {
     background: linear-gradient(180deg, #000000 0%, #585858 100%);
     mix-blend-mode: multiply;
+    opacity: 0.5;
   }
   .sx-hs-inner { position: relative; z-index: 2; max-width: 1366px; width: 100%; margin: 0 auto; text-align: start; }
 
