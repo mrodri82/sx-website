@@ -137,8 +137,13 @@ const hasMedia = !!(videoUrl || bgImage);
     white-space: pre-line;
   }
   /* Blog-style hero — smaller headline than the big landing-page heroes.
-     sxtech renders blog post titles at 81 px on a 1920 viewport. */
-  .sx-hs--overlay.sx-hs--valign-end .sx-hs-title { font-size: 81px; letter-spacing: -3px; }
+     sxtech renders blog post titles at 81 px on a 1920 viewport, and the
+     title sits right at the bottom edge (~10px gap), so we zero the
+     title margin AND cut the overlay's bottom padding down. */
+  .sx-hs--overlay.sx-hs--valign-end { padding-bottom: 10px; }
+  .sx-hs--overlay.sx-hs--valign-end .sx-hs-title {
+    font-size: 81px; letter-spacing: -3px; margin-bottom: 0;
+  }
   .sx-hs-sub {
     font-family: 'Inter', sans-serif; font-size: 21px; font-weight: 500;
     line-height: 21px;
