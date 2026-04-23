@@ -35,43 +35,48 @@ const br = normalize(content.bottom_right);
 const style = `--lb-h:${height};--lb-c:${color};${bg ? `--lb-img:url('${bg}');` : ''}`;
 ---
 
-<section
-  data-nova-el="location-banner"
-  class={`sx-lb${bw ? ' sx-lb--bw' : ''}`}
-  style={style}
->
-  <div class="sx-lb-img"></div>
-  {tl && (
-    <div class={`sx-lb-text sx-lb-text--tl sx-lb-text--${tl.size}`}>
-      {tl.lines.map((l) => <div>{l}</div>)}
-    </div>
-  )}
-  {tr && (
-    <div class={`sx-lb-text sx-lb-text--tr sx-lb-text--${tr.size}`}>
-      {tr.lines.map((l) => <div>{l}</div>)}
-    </div>
-  )}
-  {bl && (
-    <div class={`sx-lb-text sx-lb-text--bl sx-lb-text--${bl.size}`}>
-      {bl.lines.map((l) => <div>{l}</div>)}
-    </div>
-  )}
-  {br && (
-    <div class={`sx-lb-text sx-lb-text--br sx-lb-text--${br.size}`}>
-      {br.lines.map((l) => <div>{l}</div>)}
-    </div>
-  )}
+<section data-nova-el="location-banner" class="sx-lb-outer">
+  <div
+    class={`sx-lb${bw ? ' sx-lb--bw' : ''}`}
+    style={style}
+  >
+    <div class="sx-lb-img"></div>
+    {tl && (
+      <div class={`sx-lb-text sx-lb-text--tl sx-lb-text--${tl.size}`}>
+        {tl.lines.map((l) => <div>{l}</div>)}
+      </div>
+    )}
+    {tr && (
+      <div class={`sx-lb-text sx-lb-text--tr sx-lb-text--${tr.size}`}>
+        {tr.lines.map((l) => <div>{l}</div>)}
+      </div>
+    )}
+    {bl && (
+      <div class={`sx-lb-text sx-lb-text--bl sx-lb-text--${bl.size}`}>
+        {bl.lines.map((l) => <div>{l}</div>)}
+      </div>
+    )}
+    {br && (
+      <div class={`sx-lb-text sx-lb-text--br sx-lb-text--${br.size}`}>
+        {br.lines.map((l) => <div>{l}</div>)}
+      </div>
+    )}
+  </div>
 </section>
 
 <style>
+  /* sxtech wraps this banner in an e-con-boxed (max-width container).
+     Outer section mirrors the site-wide 1366px container + 50px side
+     padding — no full-bleed anymore. */
+  .sx-lb-outer {
+    padding: 40px 50px;
+    background: transparent;
+  }
   .sx-lb {
     position: relative;
-    /* Full-bleed out of any 50px-padded section wrapper the template may
-       have: push the banner back to the viewport edges regardless of the
-       content container it's rendered inside. */
-    margin-left: calc(50% - 50vw);
-    margin-right: calc(50% - 50vw);
-    width: 100vw;
+    max-width: 1366px;
+    margin: 0 auto;
+    width: 100%;
     height: var(--lb-h, 560px);
     overflow: hidden; background: #000;
     isolation: isolate;
@@ -101,6 +106,7 @@ const style = `--lb-h:${height};--lb-c:${color};${bg ? `--lb-img:url('${bg}');` 
   .sx-lb-text--br { bottom: 0; right: 0; text-align: right; }
 
   @media (max-width: 768px) {
+    .sx-lb-outer { padding: 20px 24px; }
     .sx-lb { height: auto; min-height: 320px; }
     .sx-lb-text { padding: 16px 20px; }
   }
