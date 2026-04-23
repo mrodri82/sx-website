@@ -34,6 +34,10 @@ sections = [
         "data": {
             "columns": 3,
             "items": [
+                {"image": f"{DST}{UPL}/4567.png", "category": "NEWS",
+                 "title": "DASHA INTERVIEW",
+                 "href":  "/post-dasha-creator-interview",
+                 "date":  "Apr 23, 2026"},
                 {"image": f"{DST}{UPL}/7w-1.png", "category": "NEWS",
                  "title": "Marius Rohde INTERVIEW",
                  "href":  "/post-marius-rohde-interview",

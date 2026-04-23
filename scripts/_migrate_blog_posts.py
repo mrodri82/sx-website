@@ -100,6 +100,9 @@ POSTS = [
     # Titles carry an explicit \n so the blog hero renders them on two lines
     # (white-space: pre-line in the CSS). sxtech puts the subject on line 1
     # and the type/section ("INTERVIEW", "PROGRAM"…) on line 2.
+    ("https://sxtech.eu/2026/04/23/dasha-creator-interview/",
+     "post-dasha-creator-interview", "DASHA\nINTERVIEW", "Apr 23, 2026", "NEWS",
+     "", None),
     ("https://sxtech.eu/2026/04/19/marius-rohde-interview/",
      "post-marius-rohde-interview", "Marius Rohde\nINTERVIEW", "Apr 19, 2026", "NEWS",
      "https://sxtech.eu/wp-content/uploads/2026/04/2312-1.png",
