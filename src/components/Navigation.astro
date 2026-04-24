@@ -28,11 +28,11 @@ const isActive = (href: string) => current === href || current.startsWith(href +
 ---
 
 <header
-  class={`sx-nav fixed top-0 left-0 right-0 z-50 h-[98px] ${variant === 'solid' ? 'bg-black' : variant === 'light' ? 'bg-white' : 'bg-transparent'} ${variant === 'light' ? 'sx-nav--light' : ''}`}
+  class={`sx-nav fixed top-0 left-0 right-0 z-50 h-[98px] px-[50px] ${variant === 'solid' ? 'bg-black' : variant === 'light' ? 'bg-white' : 'bg-transparent'} ${variant === 'light' ? 'sx-nav--light' : ''}`}
   data-sx-nav
   data-variant={variant}
 >
-  <div class="sx-nav-inner h-full max-w-[1366px] mx-auto flex items-center pl-[50px] pr-[10px]" style="box-sizing:border-box;width:100%">
+  <div class="sx-nav-inner h-full max-w-[1366px] mx-auto flex items-center" style="box-sizing:border-box;width:100%">
     <div class="w-full flex items-center justify-between gap-6">
       {/* Logo — sits in a 157px-wide column so the three words wrap one per line */}
       <a href="/" class="sx-nav-logo block" aria-label="SX Festival & Expo 2026 Berlin">
@@ -136,7 +136,7 @@ const isActive = (href: string) => current === href || current.startsWith(href +
   }
   .sx-tickets:hover { opacity: .8; }
   @media (max-width: 768px) {
-    .sx-nav-inner { padding-left: 30px !important; padding-right: 16px !important; }
+    .sx-nav { padding-left: 30px !important; padding-right: 16px !important; }
   }
 
   /* Light variant — used on /program: white bg, black logo + black menu items */

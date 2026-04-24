@@ -98,10 +98,13 @@ const posterUrl = (content.poster_url as string) || '';
 </section>
 
 <style is:global>
-  /* Shared content container — matches sxtech.eu 1366px cap. Previously
-     1600px, which made the homepage render ~10% wider than the reference
-     site on 1920px monitors. */
-  .sx-hero-inner { max-width:1366px; margin:0 auto; padding:140px 10px 50px 50px; box-sizing:border-box; width:100%; }
+  /* Shared content container — 1366px inner centered, outer section
+     owns the side padding so the hero content aligns with nav logo and
+     every other 1366-containered module. Inner was previously carrying
+     its own 50L/10R padding, which shifted hero content 50px right of
+     other sections on ≥1476px viewports. */
+  .sx-hero { padding:0 50px; }
+  .sx-hero-inner { max-width:1366px; margin:0 auto; padding:140px 0 50px; box-sizing:border-box; width:100%; }
   .sx-hero-badge {
     font-family:'Inter', sans-serif;
     font-size:23px; font-weight:500; line-height:1;
@@ -176,7 +179,8 @@ const posterUrl = (content.poster_url as string) || '';
     /* Mobile: keep the video (we diverge from sxtech on this — it looks better).
        object-fit:cover + 40% opacity keeps text legible on top. */
     .sx-hero-video { display:block !important; opacity:0.45; }
-    .sx-hero-inner { padding:120px 24px 40px; }
+    .sx-hero { padding:0 24px; }
+    .sx-hero-inner { padding:120px 0 40px; }
     .sx-hero-badge { font-size:18px; text-align:center; line-height:1.2; margin:0 auto 28px; max-width:280px; }
     .sx-hero-word { font-size:clamp(48px, 13vw, 72px); }
     .sx-hero-row { flex-direction:column; align-items:flex-start; gap:0; }
