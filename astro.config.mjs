@@ -5,7 +5,7 @@ import node from '@astrojs/node';
 import svelte from '@astrojs/svelte';
 
 export default defineConfig({
-  site: process.env.SITE_URL || 'https://zds.es',
+  site: process.env.SITE_URL || 'https://sxfestival.com',
   output: 'static',
   adapter: node({ mode: 'standalone' }),
   security: {
