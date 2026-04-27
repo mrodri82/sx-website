@@ -37,7 +37,7 @@ const items: Item[] = Array.isArray(content.items) ? content.items : [];
      Parent container is flex-row with two 50% columns: heading left, list right. */
   .sx-ill { background: #000; padding: 80px 50px; }
   .sx-ill-inner {
-    max-width: 1366px; margin: 0 auto;
+    max-width: 1440px; margin: 0 auto;
     display: flex; flex-direction: row; align-items: center; gap: 40px;
   }
   .sx-ill-heading {
@@ -61,7 +61,7 @@ const items: Item[] = Array.isArray(content.items) ? content.items : [];
   .sx-ill-icon { color: #fff; line-height: 1; display: inline-flex; align-items: center; transition: color .3s; }
   .sx-ill-item a:hover .sx-ill-icon { color: #ecfd21; }
 
-  @media (max-width: 1366px) { .sx-ill-heading { font-size: 138px; letter-spacing: -5px; } }
+  @media (max-width: 1440px) { .sx-ill-heading { font-size: 138px; letter-spacing: -5px; } }
   @media (max-width: 1024px) {
     .sx-ill-inner { flex-direction: column; align-items: flex-start; gap: 24px; }
     .sx-ill-heading { flex: none; font-size: 131px; letter-spacing: -4px; }

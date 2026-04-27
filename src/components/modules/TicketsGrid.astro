@@ -134,7 +134,10 @@ const columns: Column[] = (content.columns as Column[]) || defaultColumns;
 </section>
 
 <style is:global>
-  .sx-tickets-inner { max-width:1600px; margin:0 auto; padding:0 10px 0 50px; box-sizing:border-box; width:100%; }
+  /* Outer section owns the side padding; inner caps at 1440 + centers.
+     Same convention as Hero, NewsGrid, ButtonRow, FeatureCards. */
+  .sx-tickets { padding-left: 50px; padding-right: 50px; }
+  .sx-tickets-inner { max-width:1440px; margin:0 auto; box-sizing:border-box; width:100%; }
 
   .sx-tickets-title {
     font-family:'Oswald','Inter',sans-serif;
@@ -246,7 +249,7 @@ const columns: Column[] = (content.columns as Column[]) || defaultColumns;
   .sx-tickets-col { min-width:0; }
   @media (max-width: 1024px) {
     .sx-tickets-grid { grid-template-columns:minmax(0, 1fr); }
-    .sx-tickets-inner { padding:0 16px; }
+    .sx-tickets { padding-left:24px; padding-right:24px; }
   }
   @media (max-width: 640px) {
     .sx-tix-card { padding:24px 20px; min-height:auto; }

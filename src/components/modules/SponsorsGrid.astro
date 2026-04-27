@@ -64,7 +64,7 @@ const defaultLogos: Logo[] = [
 const logos: Logo[] = (content.logos as Logo[]) || defaultLogos;
 ---
 
-<section data-nova-el="sponsors-grid" class="sx-sponsors bg-black py-20">
+<section data-nova-el="sponsors-grid" class="sx-sponsors bg-black">
   <div class="sx-sponsors-inner">
     <h2 class="sx-sponsors-title">{heading}</h2>
     <div class="sx-sponsors-wall">
@@ -82,7 +82,12 @@ const logos: Logo[] = (content.logos as Logo[]) || defaultLogos;
 </section>
 
 <style is:global>
-  .sx-sponsors-inner { max-width:1600px; margin:0 auto; padding:0 10px 0 50px; box-sizing:border-box; width:100%; }
+  /* Container convention: outer section owns the side padding (50/50),
+     inner caps at 1440 and centers — same as HeroSimple, NewsGrid,
+     ButtonRow etc. Content x-axis at (viewport-1440)/2 across all
+     modules so the site never looks "shifted" between sections. */
+  .sx-sponsors { padding: 80px 50px; }
+  .sx-sponsors-inner { max-width:1440px; margin:0 auto; box-sizing:border-box; width:100%; }
   .sx-sponsors-title {
     font-family:'Oswald','Inter',sans-serif;
     font-size:clamp(36px, 3.5vw, 48px);

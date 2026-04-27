@@ -2,7 +2,7 @@
 /**
  * ArticleContent — long-form blog article body. Hero + featured image
  * come from a preceding HeroSimple. This module is now the article shell:
- * a 1366px container (matching the hero container) split into a prose
+ * a 1440px container (matching the hero container) split into a prose
  * column on the left and a sticky sidebar on the right on desktop. The
  * sidebar defaults to Newsletter + Ticket CTA cards so no blog page is
  * ever blank on the right half. On <1024px the sidebar stacks below.
@@ -82,10 +82,10 @@ const sidebarItems: SidebarItem[] = Array.isArray(content.sidebar_items) && cont
 </article>
 
 <style is:global>
-  /* Hero and article share the same 1366 container + 50px side padding so
+  /* Hero and article share the same 1440 container + 50px side padding so
      the H1 above and the prose below sit on the same X-axis. */
   .sx-ac { background: #000; padding: 48px 50px 100px; color: #fff; }
-  .sx-ac-inner { max-width: 1366px; margin: 0 auto; }
+  .sx-ac-inner { max-width: 1440px; margin: 0 auto; }
 
   .sx-ac--with-sidebar .sx-ac-inner {
     display: grid;

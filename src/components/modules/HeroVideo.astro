@@ -98,13 +98,13 @@ const posterUrl = (content.poster_url as string) || '';
 </section>
 
 <style is:global>
-  /* Shared content container — 1366px inner centered, outer section
+  /* Shared content container — 1440px inner centered, outer section
      owns the side padding so the hero content aligns with nav logo and
-     every other 1366-containered module. Inner was previously carrying
+     every other 1440-containered module. Inner was previously carrying
      its own 50L/10R padding, which shifted hero content 50px right of
      other sections on ≥1476px viewports. */
   .sx-hero { padding:0 50px; }
-  .sx-hero-inner { max-width:1366px; margin:0 auto; padding:140px 0 50px; box-sizing:border-box; width:100%; }
+  .sx-hero-inner { max-width:1440px; margin:0 auto; padding:140px 0 50px; box-sizing:border-box; width:100%; }
   .sx-hero-badge {
     font-family:'Inter', sans-serif;
     font-size:23px; font-weight:500; line-height:1;

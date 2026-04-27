@@ -5,13 +5,13 @@
  *
  * Fields:
  *   - image:     URL (required)
- *   - max_width: e.g. '1366px' (default)
+ *   - max_width: e.g. '1440px' (default)
  *   - alt:       optional alt text
  */
 interface Props { content: Record<string, any>; }
 const { content = {} } = Astro.props;
 const image = content.image || '';
-const maxWidth = content.max_width || '1366px';
+const maxWidth = content.max_width || '1440px';
 const alt = content.alt || '';
 ---
 

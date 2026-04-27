@@ -14,7 +14,7 @@
  * {
  *   gap: "24px" | "lg",
  *   padding: "48px 50px" | "2xl",
- *   max_width: "1366px",
+ *   max_width: "1440px",
  *   align: "start" | "center" | "end" | "stretch",
  *   wrap_on_mobile: true,
  *   columns: [
@@ -110,7 +110,7 @@ function columnStyle(col: any, forMobile = false): string {
 
 const rowGap     = resolveSpace(content.gap ?? 'lg');
 const rowPad     = resolveSpace(content.padding ?? '2xl');
-const rowMaxW    = content.max_width || '1366px';
+const rowMaxW    = content.max_width || '1440px';
 const rowAlign   = content.align || 'stretch';
 const wrapMob    = content.wrap_on_mobile !== false;
 const columns    = Array.isArray(content.columns) ? content.columns : [];

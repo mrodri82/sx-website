@@ -63,13 +63,16 @@ const tripled: Voice[] = real > 0 ? [...voices, ...voices, ...voices] : [];
 </section>
 
 <style is:global>
-  .sx-voices { background:#000; padding:64px 0; }
+  /* Outer section owns side padding (50/50). Inner head + festival
+     slider both cap at 1440 and center — no inner padding. Same
+     convention as every other module. */
+  .sx-voices { background:#000; padding:64px 50px; }
   .sx-voices--light { background:#FFFFFF; }
   .sx-voices--light .sx-voices-title { color:#000; }
   .sx-voices--light .progress-bar { background:#ddd; }
   .sx-voices--light .progress { background:#000; }
   .sx-voices--light .nav { background:#000; color:#fff; }
-  .sx-voices-head { max-width:1366px; margin:0 auto 24px; padding:0 24px; text-align:center; box-sizing:border-box; width:100%; }
+  .sx-voices-head { max-width:1440px; margin:0 auto 24px; text-align:center; box-sizing:border-box; width:100%; }
   .sx-voices-title {
     font-family:'Oswald','Inter',sans-serif;
     font-size:clamp(64px, 8vw, 120px);
@@ -83,7 +86,7 @@ const tripled: Voice[] = real > 0 ? [...voices, ...voices, ...voices] : [];
      center + 2 thumbs right. Slot widths are calculated from the window
      width so the 2-1-2 structure is preserved at every viewport, not
      just when 740 + 4×134 happens to fit. JS reads the same vars. */
-  .festival-slider { max-width:1366px; margin:0 auto; padding:0 50px; box-sizing:border-box; width:100%; }
+  .festival-slider { max-width:1440px; margin:0 auto; box-sizing:border-box; width:100%; }
   .slider-window { position:relative; overflow:hidden; height:530px; }
   .slider-track { display:flex; align-items:center; transition:transform .6s ease; will-change:transform; }
   .slider-track.is-jumping { transition:none; }
@@ -124,8 +127,8 @@ const tripled: Voice[] = real > 0 ? [...voices, ...voices, ...voices] : [];
   .progress { height:100%; width:0%; background:#ecfd21; transition:width .4s ease; }
 
   @media (max-width:900px) {
+    .sx-voices { padding:48px 24px; }
     .sx-voices-title { font-size:clamp(44px, 12vw, 72px); }
-    .festival-slider { padding:0 24px; }
     .slider-window { height:420px; }
     .slide { height:380px; margin:0 4px; }
   }
