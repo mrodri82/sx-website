@@ -18,6 +18,11 @@ if (!session) return Astro.redirect('/admin/login?return=' + encodeURIComponent(
 // Get page slug
 const slug = Astro.params.slug || 'homepage';
 
+// Allow the editor to preview a non-default locale by passing
+// ?nova_preview_lang=de (etc.). Falls back to the project default.
+const reqLang = Astro.url.searchParams.get('nova_preview_lang') || '';
+const previewLocale = (site.locales.includes(reqLang as any) ? reqLang : site.defaultLocale) as any;
+
 // Fetch page data
 let sections: any[] = [];
 let pageId = 0;
@@ -51,11 +56,18 @@ try {
 const sectionsJSON = JSON.stringify(sections);
 const registryJSON = JSON.stringify(MODULE_REGISTRY);
 const advancedJSON = JSON.stringify(ADVANCED_FIELDS);
+
+// i18n: only render the language bar when the project has more than
+// one configured locale. SX defaults to English-only, so the bar
+// stays hidden unless an admin opts in by setting LOCALES in .env.
+const projectLocales = site.locales.length ? site.locales : [site.defaultLocale];
+const showLangBar = projectLocales.length > 1;
+const projectDefaultLocale = site.defaultLocale;
 ---
 
 <BaseLayout title={`${seoTitle || slug} — Live Editor`}>
   <Navigation />
-  <ModuleRenderer sections={sections} />
+  <ModuleRenderer sections={sections} locale={previewLocale} />
   <Footer />
 
   <!-- ════════════ TOOLBAR ════════════ -->
@@ -209,12 +221,25 @@ const advancedJSON = JSON.stringify(ADVANCED_FIELDS);
         <button id="nova-mode-detached" class="nova-mode-btn" data-mode="detached" title="Eigenst&auml;ndige Kopie &mdash; Edits betreffen nur diese Seite">&#128203; Eigenst&auml;ndig</button>
       </div>
 
-      <!-- Language bar (global, NOT per field) -->
-      <div class="nova-lang-bar" id="nova-lang-bar-global">
-        <button class="nova-lang-btn active" data-lang="es">&#127466;&#127480; ES</button>
-        <button class="nova-lang-btn" data-lang="en">&#127468;&#127463; EN</button>
-        <button class="nova-lang-btn" data-lang="de">&#127465;&#127466; DE</button>
-      </div>
+      {/* Language bar (global, NOT per field). Hidden in single-locale
+          projects; sites that opt into multiple LOCALES see the picker. */}
+      {showLangBar && (
+        <div class="nova-lang-bar" id="nova-lang-bar-global">
+          {projectLocales.map((lc) => {
+            const flag = lc === 'es' ? '🇪🇸' : lc === 'en' ? '🇬🇧' : lc === 'de' ? '🇩🇪' : '🌐';
+            return (
+              <button
+                class={`nova-lang-btn${lc === projectDefaultLocale ? ' active' : ''}`}
+                data-lang={lc}
+              >{flag} {lc.toUpperCase()}</button>
+            );
+          })}
+        </div>
+      )}
+      <script is:inline define:vars={{ projectDefaultLocale, projectLocales }}>
+        window.__novaProjectLocales = projectLocales;
+        window.__novaProjectDefaultLocale = projectDefaultLocale;
+      </script>
 
       <!-- Slot Map -->
       <div class="nova-slot-map" id="nova-slot-map">
@@ -1155,8 +1180,12 @@ const advancedJSON = JSON.stringify(ADVANCED_FIELDS);
     }, 250);
 
     let dirty = false;
-    let currentLang = 'es';
-    const LANGS = ['es', 'en', 'de'];
+    // Default language follows the project's configured default; only the
+    // project-supported locales are exposed to the editor UI.
+    let currentLang = window.__novaProjectDefaultLocale || 'en';
+    const LANGS = (window.__novaProjectLocales && window.__novaProjectLocales.length)
+      ? window.__novaProjectLocales
+      : [currentLang];
     const LANG_LABELS = { es: '\ud83c\uddea\ud83c\uddf8 ES', en: '\ud83c\uddec\ud83c\udde7 EN', de: '\ud83c\udde9\ud83c\uddea DE' };
 
     // Module icons
@@ -3392,6 +3421,24 @@ const advancedJSON = JSON.stringify(ADVANCED_FIELDS);
       document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
       // Update global sidebar lang bar
       document.querySelectorAll('.nova-lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+
+      // Reload the preview SSR with the chosen locale so module content
+      // re-renders with the new translations. If there are unsaved edits,
+      // confirm before navigating away.
+      const url = new URL(window.location.href);
+      const urlLang = url.searchParams.get('nova_preview_lang') || (window.__novaProjectDefaultLocale || 'en');
+      if (urlLang !== lang) {
+        if (dirty && !window.confirm('Ungespeicherte Änderungen gehen verloren beim Sprachwechsel. Trotzdem wechseln?')) {
+          return;
+        }
+        if (lang === (window.__novaProjectDefaultLocale || 'en')) {
+          url.searchParams.delete('nova_preview_lang');
+        } else {
+          url.searchParams.set('nova_preview_lang', lang);
+        }
+        window.location.href = url.toString();
+        return;
+      }
       // Show/hide language fields
       document.querySelectorAll('.lang-fields').forEach(c => c.classList.toggle('active', c.dataset.lang === lang));
     }
