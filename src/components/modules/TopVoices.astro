@@ -79,14 +79,20 @@ const tripled: Voice[] = real > 0 ? [...voices, ...voices, ...voices] : [];
     margin:0;
   }
 
-  .festival-slider { max-width:1366px; margin:0 auto; padding:0 24px; box-sizing:border-box; width:100%; }
+  /* Layout law: ALWAYS 2 thumbs left + 1 active (with yellow info bar)
+     center + 2 thumbs right. Slot widths are calculated from the window
+     width so the 2-1-2 structure is preserved at every viewport, not
+     just when 740 + 4×134 happens to fit. JS reads the same vars. */
+  .festival-slider { max-width:1366px; margin:0 auto; padding:0 50px; box-sizing:border-box; width:100%; }
   .slider-window { position:relative; overflow:hidden; height:530px; }
-  .slider-track { display:flex; align-items:center; transition:transform .6s ease; }
+  .slider-track { display:flex; align-items:center; transition:transform .6s ease; will-change:transform; }
   .slider-track.is-jumping { transition:none; }
   .slide {
-    flex:0 0 134px; height:490px; margin:0 10px;
+    /* flex-basis is set inline by the JS sizing pass; this is only the
+       initial paint hint before the script runs. */
+    flex:0 0 134px; height:490px; margin:0 6px;
     overflow:hidden; position:relative;
-    transition:all .5s ease;
+    transition:flex-basis .5s ease;
     cursor:pointer;
   }
   .slide img {
@@ -114,9 +120,9 @@ const tripled: Voice[] = real > 0 ? [...voices, ...voices, ...voices] : [];
 
   @media (max-width:900px) {
     .sx-voices-title { font-size:clamp(44px, 12vw, 72px); }
+    .festival-slider { padding:0 24px; }
     .slider-window { height:420px; }
-    .slide { flex:0 0 60px; height:380px; }
-    .slide.active { flex:0 0 82%; }
+    .slide { height:380px; margin:0 4px; }
   }
 </style>
 
@@ -140,24 +146,42 @@ const tripled: Voice[] = real > 0 ? [...voices, ...voices, ...voices] : [];
       if (index < 0) index = real;
 
       function sizes() {
-        // Mirror CSS: mobile breakpoint at 900px. Narrow = flex-basis of
-        // inactive slides; wide = flex-basis of active slide. Horizontal
-        // margin is 10px each side → 20px total per slot.
+        // Always 2 thumbs left + active + 2 thumbs right inside the
+        // window. THUMB width is computed from the remaining space so
+        // the 2-1-2 layout holds at every viewport. Margin matches CSS.
         const mobile = window.innerWidth <= 900;
-        const MARGIN = 20;
-        const NARROW = mobile ? 60 : 134;
+        const MARGIN = mobile ? 8 : 12;
         const winW = root.querySelector<HTMLElement>('.slider-window')!.offsetWidth;
-        // On mobile active = 82% of window, on desktop fixed 740
-        const WIDE = mobile ? Math.round(winW * 0.82) : 740;
+        // Active slide: large image + yellow info bar. Cap at 740px on
+        // wide screens; on narrow ones scale to ~50% of the window so
+        // there's still room for 2 thumbs each side.
+        const WIDE = mobile ? Math.round(winW * 0.78)
+                            : Math.min(740, Math.round(winW * 0.55));
+        // 5 slots visible (2+1+2) with 5 inter-slot gaps of MARGIN.
+        // Available for thumbs: winW − active − 5 × MARGIN, split across 4 thumbs.
+        const NARROW = mobile
+          ? Math.max(40, Math.round((winW - WIDE - 5 * MARGIN) / 4))
+          : Math.max(80, Math.round((winW - WIDE - 5 * MARGIN) / 4));
         return { NARROW, WIDE, MARGIN, winW };
+      }
+
+      function applySizes() {
+        const { NARROW, WIDE, MARGIN } = sizes();
+        slides.forEach((s, i) => {
+          const w = i === index ? WIDE : NARROW;
+          s.style.flex = `0 0 ${w}px`;
+          s.style.margin = `0 ${MARGIN / 2}px`;
+        });
       }
 
       function update() {
         slides.forEach((s, i) => s.classList.toggle('active', i === index));
+        applySizes();
         const { NARROW, WIDE, MARGIN, winW } = sizes();
         // Offset from track origin to the CENTER of the active slide.
-        // All slides before `index` are narrow. Leading margin-left = MARGIN/2.
-        let offset = MARGIN / 2; // start at first slide's left edge + its margin-left
+        // Each slot consumes (slotWidth + MARGIN) — slotWidth is NARROW
+        // for inactive, WIDE for the active one we land on.
+        let offset = MARGIN / 2; // first slide's leading margin
         for (let i = 0; i < index; i++) offset += NARROW + MARGIN;
         offset += WIDE / 2; // reach center of active
         const translateX = winW / 2 - offset;

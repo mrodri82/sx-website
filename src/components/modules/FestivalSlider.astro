@@ -42,26 +42,29 @@ const tripled = items.length > 0 ? [...items, ...items, ...items] : [];
 </section>
 
 <style>
-  /* 1:1 from sxtech .festival-slider inline CSS (element 74143e0). */
+  /* Layout law: 2 thumbs left + active center + 2 thumbs right at every
+     viewport. Widths are computed by the script so the 2-1-2 structure
+     holds. CSS values below are only the initial paint hint. */
   .sx-fs { background: #000; padding: 40px 50px 60px; }
   .sx-fs--light { background: #FFFFFF; }
   .sx-fs--light .sx-fs-progress { background: #ddd; }
   .sx-fs--light .sx-fs-progress-fill { background: #000; }
-  .sx-fs-outer { max-width: 1240px; margin: 0 auto; }
+  .sx-fs-outer { max-width: 1366px; margin: 0 auto; }
 
   .sx-fs-window { overflow: hidden; height: 490px; position: relative; }
   .sx-fs-track {
     display: flex; align-items: center;
     transition: transform .5s ease;
+    will-change: transform;
   }
   .sx-fs-track.is-jumping { transition: none; }
 
   .sx-fs-slide {
-    flex: 0 0 225px; height: 490px; margin: 0 10px;
+    flex: 0 0 134px; height: 490px; margin: 0 6px;
     position: relative; overflow: hidden;
-    opacity: 0.6; transition: all .4s ease;
+    opacity: 0.6; transition: flex-basis .5s ease, opacity .4s ease;
   }
-  .sx-fs-slide.is-active { flex: 0 0 790px; opacity: 1; }
+  .sx-fs-slide.is-active { flex: 0 0 740px; opacity: 1; }
 
   .sx-fs-slide img {
     position: absolute; top: 0; left: 0;
@@ -85,12 +88,8 @@ const tripled = items.length > 0 ? [...items, ...items, ...items] : [];
   .sx-fs-progress-fill { height: 100%; width: 0%; background: #ECFD21; transition: width .4s linear; }
 
   @media (max-width: 900px) {
-    .sx-fs-slide { flex: 0 0 120px; }
-    .sx-fs-slide.is-active { flex: 0 0 70%; }
-  }
-  @media (max-width: 600px) {
-    .sx-fs-slide { flex: 0 0 80%; }
-    .sx-fs-slide.is-active { flex: 0 0 90%; }
+    .sx-fs { padding: 30px 24px 50px; }
+    .sx-fs-slide { height: 380px; margin: 0 4px; }
   }
 </style>
 
@@ -115,8 +114,31 @@ const tripled = items.length > 0 ? [...items, ...items, ...items] : [];
       let idx = real;
       let tickerStart = performance.now();
 
+      function sizes() {
+        const winW = (track!.parentElement as HTMLElement).offsetWidth;
+        const mobile = window.innerWidth <= 900;
+        const MARGIN = mobile ? 8 : 12;
+        // Active capped at 740 on wide screens, scales on narrow.
+        const WIDE = mobile ? Math.round(winW * 0.78)
+                            : Math.min(740, Math.round(winW * 0.55));
+        // 2 thumbs each side; thumb width is the leftover space split 4 ways.
+        const NARROW = Math.max(mobile ? 40 : 80,
+                                Math.round((winW - WIDE - 5 * MARGIN) / 4));
+        return { WIDE, NARROW, MARGIN, winW };
+      }
+
+      function applySizes() {
+        const { WIDE, NARROW, MARGIN } = sizes();
+        slides.forEach((s, i) => {
+          const w = i === idx ? WIDE : NARROW;
+          s.style.flex = `0 0 ${w}px`;
+          s.style.margin = `0 ${MARGIN / 2}px`;
+        });
+      }
+
       function apply() {
         slides.forEach((s, i) => s.classList.toggle('is-active', i === idx));
+        applySizes();
         const container = track!.parentElement!;
         const active = slides[idx];
         const cRect = container.getBoundingClientRect();
