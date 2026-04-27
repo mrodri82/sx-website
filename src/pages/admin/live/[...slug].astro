@@ -8,6 +8,7 @@ import Footer from '@/components/Footer.astro';
 import ModuleRenderer from '@/components/modules/ModuleRenderer.astro';
 import { getPageSections } from '@/lib/wordpress';
 import { MODULE_REGISTRY, ADVANCED_FIELDS } from '@/lib/editor/module-registry';
+import { ATOM_REGISTRY } from '@/lib/editor/atom-registry';
 import { site } from '@/config/site';
 
 // Auth check
@@ -56,6 +57,16 @@ try {
 const sectionsJSON = JSON.stringify(sections);
 const registryJSON = JSON.stringify(MODULE_REGISTRY);
 const advancedJSON = JSON.stringify(ADVANCED_FIELDS);
+// Strip the function members of the atom registry — only the panel
+// schemas need to reach the browser. Detect/read/apply/serialize live
+// in atom-registry-runtime.ts on the client.
+const atomPanelsJSON = JSON.stringify(
+  Object.fromEntries(
+    Object.entries(ATOM_REGISTRY)
+      .filter(([, def]) => def !== null)
+      .map(([type, def]) => [type, def!.panel])
+  )
+);
 
 // i18n: only render the language bar when the project has more than
 // one configured locale. SX defaults to English-only, so the bar
@@ -245,6 +256,19 @@ const projectDefaultLocale = site.defaultLocale;
       <div class="nova-slot-map" id="nova-slot-map">
         <div class="nova-slot-map-title" id="nova-slot-map-title">Slot Map</div>
         <div id="nova-slot-map-items"></div>
+      </div>
+
+      {/* Atom Panel — auto-rendered when the selected slot matches a known
+          atom (image / heading / text / button …). Lives parallel to the
+          module-schema content so a slot can be edited even if the module
+          has no per-field schema entry. */}
+      <div id="nova-atom-panel" class="nova-atom-panel" style="display:none">
+        <div class="nova-atom-panel-head">
+          <span id="nova-atom-panel-title">Atom</span>
+          <span id="nova-atom-panel-type" class="nova-atom-panel-type"></span>
+        </div>
+        <div id="nova-atom-panel-hint" class="nova-atom-panel-hint"></div>
+        <div id="nova-atom-panel-fields"></div>
       </div>
 
       <!-- Tabs -->
@@ -647,6 +671,74 @@ const projectDefaultLocale = site.defaultLocale;
     }
     .nova-lang-btn:hover { color: var(--nova-text); background: rgba(255,255,255,0.03); }
     .nova-lang-btn.active { background: var(--nova-accent); color: #fff; border-color: var(--nova-accent); }
+
+    /* ═══ ATOM PANEL ═══ */
+    .nova-atom-panel {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--nova-border);
+      background: rgba(0, 200, 220, 0.04);
+    }
+    .nova-atom-panel-head {
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 11px; font-weight: 600; color: var(--nova-text);
+      text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;
+    }
+    .nova-atom-panel-type {
+      font-size: 10px; color: var(--nova-teal);
+      background: rgba(0, 200, 220, 0.12);
+      padding: 2px 8px; border-radius: 8px;
+      letter-spacing: 0;
+    }
+    .nova-atom-panel-hint {
+      font-size: 10px; color: var(--nova-text-dim);
+      margin-bottom: 8px;
+    }
+    .nova-atom-fld { margin: 8px 0; }
+    .nova-atom-fld-label {
+      display: block; font-size: 10px; font-weight: 600;
+      color: var(--nova-text-dim);
+      text-transform: uppercase; letter-spacing: 0.04em;
+      margin-bottom: 4px;
+    }
+    .nova-atom-fld input[type="text"],
+    .nova-atom-fld input[type="url"],
+    .nova-atom-fld textarea,
+    .nova-atom-fld select {
+      width: 100%; box-sizing: border-box;
+      background: var(--nova-bg);
+      border: 1px solid var(--nova-border);
+      border-radius: 6px;
+      padding: 6px 8px;
+      font-size: 12px; color: var(--nova-text);
+      font-family: inherit;
+    }
+    .nova-atom-fld textarea { min-height: 60px; resize: vertical; }
+    .nova-atom-fld input[type="color"] {
+      width: 40px; height: 28px; padding: 0;
+      border: 1px solid var(--nova-border); border-radius: 6px;
+      background: var(--nova-bg);
+    }
+    .nova-atom-fld-row { display: flex; gap: 8px; align-items: center; }
+    .nova-atom-fld-media {
+      display: flex; gap: 8px; align-items: center;
+    }
+    .nova-atom-fld-media-thumb {
+      width: 56px; height: 56px;
+      background: var(--nova-bg);
+      border: 1px solid var(--nova-border); border-radius: 6px;
+      background-size: cover; background-position: center;
+    }
+    .nova-atom-fld-media-pick {
+      flex: 0 0 auto;
+      padding: 6px 12px;
+      background: var(--nova-accent); color: #fff;
+      border: 0; border-radius: 6px;
+      font-size: 11px; font-weight: 600; cursor: pointer;
+    }
+    .nova-atom-fld-toggle {
+      display: flex; align-items: center; gap: 8px;
+      cursor: pointer; user-select: none;
+    }
 
     /* ═══ SLOT MAP ═══ */
     .nova-slot-map {
@@ -1136,12 +1228,14 @@ const projectDefaultLocale = site.defaultLocale;
   <script id="nova-data-sections" type="application/json" set:html={sectionsJSON} />
   <script id="nova-data-registry" type="application/json" set:html={registryJSON} />
   <script id="nova-data-advanced" type="application/json" set:html={advancedJSON} />
+  <script id="nova-data-atom-panels" type="application/json" set:html={atomPanelsJSON} />
   <script id="nova-data-meta" type="application/json" set:html={JSON.stringify({ pageId, slug, brandName: site.brandName, domain: site.domain })} />
 
   <script>
     const sections = JSON.parse(document.getElementById('nova-data-sections').textContent);
     const REGISTRY = JSON.parse(document.getElementById('nova-data-registry').textContent);
     const ADVANCED = JSON.parse(document.getElementById('nova-data-advanced').textContent);
+    const ATOM_PANELS = JSON.parse(document.getElementById('nova-data-atom-panels').textContent);
     const _meta = JSON.parse(document.getElementById('nova-data-meta').textContent);
     const pageId = _meta.pageId;
     const slug = _meta.slug;
@@ -1178,6 +1272,122 @@ const projectDefaultLocale = site.defaultLocale;
       const have = document.body.classList.contains('nova-dirty');
       if (want !== have) document.body.classList.toggle('nova-dirty', want);
     }, 250);
+
+    // ═══ ATOM RUNTIME ═══════════════════════════════════════════
+    // Mirrors src/lib/editor/atom-registry.ts in plain JS so we can run
+    // detect/apply/serialize directly in the editor's iframe-less DOM.
+    // Server-side panel JSON arrives via #nova-data-atom-panels.
+    const ATOM_RUNTIME = {
+      image: {
+        detect: (el) => el.tagName === 'IMG',
+        read: (el) => ({
+          src:           el.getAttribute('src') || '',
+          alt:           el.getAttribute('alt') || '',
+          object_fit:    el.style.objectFit || getComputedStyle(el).objectFit || 'cover',
+          filter:        el.dataset.atomFilter || 'none',
+          border_radius: el.style.borderRadius || '0',
+        }),
+        apply: (el, p) => {
+          if (p.src && p.src !== el.src) el.src = p.src;
+          if (typeof p.alt === 'string') el.alt = p.alt;
+          if (p.object_fit) el.style.objectFit = p.object_fit;
+          if (p.border_radius) el.style.borderRadius = p.border_radius;
+          if (p.filter) {
+            el.dataset.atomFilter = p.filter;
+            const map = {
+              none: '', grayscale: 'grayscale(100%)', 'grayscale-soft': 'grayscale(50%)',
+              'blur-sm': 'blur(2px)', 'blur-lg': 'blur(8px)',
+              'contrast-up': 'contrast(1.2)', sepia: 'sepia(80%)',
+            };
+            el.style.filter = map[p.filter] || '';
+          }
+        },
+        serialize: (p, slotKey) => [
+          { key: slotKey,                     value: p.src || '' },
+          { key: slotKey + '_alt',            value: p.alt || '' },
+          { key: slotKey + '_object_fit',     value: p.object_fit || '' },
+          { key: slotKey + '_filter',         value: p.filter || '' },
+          { key: slotKey + '_border_radius',  value: p.border_radius || '' },
+        ],
+      },
+      heading: {
+        detect: (el) => /^H[1-6]$/.test(el.tagName),
+        read: (el) => ({
+          text:  (el.textContent || '').trim(),
+          level: el.tagName.toLowerCase(),
+          color: el.style.color || '',
+          align: el.style.textAlign || '',
+        }),
+        apply: (el, p) => {
+          if (typeof p.text === 'string') el.textContent = p.text;
+          if (p.color) el.style.color = p.color;
+          if (p.align) el.style.textAlign = p.align;
+        },
+        serialize: (p, slotKey) => [
+          { key: slotKey,            value: p.text || '' },
+          { key: slotKey + '_color', value: p.color || '' },
+          { key: slotKey + '_align', value: p.align || '' },
+          { key: slotKey + '_level', value: p.level || '' },
+        ],
+      },
+      text: {
+        detect: (el) => {
+          if (el.tagName !== 'P') return false;
+          const wc = (el.textContent || '').trim().split(/\s+/).filter(Boolean).length;
+          return wc >= 5;
+        },
+        read: (el) => ({
+          text:  el.innerHTML || '',
+          color: el.style.color || '',
+          align: el.style.textAlign || '',
+        }),
+        apply: (el, p) => {
+          if (typeof p.text === 'string') el.innerHTML = p.text;
+          if (p.color) el.style.color = p.color;
+          if (p.align) el.style.textAlign = p.align;
+        },
+        serialize: (p, slotKey) => [
+          { key: slotKey,            value: p.text || '' },
+          { key: slotKey + '_color', value: p.color || '' },
+          { key: slotKey + '_align', value: p.align || '' },
+        ],
+      },
+      button: {
+        detect: (el) => {
+          if (el.tagName === 'BUTTON') return true;
+          if (el.tagName !== 'A') return false;
+          return /\b(btn|cta|button)\b/i.test(el.className || '');
+        },
+        read: (el) => ({
+          label:   (el.textContent || '').trim(),
+          url:     el.getAttribute('href') || '',
+          variant: el.dataset.atomVariant || 'solid',
+          new_tab: el.getAttribute('target') === '_blank' ? '1' : '',
+        }),
+        apply: (el, p) => {
+          if (typeof p.label === 'string') el.textContent = p.label;
+          if (p.url) el.setAttribute('href', p.url);
+          if (p.variant) el.dataset.atomVariant = p.variant;
+          if (p.new_tab) { el.setAttribute('target', '_blank'); el.setAttribute('rel', 'noopener'); }
+          else if (typeof p.new_tab === 'string') { el.removeAttribute('target'); }
+        },
+        serialize: (p, slotKey) => [
+          { key: slotKey,              value: p.label || '' },
+          { key: slotKey + '_url',     value: p.url || '' },
+          { key: slotKey + '_variant', value: p.variant || '' },
+          { key: slotKey + '_new_tab', value: p.new_tab ? '1' : '' },
+        ],
+      },
+    };
+
+    function resolveAtomType(el) {
+      if (!el) return null;
+      if (el.dataset && el.dataset.atom && ATOM_RUNTIME[el.dataset.atom]) return el.dataset.atom;
+      for (const [type, def] of Object.entries(ATOM_RUNTIME)) {
+        if (def.detect(el)) return type;
+      }
+      return null;
+    }
 
     let dirty = false;
     // Default language follows the project's configured default; only the
@@ -1646,6 +1856,12 @@ const projectDefaultLocale = site.defaultLocale;
         pageEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
 
+      // 2b. Render the atom panel for this slot. Looks at the selected
+      // element AND any direct child <img>/<a>/<h*> — modules wrap their
+      // editable atoms in a container div with data-nova-el, so we
+      // descend one level when the slot wrapper itself isn't an atom.
+      renderAtomPanelForSlot(pageEl, slotName);
+
       // 3. Activate slot in map
       document.querySelectorAll('.nova-slot-item').forEach(s => s.classList.remove('active'));
       const mapItem = document.querySelector('.nova-slot-item[data-slot="' + slotName + '"]');
@@ -1669,6 +1885,193 @@ const projectDefaultLocale = site.defaultLocale;
       if (styleTab && styleTab.style.display !== 'none') {
         focusStyleGroup(slotName);
       }
+    }
+
+    // ═══ ATOM PANEL RENDERER ═══════════════════════════════════
+    // Given a DOM element (slot wrapper) and its slot key, detect the
+    // atom type and render the matching panel. Hidden when no atom
+    // matches (e.g. the wrapper is a generic <div> without atom content).
+    function renderAtomPanelForSlot(slotEl, slotKey) {
+      const panelHost = document.getElementById('nova-atom-panel');
+      const fieldsHost = document.getElementById('nova-atom-panel-fields');
+      const titleEl = document.getElementById('nova-atom-panel-title');
+      const typeEl = document.getElementById('nova-atom-panel-type');
+      const hintEl = document.getElementById('nova-atom-panel-hint');
+      if (!panelHost || !fieldsHost) return;
+
+      // Decide which element to introspect. Many modules wrap an <img>
+      // in a <div data-nova-el="hero-image">, so descend one level if
+      // the wrapper itself is a generic container.
+      let el = slotEl;
+      if (el && !resolveAtomType(el)) {
+        const candidate = el.querySelector('img, h1, h2, h3, h4, h5, h6, p, a, button, [data-atom]');
+        if (candidate) el = candidate;
+      }
+
+      const type = el ? resolveAtomType(el) : null;
+      if (!type || !ATOM_PANELS[type]) {
+        panelHost.style.display = 'none';
+        fieldsHost.innerHTML = '';
+        return;
+      }
+
+      const panel = ATOM_PANELS[type];
+      const def = ATOM_RUNTIME[type];
+      const props = def.read(el);
+
+      titleEl.textContent = panel.title;
+      typeEl.textContent = type;
+      hintEl.textContent = panel.hint || '';
+      hintEl.style.display = panel.hint ? '' : 'none';
+
+      fieldsHost.innerHTML = '';
+      panel.fields.forEach(field => {
+        const fld = renderAtomField(field, props[field.key] || '', (newValue) => {
+          props[field.key] = newValue;
+          def.apply(el, props);
+          persistAtomChange(type, slotKey, props);
+        });
+        fieldsHost.appendChild(fld);
+      });
+
+      panelHost.style.display = '';
+      panelHost.dataset.atomType = type;
+      panelHost.dataset.slotKey = slotKey;
+    }
+
+    function renderAtomField(field, value, onChange) {
+      const wrap = document.createElement('div');
+      wrap.className = 'nova-atom-fld';
+      wrap.dataset.fieldKey = field.key;
+
+      const label = document.createElement('label');
+      label.className = 'nova-atom-fld-label';
+      label.textContent = field.label;
+      wrap.appendChild(label);
+
+      let input;
+      switch (field.type) {
+        case 'media': {
+          // Media row: thumbnail + Pick button.
+          const row = document.createElement('div');
+          row.className = 'nova-atom-fld-media';
+          const thumb = document.createElement('div');
+          thumb.className = 'nova-atom-fld-media-thumb';
+          if (value) thumb.style.backgroundImage = `url(${value})`;
+          const btn = document.createElement('button');
+          btn.className = 'nova-atom-fld-media-pick';
+          btn.type = 'button';
+          btn.textContent = value ? 'Bild ersetzen' : 'Bild wählen';
+          btn.addEventListener('click', () => {
+            // Reuse the existing WP Media frame helper if loaded.
+            if (typeof openMediaFrame === 'function') {
+              openMediaFrame((url) => {
+                thumb.style.backgroundImage = `url(${url})`;
+                btn.textContent = 'Bild ersetzen';
+                onChange(url);
+              });
+            } else {
+              const url = window.prompt('Bild-URL', value || '');
+              if (url !== null) {
+                thumb.style.backgroundImage = `url(${url})`;
+                btn.textContent = url ? 'Bild ersetzen' : 'Bild wählen';
+                onChange(url);
+              }
+            }
+          });
+          row.appendChild(thumb);
+          row.appendChild(btn);
+          wrap.appendChild(row);
+          return wrap;
+        }
+        case 'text':
+        case 'url':
+          input = document.createElement('input');
+          input.type = field.type === 'url' ? 'url' : 'text';
+          input.value = value;
+          input.addEventListener('input', () => onChange(input.value));
+          break;
+        case 'textarea':
+          input = document.createElement('textarea');
+          input.value = value;
+          input.addEventListener('input', () => onChange(input.value));
+          break;
+        case 'select':
+          input = document.createElement('select');
+          (field.options || []).forEach(opt => {
+            const o = document.createElement('option');
+            o.value = opt.value; o.textContent = opt.label;
+            if (opt.value === value) o.selected = true;
+            input.appendChild(o);
+          });
+          input.addEventListener('change', () => onChange(input.value));
+          break;
+        case 'color': {
+          const row = document.createElement('div');
+          row.className = 'nova-atom-fld-row';
+          const swatch = document.createElement('input');
+          swatch.type = 'color';
+          swatch.value = /^#[0-9a-f]{6}$/i.test(value) ? value : '#000000';
+          const text = document.createElement('input');
+          text.type = 'text';
+          text.value = value;
+          text.placeholder = '#000000 oder transparent';
+          swatch.addEventListener('input', () => { text.value = swatch.value; onChange(swatch.value); });
+          text.addEventListener('input', () => { onChange(text.value); });
+          row.appendChild(swatch); row.appendChild(text);
+          wrap.appendChild(row);
+          return wrap;
+        }
+        case 'toggle': {
+          const lab = document.createElement('label');
+          lab.className = 'nova-atom-fld-toggle';
+          const cb = document.createElement('input');
+          cb.type = 'checkbox';
+          cb.checked = !!value;
+          const txt = document.createElement('span');
+          txt.textContent = field.hint || '';
+          cb.addEventListener('change', () => onChange(cb.checked ? '1' : ''));
+          lab.appendChild(cb); lab.appendChild(txt);
+          wrap.appendChild(lab);
+          return wrap;
+        }
+        default:
+          input = document.createElement('input');
+          input.type = 'text';
+          input.value = value;
+          input.addEventListener('input', () => onChange(input.value));
+      }
+
+      if (input) wrap.appendChild(input);
+      if (field.hint) {
+        const h = document.createElement('div');
+        h.className = 'nova-atom-panel-hint';
+        h.style.marginTop = '4px';
+        h.textContent = field.hint;
+        wrap.appendChild(h);
+      }
+      return wrap;
+    }
+
+    function persistAtomChange(type, slotKey, props) {
+      if (selectedModuleIdx < 0) return;
+      const section = sections[selectedModuleIdx];
+      if (!section || !section.content) return;
+      const def = ATOM_RUNTIME[type];
+      if (!def) return;
+      const patches = def.serialize(props, slotKey);
+      // Translatable atoms write into the lang-suffixed key when one
+      // exists in content; fallback to the bare key. This mirrors the
+      // legacy schema's `_es / _en / _de` convention.
+      patches.forEach(({ key, value }) => {
+        const langKey = key + '_' + currentLang;
+        if (langKey in section.content || (key + '_es') in section.content) {
+          section.content[langKey] = value;
+        } else {
+          section.content[key] = value;
+        }
+      });
+      dirty = true;
     }
 
     // Expand + scroll + highlight the style group for a given slot
@@ -1892,6 +2295,9 @@ const projectDefaultLocale = site.defaultLocale;
       }
       selectedModuleIdx = idx;
       selectedSlotName = null;
+      // Hide the atom panel — a fresh module has no selected slot yet.
+      const __atomPanel = document.getElementById('nova-atom-panel');
+      if (__atomPanel) __atomPanel.style.display = 'none';
 
       // Render mode bar if this component supports being globally shared
       // (registry.source === 'global' means a central zds_module post can
