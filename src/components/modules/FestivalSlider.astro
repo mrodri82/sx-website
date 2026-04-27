@@ -72,7 +72,13 @@ const tripled = items.length > 0 ? [...items, ...items, ...items] : [];
     transition: opacity .4s ease;
   }
   .sx-fs-large { opacity: 0; }
-  .sx-fs-slide.is-active .sx-fs-large { opacity: 1; }
+  .sx-fs-slide.is-active { background: #000; }
+  .sx-fs-slide.is-active .sx-fs-large {
+    opacity: 1;
+    /* Active asset has the yellow info bar baked into the bottom — use
+       contain so the bar is never cropped. */
+    object-fit: contain; object-position: center;
+  }
   .sx-fs-slide.is-active .sx-fs-thumb { opacity: 0; }
 
   .sx-fs-nav {

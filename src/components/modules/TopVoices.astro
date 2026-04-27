@@ -101,9 +101,14 @@ const tripled: Voice[] = real > 0 ? [...voices, ...voices, ...voices] : [];
     transition:opacity .4s ease;
   }
   .slide .large { opacity:0; }
-  .slide.active { flex:0 0 740px; }
+  .slide.active { flex:0 0 740px; background:#000; }
   .slide.active .large { opacity:1; }
   .slide.active .thumb { opacity:0; }
+  /* The active large image carries the yellow info bar baked into the
+     bottom of the asset. object-fit:cover crops the bottom edge — use
+     contain on the active so the whole image (incl. the yellow box) is
+     always visible inside the 490px slot. */
+  .slide.active .large { object-fit:contain; object-position:center; }
 
   .nav {
     position:absolute; top:50%; transform:translateY(-50%);
