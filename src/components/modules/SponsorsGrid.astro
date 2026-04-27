@@ -66,11 +66,11 @@ const logos: Logo[] = (content.logos as Logo[]) || defaultLogos;
 
 <section data-nova-el="sponsors-grid" class="sx-sponsors bg-black">
   <div class="sx-sponsors-inner">
-    <h2 class="sx-sponsors-title">{heading}</h2>
-    <div class="sx-sponsors-wall">
+    <h2 class="sx-sponsors-title" data-atom="heading">{heading}</h2>
+    <div class="sx-sponsors-wall" data-nova-el="wall" data-atom="logos">
       {logos.map((l) => {
         const imgStyle = l.filter ? `filter:${l.filter}` : undefined;
-        const body = <img src={l.src} alt={l.alt || ''} loading="lazy" decoding="async" style={imgStyle} />;
+        const body = <img data-atom="image" src={l.src} alt={l.alt || ''} loading="lazy" decoding="async" style={imgStyle} />;
         return l.href ? (
           <a href={l.href} target="_blank" rel="noopener" class="sx-sponsor-cell" aria-label={l.alt}>{body}</a>
         ) : (

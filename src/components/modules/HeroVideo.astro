@@ -58,12 +58,12 @@ const posterUrl = (content.poster_url as string) || '';
   <div class="sx-hero-inner relative z-10 w-full min-h-screen flex flex-col justify-evenly">
     <div>
       {badge && (
-        <p data-nova-el="hero-video-badge" class="sx-hero-badge">{badge}</p>
+        <p data-nova-el="hero-video-badge" data-atom="text" class="sx-hero-badge">{badge}</p>
       )}
     </div>
 
     <div class="sx-hero-title-wrap">
-      <h1 data-nova-el="hero-video-title" class="sx-hero-title m-0">
+      <h1 data-nova-el="hero-video-title" data-atom="heading" class="sx-hero-title m-0">
         {title1 && <span class="sx-hero-word">{title1}</span>}
         <span class="sx-hero-row">
           {title2 && <span class="sx-hero-word">{title2}</span>}
@@ -80,18 +80,18 @@ const posterUrl = (content.poster_url as string) || '';
 
     <div class="sx-hero-bottom">
       {taglineLabel && (
-        <p data-nova-el="hero-video-tagline-label" class="sx-hero-tagline-label">
+        <p data-nova-el="hero-video-tagline-label" data-atom="text" class="sx-hero-tagline-label">
           <b>{taglineLabel}</b>
         </p>
       )}
       {taglineBody && (
-        <p data-nova-el="hero-video-tagline-body" class="sx-hero-tagline-body"
+        <p data-nova-el="hero-video-tagline-body" data-atom="text" class="sx-hero-tagline-body"
            set:html={taglineBody.replace(/\n/g, '<br>')} />
       )}
 
       <div class="sx-hero-ctas mt-6">
-        {cta1Text && <a data-nova-el="hero-video-cta1" href={cta1Url} class="sx-hero-btn">{cta1Text}</a>}
-        {cta2Text && <a data-nova-el="hero-video-cta2" href={cta2Url} class="sx-hero-btn sx-hero-btn--ghost">{cta2Text}</a>}
+        {cta1Text && <a data-nova-el="hero-video-cta1" data-atom="button" href={cta1Url} class="sx-hero-btn">{cta1Text}</a>}
+        {cta2Text && <a data-nova-el="hero-video-cta2" data-atom="button" href={cta2Url} class="sx-hero-btn sx-hero-btn--ghost">{cta2Text}</a>}
       </div>
     </div>
   </div>

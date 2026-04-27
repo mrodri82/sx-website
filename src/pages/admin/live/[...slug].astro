@@ -1352,6 +1352,42 @@ const projectDefaultLocale = site.defaultLocale;
           { key: slotKey + '_align', value: p.align || '' },
         ],
       },
+      logos: {
+        detect: (el) => {
+          if (el.dataset && el.dataset.atom === 'logos') return true;
+          if (!['DIV','SECTION','UL'].includes(el.tagName)) return false;
+          const imgKids = Array.from(el.children).filter((c) =>
+            c.tagName === 'IMG' || (c.querySelector && c.querySelector('img')));
+          return imgKids.length >= 3 && imgKids.length === el.children.length;
+        },
+        read: (el) => ({
+          per_row: el.dataset.atomPerRow || '5',
+          align:   el.dataset.atomAlign  || 'center',
+          gap:     el.dataset.atomGap    || '24px',
+          filter:  el.dataset.atomFilter || 'none',
+        }),
+        apply: (el, p) => {
+          if (p.per_row) {
+            el.dataset.atomPerRow = p.per_row;
+            el.style.gridTemplateColumns = 'repeat(' + p.per_row + ', minmax(0, 1fr))';
+            el.style.display = 'grid';
+          }
+          if (p.align)  { el.dataset.atomAlign  = p.align;  el.style.justifyContent = p.align; }
+          if (p.gap)    { el.dataset.atomGap    = p.gap;    el.style.gap = p.gap; }
+          if (p.filter) {
+            el.dataset.atomFilter = p.filter;
+            const map = { none:'', grayscale:'grayscale(100%)', 'grayscale-soft':'grayscale(50%)' };
+            const filterValue = map[p.filter] || '';
+            Array.from(el.querySelectorAll('img')).forEach((img) => (img.style.filter = filterValue));
+          }
+        },
+        serialize: (p, slotKey) => [
+          { key: slotKey + '_per_row', value: p.per_row || '' },
+          { key: slotKey + '_align',   value: p.align   || '' },
+          { key: slotKey + '_gap',     value: p.gap     || '' },
+          { key: slotKey + '_filter',  value: p.filter  || '' },
+        ],
+      },
       button: {
         detect: (el) => {
           if (el.tagName === 'BUTTON') return true;

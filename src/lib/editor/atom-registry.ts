@@ -307,14 +307,98 @@ const BUTTON: AtomDef = {
 };
 
 // ──────────────────────────────────────────────────────────────────
+// LOGOS — repeater of <img> children inside a container
+// ──────────────────────────────────────────────────────────────────
+
+const LOGOS: AtomDef = {
+  type: 'logos',
+  /* Containers tag themselves with data-atom="logos". Heuristic fallback:
+     a <div>/<section> whose direct children are mostly <img> (≥3) and
+     looks like a wall of logos — but explicit data-atom is preferred. */
+  detect: (el) => {
+    if (el.dataset.atom === 'logos') return true;
+    if (!['DIV', 'SECTION', 'UL'].includes(el.tagName)) return false;
+    const imgKids = Array.from(el.children).filter(c =>
+      c.tagName === 'IMG' || c.querySelector?.('img'));
+    return imgKids.length >= 3 && imgKids.length === el.children.length;
+  },
+  panel: {
+    title: 'Logos',
+    hint: 'Repeater von Bildern. Anzahl pro Reihe + Ausrichtung steuerbar.',
+    fields: [
+      { key: 'per_row',   type: 'select', label: 'Logos pro Reihe',
+        options: [
+          { value: '2', label: '2' }, { value: '3', label: '3' },
+          { value: '4', label: '4' }, { value: '5', label: '5' },
+          { value: '6', label: '6' }, { value: '8', label: '8' },
+        ],
+      },
+      { key: 'align',     type: 'select', label: 'Ausrichtung',
+        options: [
+          { value: 'start',  label: 'Links' },
+          { value: 'center', label: 'Mitte' },
+          { value: 'end',    label: 'Rechts' },
+          { value: 'space-between', label: 'Verteilt' },
+        ],
+      },
+      { key: 'gap',       type: 'select', label: 'Abstand',
+        options: [
+          { value: '0',    label: 'Keiner' },
+          { value: '12px', label: 'Klein' },
+          { value: '24px', label: 'Mittel' },
+          { value: '48px', label: 'Groß' },
+        ],
+      },
+      { key: 'filter',    type: 'select', label: 'Bildfilter',
+        options: [
+          { value: 'none',           label: 'Original' },
+          { value: 'grayscale',      label: 'Schwarz / Weiß' },
+          { value: 'grayscale-soft', label: 'Schwarz / Weiß (50 %)' },
+        ],
+      },
+    ],
+  },
+  read: (el) => ({
+    per_row: el.dataset.atomPerRow || '5',
+    align:   el.dataset.atomAlign  || 'center',
+    gap:     el.dataset.atomGap    || '24px',
+    filter:  el.dataset.atomFilter || 'none',
+  }),
+  apply: (el, p) => {
+    if (p.per_row) {
+      el.dataset.atomPerRow = p.per_row;
+      el.style.gridTemplateColumns = `repeat(${p.per_row}, minmax(0, 1fr))`;
+      el.style.display = 'grid';
+    }
+    if (p.align)  { el.dataset.atomAlign  = p.align;  el.style.justifyContent = p.align; }
+    if (p.gap)    { el.dataset.atomGap    = p.gap;    el.style.gap = p.gap; }
+    if (p.filter) {
+      el.dataset.atomFilter = p.filter;
+      const map: Record<string, string> = {
+        none: '', grayscale: 'grayscale(100%)', 'grayscale-soft': 'grayscale(50%)',
+      };
+      const filterValue = map[p.filter] || '';
+      Array.from(el.querySelectorAll('img')).forEach(img =>
+        ((img as HTMLImageElement).style.filter = filterValue));
+    }
+  },
+  serialize: (p, slotKey) => [
+    { key: `${slotKey}_per_row`, value: p.per_row || '' },
+    { key: `${slotKey}_align`,   value: p.align   || '' },
+    { key: `${slotKey}_gap`,     value: p.gap     || '' },
+    { key: `${slotKey}_filter`,  value: p.filter  || '' },
+  ],
+};
+
+// ──────────────────────────────────────────────────────────────────
 
 export const ATOM_REGISTRY: Record<AtomType, AtomDef | null> = {
   image:    IMAGE,
   heading:  HEADING,
   text:     TEXT,
   button:   BUTTON,
+  logos:    LOGOS,
   link:     null, // TODO
-  logos:    null, // TODO (repeater)
   row:      null, // TODO
   card:     null, // TODO
   video:    null, // TODO

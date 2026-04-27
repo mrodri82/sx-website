@@ -59,9 +59,9 @@ const hasMedia = !!(videoUrl || bgImage);
   {hasMedia && <div class="sx-hs-gradient" aria-hidden="true"></div>}
 
   <div class="sx-hs-inner">
-    {title && <h1 class="sx-hs-title">{title}</h1>}
+    {title && <h1 class="sx-hs-title" data-nova-el="title" data-atom="heading">{title}</h1>}
     {chips.length > 0 && (
-      <div class="sx-hs-chips">
+      <div class="sx-hs-chips" data-nova-el="chips">
         {chips.map((c: any) => {
           const label = typeof c === 'string' ? c : (c?.label || '');
           const href = typeof c === 'string' ? undefined : c?.href;
@@ -71,11 +71,11 @@ const hasMedia = !!(videoUrl || bgImage);
         })}
       </div>
     )}
-    {subtitle && <p class="sx-hs-sub">{subtitle}</p>}
+    {subtitle && <p class="sx-hs-sub" data-nova-el="subtitle" data-atom="text">{subtitle}</p>}
     {(ctaText || cta2Text) && (
       <div class="sx-hs-ctas">
-        {ctaText  && <a href={ctaUrl}  class={`sx-hs-cta${ctaVariant !== 'solid' ? ' sx-hs-cta--' + ctaVariant : ''}`} set:html={ctaText} />}
-        {cta2Text && <a href={cta2Url} class={`sx-hs-cta${cta2Variant !== 'solid' ? ' sx-hs-cta--' + cta2Variant : ''}`} set:html={cta2Text} />}
+        {ctaText  && <a href={ctaUrl}  data-nova-el="cta1" data-atom="button" class={`sx-hs-cta${ctaVariant !== 'solid' ? ' sx-hs-cta--' + ctaVariant : ''}`} set:html={ctaText} />}
+        {cta2Text && <a href={cta2Url} data-nova-el="cta2" data-atom="button" class={`sx-hs-cta${cta2Variant !== 'solid' ? ' sx-hs-cta--' + cta2Variant : ''}`} set:html={cta2Text} />}
       </div>
     )}
   </div>

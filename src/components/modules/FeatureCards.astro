@@ -36,14 +36,14 @@ const theme = (content.theme === 'light' ? 'light' : 'dark') as 'light'|'dark';
               <div class="sx-fcard-media">
                 <div class="sx-fcard-ov-text">
                   {primary && (
-                    <a class="sx-fcard-apply" href={primary.href} target={primary.href?.startsWith('http') ? '_blank' : undefined} rel="noopener">
+                    <a class="sx-fcard-apply" data-atom="button" href={primary.href} target={primary.href?.startsWith('http') ? '_blank' : undefined} rel="noopener">
                       {primary.label}
                       <svg class="sx-fcard-apply-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
                     </a>
                   )}
-                  <h3 class="sx-fcard-title">{it.title}</h3>
+                  <h3 class="sx-fcard-title" data-atom="heading">{it.title}</h3>
                 </div>
-                {it.description && <div class="sx-fcard-desc" set:html={it.description} />}
+                {it.description && <div class="sx-fcard-desc" data-atom="text" set:html={it.description} />}
               </div>
             </article>
           );
@@ -55,7 +55,7 @@ const theme = (content.theme === 'light' ? 'light' : 'dark') as 'light'|'dark';
             {Array.isArray(it.buttons) && it.buttons.length > 0 && (
               <div class="sx-fcard-btns">
                 {it.buttons.map((b) => (
-                  <a class="sx-fcard-btn" href={b.href} target={b.href?.startsWith('http') ? '_blank' : undefined} rel="noopener">
+                  <a class="sx-fcard-btn" data-atom="button" href={b.href} target={b.href?.startsWith('http') ? '_blank' : undefined} rel="noopener">
                     <span class="sx-fcard-btn-label">{b.label}</span>
                     <span class="sx-fcard-btn-icon" aria-hidden="true">
                       <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
