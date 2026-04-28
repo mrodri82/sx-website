@@ -38,7 +38,8 @@ export const POST: APIRoute = async ({ request }) => {
       Authorization: `Bearer ${OPENROUTER_KEY}`,
       'Content-Type': 'application/json',
       'HTTP-Referer': `https://${site.domain}`,
-      'X-Title': `Nova Image Generator — ${site.brandName}`,
+      // ASCII-only header (em-dash U+2014 fails ByteString conversion).
+      'X-Title': `Nova Image Generator - ${site.brandName}`,
     },
     body: JSON.stringify({
       model: 'google/gemini-3.1-flash-image-preview',

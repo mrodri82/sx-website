@@ -41,7 +41,9 @@ export const POST: APIRoute = async ({ request }) => {
       Authorization: `Bearer ${OPENROUTER_KEY}`,
       'Content-Type': 'application/json',
       'HTTP-Referer': `https://${site.domain}`,
-      'X-Title': `Nova Editor AI — ${site.brandName}`,
+      // ASCII-only — em-dash (U+2014) breaks ByteString conversion in
+      // Node's fetch and rejects every AI request with a 500.
+      'X-Title': `Nova Editor AI - ${site.brandName}`,
     },
     body: JSON.stringify({
       model: MODEL,
