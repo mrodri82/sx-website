@@ -19,22 +19,20 @@ const locale = getLocaleFromPath(Astro.url.pathname) as Locale;
 
 const heading = t(content, 'heading', locale) || 'TOP VOICES';
 
-// thumb = narrow portrait (no caption); large = wide image with the
-// yellow caption bar baked in. Mapping was inverted previously: kylie/
-// cath1/charl1/etc. (the plain portraits) were tagged as `large`, which
-// pushed them into the active 740-px slot while the actual caption
-// images sat in the narrow thumb slots. Verified against the
-// /program slider data which already had the correct ordering.
+// Per-pair naming inconsistency: most use `<name>1` for the wide
+// caption image and `<name>2` for the narrow portrait, but kylie/kyli2
+// is reversed (kylie = narrow portrait, kyli2 = wide caption).
+// Only kylie pair was wrong — the other 8 were already correct.
 const defaultVoices: Voice[] = [
-  { thumb: '/media/voices/cath1.webp',  large: '/media/voices/cath2.webp',  alt: 'Catherine' },
-  { thumb: '/media/voices/charl1.webp', large: '/media/voices/charl2.webp', alt: 'Charlotte' },
-  { thumb: '/media/voices/susan1.webp', large: '/media/voices/susan2.webp', alt: 'Susan' },
-  { thumb: '/media/voices/kylie.webp',  large: '/media/voices/kyli2.webp',  alt: 'Kylie Darling' },
-  { thumb: '/media/voices/bp.webp',     large: '/media/voices/bp2.webp',    alt: 'BP' },
-  { thumb: '/media/voices/kris2.webp',  large: '/media/voices/kris3.webp',  alt: 'Kris' },
-  { thumb: '/media/voices/mik3.webp',   large: '/media/voices/mik4.webp',   alt: 'Mik' },
-  { thumb: '/media/voices/moon1.webp',  large: '/media/voices/moon2.webp',  alt: 'Moon' },
-  { thumb: '/media/voices/muse1.webp',  large: '/media/voices/muse2.webp',  alt: 'Muse' },
+  { large: '/media/voices/cath1.webp',  thumb: '/media/voices/cath2.webp',  alt: 'Catherine' },
+  { large: '/media/voices/charl1.webp', thumb: '/media/voices/charl2.webp', alt: 'Charlotte' },
+  { large: '/media/voices/susan1.webp', thumb: '/media/voices/susan2.webp', alt: 'Susan' },
+  { large: '/media/voices/kyli2.webp',  thumb: '/media/voices/kylie.webp',  alt: 'Kylie Darling' },
+  { large: '/media/voices/bp2.webp',    thumb: '/media/voices/bp.webp',     alt: 'BP' },
+  { large: '/media/voices/kris3.webp',  thumb: '/media/voices/kris2.webp',  alt: 'Kris' },
+  { large: '/media/voices/mik4.webp',   thumb: '/media/voices/mik3.webp',   alt: 'Mik' },
+  { large: '/media/voices/moon2.webp',  thumb: '/media/voices/moon1.webp',  alt: 'Moon' },
+  { large: '/media/voices/muse2.webp',  thumb: '/media/voices/muse1.webp',  alt: 'Muse' },
 ];
 const voices: Voice[] = (content.voices as Voice[]) || defaultVoices;
 const theme = (content.theme === 'light' ? 'light' : 'dark') as 'light'|'dark';
