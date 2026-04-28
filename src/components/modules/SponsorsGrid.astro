@@ -96,23 +96,30 @@ const logos: Logo[] = (content.logos as Logo[]) || defaultLogos;
     color:#ecfd21; text-transform:uppercase;
     margin:0 0 40px 0;
   }
+  /* Logo wall — Kunde-Feedback 28.04.2026: Logos waren disproportional
+     groß, deutlich kleiner als auf sxtech.eu. 7 Spalten + 60px Höhe +
+     140px max-Breite + engerer Gap geben den dezenten "Featured Brands"-
+     Look (sxtech rendert die Logos auf ähnlicher Größe). */
   .sx-sponsors-wall {
     display:flex; flex-wrap:wrap;
     justify-content:center; align-items:center;
-    gap:40px 32px;
+    gap:28px 24px;
     min-width:0;
   }
   .sx-sponsor-cell {
     display:flex; align-items:center; justify-content:center;
-    flex: 0 0 calc((100% - 4 * 32px) / 5);
-    max-width:200px; height:90px;
+    flex: 0 0 calc((100% - 6 * 24px) / 7);
+    max-width:140px; height:60px;
     transition: transform .2s ease, opacity .2s ease;
   }
-  @media (max-width:900px) {
-    .sx-sponsor-cell { flex: 0 0 calc((100% - 2 * 32px) / 3); }
+  @media (max-width:1024px) {
+    .sx-sponsor-cell { flex: 0 0 calc((100% - 4 * 24px) / 5); max-width:140px; }
   }
-  @media (max-width:640px) {
-    .sx-sponsor-cell { flex: 0 0 calc((100% - 32px) / 2); }
+  @media (max-width:768px) {
+    .sx-sponsor-cell { flex: 0 0 calc((100% - 3 * 20px) / 4); height:50px; }
+  }
+  @media (max-width:480px) {
+    .sx-sponsor-cell { flex: 0 0 calc((100% - 16px) / 3); height:44px; }
   }
   .sx-sponsor-cell:hover { transform: scale(1.05); }
   .sx-sponsor-cell img {
@@ -125,11 +132,7 @@ const logos: Logo[] = (content.logos as Logo[]) || defaultLogos;
   }
   .sx-sponsor-cell:hover img { opacity: 1; }
 
-  @media (max-width:1024px) {
-    .sx-sponsors-wall { grid-template-columns:repeat(3, minmax(0, 1fr)); gap:32px 24px; }
-  }
   @media (max-width:640px) {
-    .sx-sponsors-wall { grid-template-columns:repeat(2, minmax(0, 1fr)); gap:24px; }
-    .sx-sponsors-inner { padding:0 24px; }
+    .sx-sponsors { padding: 60px 24px; }
   }
 </style>
