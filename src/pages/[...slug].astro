@@ -144,8 +144,25 @@ if (sections.length === 0) {
   } catch {}
 }
 
-// If nothing found at all, 404
+// If nothing found at all, try old-slug-lookup before giving up.
+// WP Core stores every slug rename as _wp_old_slug post-meta. Our
+// zds-modules mu-plugin exposes /zds/v1/old-slug-lookup which resolves
+// renamed slugs to the post's current slug. Headless equivalent of WP's
+// wp_old_slug_redirect() which only fires on WP-rendered pages.
 if (sections.length === 0 && !pageTitle) {
+  try {
+    const WP_URL = site.cmsUrl;
+    const oldSlugRes = await fetch(
+      `${WP_URL}/index.php/?rest_route=/zds/v1/old-slug-lookup&slug=${encodeURIComponent(slug)}`,
+      { headers: { Host: site.cmsHost }, cache: 'no-store' }
+    );
+    if (oldSlugRes.ok) {
+      const data = await oldSlugRes.json();
+      if (data.found && data.slug && data.slug !== slug) {
+        return Astro.redirect(`/${data.slug}/`, 301);
+      }
+    }
+  } catch { /* fall through to 404 */ }
   return new Response(null, { status: 404 });
 }
 
